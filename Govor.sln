@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Core", "Govor.Core\Go
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Data", "Govor.Data\Govor.Data.csproj", "{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Console", "Govor.Console\Govor.Console.csproj", "{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,10 @@ Global
 		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
