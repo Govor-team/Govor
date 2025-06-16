@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.API.Tests", "Govor.API.Tests\Govor.API.Tests.csproj", "{15031CBD-F319-4755-BA91-B86F20BD8E37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.API", "Govor.API\Govor.API.csproj", "{EA8F272F-4276-438A-9DEA-C58860A440AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Core", "Govor.Core\Govor.Core.csproj", "{F7BB1EC7-63D6-4525-ADE4-E4AC937E219D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Data", "Govor.Data\Govor.Data.csproj", "{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15031CBD-F319-4755-BA91-B86F20BD8E37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15031CBD-F319-4755-BA91-B86F20BD8E37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15031CBD-F319-4755-BA91-B86F20BD8E37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15031CBD-F319-4755-BA91-B86F20BD8E37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA8F272F-4276-438A-9DEA-C58860A440AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA8F272F-4276-438A-9DEA-C58860A440AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA8F272F-4276-438A-9DEA-C58860A440AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA8F272F-4276-438A-9DEA-C58860A440AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7BB1EC7-63D6-4525-ADE4-E4AC937E219D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7BB1EC7-63D6-4525-ADE4-E4AC937E219D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7BB1EC7-63D6-4525-ADE4-E4AC937E219D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7BB1EC7-63D6-4525-ADE4-E4AC937E219D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+	EndGlobalSection
+EndGlobal

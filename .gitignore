@@ -1,0 +1,56 @@
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+
+## .NET (общие файлы и папки)
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio
+.vs/
+.vscode/
+*.code-workspace
+
+## ASP.NET Core специфичное
+wwwroot/lib/
+appsettings.Development.json
+appsettings.*.json
+
+## MAUI специфичное
+**/Platforms/Android/bin/
+**/Platforms/Android/obj/
+**/Platforms/iOS/bin/
+**/Platforms/iOS/obj/
+**/Platforms/MacCatalyst/bin/
+**/Platforms/MacCatalyst/obj/
+**/Platforms/Tizen/bin/
+**/Platforms/Tizen/obj/
+**/Platforms/Windows/bin/
+**/Platforms/Windows/obj/
+**/Resources/**/*.designer.cs
+**/*.apk
+**/*.aab
+**/*.app
+**/*.xcarchive
+**/*.xcuserstate
+*.db
+
+## JetBrains Rider
+.idea/
+
+## Logs
+*.log
+logs/
+
+## Папки для публикации
+publish/
+artifacts/
+
+## Конфигурации и кеши
+*.swp
+*.DS_Store
+Thumbs.db
