@@ -87,7 +87,6 @@ public class UsersRepository : IUsersRepository
             _validator.Validate(user);
 
             _context.Users.Add(user);
-
             await _context.SaveChangesAsync();
         }
         catch (InvalidObjectException<User> ex)
@@ -99,7 +98,8 @@ public class UsersRepository : IUsersRepository
             throw new AdditionUserException("Cannot add user", ex);
         }
     }
-
+    
+    // TODO: Test this block
     public async Task Update(User user)
     {
         try
@@ -130,33 +130,63 @@ public class UsersRepository : IUsersRepository
         }
     }
 
-    public Task Remove(User user)
+    public async Task Remove(User user)
     {
-        _validator.Validate(user);
-        throw new NotImplementedException();
+        try
+        {
+            _validator.Validate(user);
+            await Remove(user.Id);
+        }
+        catch (InvalidObjectException<User> ex)
+        {
+            throw new UserRemoveException("User with given data invalid", ex);
+        }
     }
 
-    public Task Remove(Guid userId)
+    public async Task Remove(Guid userId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var result = await FindById(userId);
+
+            _context.Users.Remove(result);
+            await _context.SaveChangesAsync();
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new UserRemoveException($"Not found user by given id {userId}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new UserRemoveException("Error when removing the user", ex);
+        }
     }
 
     public Task<bool> Exists(User user)
     {
         _validator.Validate(user);
-        throw new NotImplementedException();
+
+        return _context.Users.AnyAsync(u =>
+            u.Id == user.Id &&
+            u.Username == user.Username &&
+            u.HashPassword == user.HashPassword
+        );
     }
 
     public Task<bool> ExistsById(Guid id)
     {
-        throw new NotImplementedException();
+        return _context.Users.AnyAsync(u => u.Id == id);
     }
 
     public Task<bool> ExistsUsername(string username)
     {
-        throw new NotImplementedException();
+        return _context.Users.AnyAsync(u => u.Username == username);
     }
+
 }
+
+public class UserRemoveException(string s, Exception exception)
+    : Exception(s, exception);
 
 public class AdditionUserException(string s, Exception ex) 
     : Exception(s, ex);
