@@ -1,13 +1,26 @@
+using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Core.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace Govor.Data.Repositories;
 
 public class UsersRepository : IUsersRepository
 {
-    public Task<IEnumerable<User>> GetAll()
+    private GovorDbContext _context;
+    private IObjectValidator<User> _validator;
+    public UsersRepository(GovorDbContext context, IObjectValidator<User> validator)
     {
-        throw new NotImplementedException();
+        _context = context;
+        _validator = validator;
+    }
+    
+    public async Task<IEnumerable<User>> GetAll()
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .Where(x => true)
+            .ToListAsync();
     }
 
     public Task<User> FindById(Guid id)
