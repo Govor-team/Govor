@@ -17,7 +17,7 @@ public class UsersRepository : IUsersRepository
         _validator = validator;
     }
     
-    public async Task<IEnumerable<User>> GetAll()
+    public async Task<IEnumerable<User>> GetAllAsync()
     {
         return await _context.Users
             .AsNoTracking()
@@ -25,7 +25,7 @@ public class UsersRepository : IUsersRepository
             .ToListOrThrowIfEmpty(new NotFoundException("Users in Database not exists"));
     }
 
-    public async Task<User> FindById(Guid id)
+    public async Task<User> FindByIdAsync(Guid id)
     {
         if(id == Guid.Empty)
             throw new ArgumentException("Id must not be empty", nameof(id));
@@ -36,7 +36,7 @@ public class UsersRepository : IUsersRepository
                ?? throw new NotFoundByKeyException<Guid>(id, "User with given id does not exist");
     }
 
-    public async Task<List<User>> FindByRangeId(IEnumerable<Guid> ids)
+    public async Task<List<User>> FindByRangeIdAsync(IEnumerable<Guid> ids)
     {
         if (ids is null || !ids.Any())
             throw new ArgumentException("Ids must not be empty", nameof(ids));
@@ -47,7 +47,7 @@ public class UsersRepository : IUsersRepository
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<Guid>>(ids,"Users with given ids not found"));
     }
     
-    public async Task<User> FindByUsername(string username)
+    public async Task<User> FindByUsernameAsync(string username)
     {
         if(username is null || username == string.Empty)
             throw new ArgumentNullException(username, "Username cannot be empty");
@@ -58,7 +58,7 @@ public class UsersRepository : IUsersRepository
                ?? throw new NotFoundByKeyException<string>(username, "User with given username does not exist");
     }
     
-    public async Task<List<User>> FindByRangeUsernames(IEnumerable<string> usernames)
+    public async Task<List<User>> FindByRangeUsernamesAsync(IEnumerable<string> usernames)
     {
         if (usernames is null || !usernames.Any())
             throw new ArgumentException("Usernames must not be empty", nameof(usernames));
@@ -69,7 +69,7 @@ public class UsersRepository : IUsersRepository
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<string>>(usernames, "Users with given usernames not found"));
     }
 
-    public async Task<List<User>> FindUsersByCreatedDate(DateOnly createdDate)
+    public async Task<List<User>> FindUsersByCreatedDateAsync(DateOnly createdDate)
     {
         if(createdDate == DateOnly.MinValue)
             throw new ArgumentException("Created date cannot be earlier than MinValue", nameof(createdDate));
@@ -80,7 +80,7 @@ public class UsersRepository : IUsersRepository
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<DateOnly>(createdDate, "Users with given created date do not exist"));
     }
     
-    public async Task Add(User user)
+    public async Task AddAsync(User user)
     {
         try
         {
@@ -100,7 +100,7 @@ public class UsersRepository : IUsersRepository
     }
     
     // TODO: Test this block
-    public async Task Update(User user)
+    public async Task UpdateAsync(User user)
     {
         try
         {
@@ -130,12 +130,12 @@ public class UsersRepository : IUsersRepository
         }
     }
 
-    public async Task Remove(User user)
+    public async Task RemoveAsync(User user)
     {
         try
         {
             _validator.Validate(user);
-            await Remove(user.Id);
+            await RemoveAsync(user.Id);
         }
         catch (InvalidObjectException<User> ex)
         {
@@ -143,11 +143,11 @@ public class UsersRepository : IUsersRepository
         }
     }
 
-    public async Task Remove(Guid userId)
+    public async Task RemoveAsync(Guid userId)
     {
         try
         {
-            var result = await FindById(userId);
+            var result = await FindByIdAsync(userId);
 
             _context.Users.Remove(result);
             await _context.SaveChangesAsync();
@@ -162,7 +162,7 @@ public class UsersRepository : IUsersRepository
         }
     }
 
-    public Task<bool> Exists(User user)
+    public Task<bool> ExistsAsync(User user)
     {
         _validator.Validate(user);
 
@@ -173,12 +173,12 @@ public class UsersRepository : IUsersRepository
         );
     }
 
-    public Task<bool> ExistsById(Guid id)
+    public Task<bool> ExistsByIdAsync(Guid id)
     {
         return _context.Users.AnyAsync(u => u.Id == id);
     }
 
-    public Task<bool> ExistsUsername(string username)
+    public Task<bool> ExistsUsernameAsync(string username)
     {
         return _context.Users.AnyAsync(u => u.Name == username);
     }

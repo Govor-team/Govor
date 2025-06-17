@@ -47,7 +47,7 @@ public class UsersRepositoryTests
 
         // Act 
 
-        var result = await userRepository.GetAll();
+        var result = await userRepository.GetAllAsync();
 
         // Assert 
         Assert.That(result, Is.Not.Null);
@@ -68,7 +68,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
 
         // Act 
-        var result = await userRepository.FindById(user.Id);
+        var result = await userRepository.FindByIdAsync(user.Id);
 
         // Assert 
         Assert.That(result, Is.Not.Null);
@@ -86,7 +86,7 @@ public class UsersRepositoryTests
         var userRepository = new UsersRepository(context, _userValidator);
 
         // Act & Assert  
-        Assert.ThrowsAsync<NotFoundByKeyException<Guid>>(async () => await userRepository.FindById(id));
+        Assert.ThrowsAsync<NotFoundByKeyException<Guid>>(async () => await userRepository.FindByIdAsync(id));
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
 
         // Act 
-        var result = await userRepository.FindByRangeId(users.Select(u => u.Id));
+        var result = await userRepository.FindByRangeIdAsync(users.Select(u => u.Id));
 
         // Assert 
         Assert.That(result, Is.Not.Null);
@@ -124,7 +124,7 @@ public class UsersRepositoryTests
 
         // Act & Assert 
         Assert.ThrowsAsync<NotFoundByKeyException<IEnumerable<Guid>>>(async () =>
-            await userRepository.FindByRangeId(ids));
+            await userRepository.FindByRangeIdAsync(ids));
     }
 
     [Test]
@@ -140,7 +140,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
 
         // Act 
-        var result = await userRepository.FindByUsername(user.Name);
+        var result = await userRepository.FindByUsernameAsync(user.Name);
         // Assert
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Name, Is.EqualTo(user.Name));
@@ -157,7 +157,7 @@ public class UsersRepositoryTests
         var userRepository = new UsersRepository(context, _userValidator);
         // Act & Assert 
 
-        Assert.ThrowsAsync<NotFoundByKeyException<string>>(async () => await userRepository.FindByUsername(username));
+        Assert.ThrowsAsync<NotFoundByKeyException<string>>(async () => await userRepository.FindByUsernameAsync(username));
     }
 
     [Test]
@@ -174,7 +174,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
 
         // Act 
-        var result = await userRepository.FindByRangeUsernames(users.Select(u => u.Name));
+        var result = await userRepository.FindByRangeUsernamesAsync(users.Select(u => u.Name));
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -194,7 +194,7 @@ public class UsersRepositoryTests
 
         // Act & Assert 
         Assert.ThrowsAsync<NotFoundByKeyException<IEnumerable<string>>>(async () =>
-            await userRepository.FindByRangeUsernames(usernames));
+            await userRepository.FindByRangeUsernamesAsync(usernames));
     }
 
     [Test]
@@ -213,7 +213,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
 
         // Act 
-        var result = await userRepository.FindUsersByCreatedDate(selectedDate);
+        var result = await userRepository.FindUsersByCreatedDateAsync(selectedDate);
 
         // Assert
         var expectedUsers = users
@@ -236,7 +236,7 @@ public class UsersRepositoryTests
 
         // Act & Assert 
         Assert.ThrowsAsync<NotFoundByKeyException<DateOnly>>(async () =>
-            await userRepository.FindUsersByCreatedDate(date));
+            await userRepository.FindUsersByCreatedDateAsync(date));
     }
 
     [Test]
@@ -248,7 +248,7 @@ public class UsersRepositoryTests
         var userRepository = new UsersRepository(context, _userValidator);
 
         // Act 
-        userRepository.Add(user);
+        userRepository.AddAsync(user);
         var res = context.Users.Find(user.Id);
 
         // Assert 
@@ -268,7 +268,7 @@ public class UsersRepositoryTests
         var userRepository = new UsersRepository(context, _userValidator);
 
         // Act & Assert
-        Assert.ThrowsAsync<AdditionUserException>(async () => await userRepository.Add(user));
+        Assert.ThrowsAsync<AdditionUserException>(async () => await userRepository.AddAsync(user));
     }
     
     [Test]
@@ -283,7 +283,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
         
         // Act 
-        var res = await userRepository.Exists(user);
+        var res = await userRepository.ExistsAsync(user);
         
         // Assert 
         Assert.That(res, Is.True);
@@ -299,7 +299,7 @@ public class UsersRepositoryTests
         
         
         // Act 
-        var res = await userRepository.Exists(user);
+        var res = await userRepository.ExistsAsync(user);
         
         // Assert 
         Assert.That(res, Is.False);
@@ -312,7 +312,7 @@ public class UsersRepositoryTests
         await using var context = new GovorDbContext(_options);
         var userRepository = new UsersRepository(context, _userValidator);
         // Act & Assert 
-        Assert.ThrowsAsync<InvalidObjectException<User>>(async () => await userRepository.Exists(default));
+        Assert.ThrowsAsync<InvalidObjectException<User>>(async () => await userRepository.ExistsAsync(default));
     }
     
     [Test]
@@ -327,7 +327,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
         
         // Act 
-        var res = await userRepository.ExistsById(user.Id);
+        var res = await userRepository.ExistsByIdAsync(user.Id);
         
         // Assert 
         Assert.That(res, Is.True);
@@ -343,7 +343,7 @@ public class UsersRepositoryTests
         
         
         // Act 
-        var res = await userRepository.ExistsById(user.Id);
+        var res = await userRepository.ExistsByIdAsync(user.Id);
         
         // Assert 
         Assert.That(res, Is.False);
@@ -361,7 +361,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
         
         // Act 
-        var res = await userRepository.ExistsUsername(user.Name);
+        var res = await userRepository.ExistsUsernameAsync(user.Name);
         
         // Assert 
         Assert.That(res, Is.True);
@@ -378,7 +378,7 @@ public class UsersRepositoryTests
         
         
         // Act 
-        var res = await userRepository.ExistsUsername(user.Name);
+        var res = await userRepository.ExistsUsernameAsync(user.Name);
         
         // Assert 
         Assert.That(res, Is.False);

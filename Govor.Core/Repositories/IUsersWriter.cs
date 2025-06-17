@@ -4,8 +4,8 @@ namespace Govor.Core.Repositories;
 
 public interface IUsersWriter
 {
-    public Task Add(User user);
-    public Task Update(User user);
-    public Task Remove(User user);
-    public Task Remove(Guid userId);
+    public Task AddAsync(User user);
+    public Task UpdateAsync(User user);
+    public Task RemoveAsync(User user);
+    public Task RemoveAsync(Guid userId);
 }
