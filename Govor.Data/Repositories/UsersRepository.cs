@@ -54,7 +54,7 @@ public class UsersRepository : IUsersRepository
         
         return await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Username == username) 
+            .FirstOrDefaultAsync(x => x.Name == username) 
                ?? throw new NotFoundByKeyException<string>(username, "User with given username does not exist");
     }
     
@@ -65,7 +65,7 @@ public class UsersRepository : IUsersRepository
 
         return await _context.Users
             .AsNoTracking()
-            .Where(x => usernames.Contains(x.Username))
+            .Where(x => usernames.Contains(x.Name))
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<string>>(usernames, "Users with given usernames not found"));
     }
 
@@ -109,11 +109,11 @@ public class UsersRepository : IUsersRepository
             var rowsAffected = await _context.Users
                 .Where(u => u.Id == user.Id)
                 .ExecuteUpdateAsync(u => u
-                    .SetProperty(a => a.Username, user.Username)
+                    .SetProperty(a => a.Name, user.Name)
                     .SetProperty(u => u.IconId, user.IconId)
                     .SetProperty(u => u.Description, user.Description)
                     .SetProperty(u => u.CreatedOn, user.CreatedOn)
-                    .SetProperty(u => u.HashPassword, user.HashPassword)
+                    .SetProperty(u => u.PasswordHash, user.PasswordHash)
                     .SetProperty(u => u.WasOnline, user.WasOnline)
                 );
 
@@ -168,8 +168,8 @@ public class UsersRepository : IUsersRepository
 
         return _context.Users.AnyAsync(u =>
             u.Id == user.Id &&
-            u.Username == user.Username &&
-            u.HashPassword == user.HashPassword
+            u.Name == user.Name &&
+            u.PasswordHash == user.PasswordHash
         );
     }
 
@@ -180,7 +180,7 @@ public class UsersRepository : IUsersRepository
 
     public Task<bool> ExistsUsername(string username)
     {
-        return _context.Users.AnyAsync(u => u.Username == username);
+        return _context.Users.AnyAsync(u => u.Name == username);
     }
 
 }
