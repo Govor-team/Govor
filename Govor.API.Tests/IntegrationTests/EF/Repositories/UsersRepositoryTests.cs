@@ -235,4 +235,37 @@ public class UsersRepositoryTests
         // Act & Assert 
         Assert.ThrowsAsync<NotFoundByKeyException<DateOnly>>(async () => await userRepository.FindUsersByCreatedDate(date));
     }
+
+    [Test]
+    public async Task Given_ValidUser_When_AddUser_Then_CreateUser()
+    {
+        var user = _fixture.Create<User>();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        // Act 
+        userRepository.Add(user);
+        var res = context.Users.Find(user.Id);
+        
+        // Assert 
+        
+        Assert.That(res, Is.Not.Null);
+        Assert.That(res.Username, Is.EqualTo(user.Username));
+        Assert.That(res.Id, Is.EqualTo(user.Id));
+    }
+
+    [Test]
+    public async Task Given_InvalidUser_When_AddUser_Should_Throw_AdditionUserException()
+    {
+        var user = _fixture.Create<User>();
+        user.Username = string.Empty;
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        // Act & Assert
+        Assert.ThrowsAsync<AdditionUserException>(async () => await userRepository.Add(user));
+    }
+    
 }
