@@ -270,13 +270,12 @@ public class UsersRepositoryTests
         // Act & Assert
         Assert.ThrowsAsync<AdditionUserException>(async () => await userRepository.Add(user));
     }
-
+    
     [Test]
-    public async Task Given_ValidUser_When_RemoveUser_Then_RemoveUser()
+    public async Task Given_ValidUser_When_ExistUser_Then_True()
     {
-        // Arrange 
+        // Arrange
         var user = _fixture.Create<User>();
-        
         await using var context = new GovorDbContext(_options);
         var userRepository = new UsersRepository(context, _userValidator);
         
@@ -284,11 +283,104 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
         
         // Act 
-        
-        await userRepository.Remove(user);
-        var res = context.Users.AsNoTracking().FirstOrDefault(u => u.Id == user.Id);
+        var res = await userRepository.Exists(user);
         
         // Assert 
-        Assert.That(res, Is.Null);
+        Assert.That(res, Is.True);
+    }
+    [Test]
+    public async Task Given_ValidUserButNotInDB_When_ExistUser_Then_False()
+    {
+        // Arrange 
+        var user = _fixture.Create<User>();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        
+        // Act 
+        var res = await userRepository.Exists(user);
+        
+        // Assert 
+        Assert.That(res, Is.False);
+    }
+
+    [Test]
+    public async Task Given_InvalidUser_When_ExistUser_Should_Throw_InvalidObjectException()
+    {
+        // Arrange 
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        // Act & Assert 
+        Assert.ThrowsAsync<InvalidObjectException<User>>(async () => await userRepository.Exists(default));
+    }
+    
+    [Test]
+    public async Task Given_ValidUserId_When_ExistUserById_Then_True()
+    {
+        // Arrange
+        var user = _fixture.Create<User>();
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var res = await userRepository.ExistsById(user.Id);
+        
+        // Assert 
+        Assert.That(res, Is.True);
+    }
+    [Test]
+    public async Task Given_ValidUserIdButNotInDB_When_ExistUser_Then_False()
+    {
+        // Arrange 
+        var user = _fixture.Create<User>();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        
+        // Act 
+        var res = await userRepository.ExistsById(user.Id);
+        
+        // Assert 
+        Assert.That(res, Is.False);
+    }
+
+    [Test]
+    public async Task Given_ValidUsername_When_ExistUserById_Then_True()
+    {
+        // Arrange
+        var user = _fixture.Create<User>();
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var res = await userRepository.ExistsUsername(user.Username);
+        
+        // Assert 
+        Assert.That(res, Is.True);
+    }
+    
+    [Test]
+    public async Task Given_ValidUsernameButNotInDB_When_ExistUser_Then_False()
+    {
+        // Arrange 
+        var user = _fixture.Create<User>();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        
+        // Act 
+        var res = await userRepository.ExistsUsername(user.Username);
+        
+        // Assert 
+        Assert.That(res, Is.False);
     }
 }
