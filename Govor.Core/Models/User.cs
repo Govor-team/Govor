@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Govor.Core.Models;
 
 public class User
@@ -7,6 +9,6 @@ public class User
     public string Description {get; set;} 
     public string HashPassword {get; set;}
     public Guid IconId {get; set;} 
-    public DateTime CreatedOn {get; set;}
+    public DateOnly CreatedOn {get; set;}
     public DateTime WasOnline {get; set;}
 }

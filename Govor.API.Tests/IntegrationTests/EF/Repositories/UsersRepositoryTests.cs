@@ -125,4 +125,114 @@ public class UsersRepositoryTests
         // Act & Assert 
         Assert.ThrowsAsync<NotFoundByKeyException<IEnumerable<Guid>>>(async () => await userRepository.FindByRangeId(ids));
     }
+
+    [Test]
+    public async Task Given_ValidUsername_When_FindByUsername_Then_Returns_User()
+    {
+        // Arrange 
+        var user = _fixture.Create<User>();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var result = await userRepository.FindByUsername(user.Username);
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Username, Is.EqualTo(user.Username));
+        Assert.That(result.Id, Is.EqualTo(user.Id));
+    }
+    
+    [Test]
+    public async Task Given_InvalidUsername_When_FindByUsername_Should_Throw_NotFoundByKeyException()
+    {
+        // Arrange 
+        string username = _fixture.Create<string>();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        // Act & Assert 
+        
+        Assert.ThrowsAsync<NotFoundByKeyException<string>>(async () => await userRepository.FindByUsername(username));
+    }
+    
+    [Test]
+    public async Task Given_ValidUsernames_When_FindByRangeUsernames_Then_Returns_Users()
+    {
+        // Arrange 
+        var random = new Random();
+        var users = _fixture.CreateMany<User>(random.Next(3, 10)).ToList();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        context.Users.AddRange(users);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var result = await userRepository.FindByRangeUsernames(users.Select(u => u.Username));
+        
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Select(u => u.Username), Is.EquivalentTo(users.Select(u => u.Username)));
+        Assert.That(result.Select(u => u.Id), Is.EquivalentTo(users.Select(u => u.Id)));
+    }
+    
+    [Test]
+    public async Task Given_InvalidUsernames_When_FindByRangeUsernames_Should_Throw_NotFoundByKeyException()
+    {
+        // Arrange 
+        var random = new Random();
+        var usernames = _fixture.CreateMany<string>(random.Next(3, 10)).ToList();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        // Act & Assert 
+        Assert.ThrowsAsync<NotFoundByKeyException<IEnumerable<string>>>(async () => await userRepository.FindByRangeUsernames(usernames));
+    }
+
+    [Test]
+    public async Task Given_ValidDateOnly_When_FindByCreatedDate_Then_Returns_Users()
+    {
+        // Arrange 
+        var random = new Random();
+        var users = _fixture.CreateMany<User>(random.Next(3, 10)).ToList();
+        
+        var selectedDate = users[random.Next(users.Count)].CreatedOn;
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+
+        context.Users.AddRange(users);
+        await context.SaveChangesAsync();
+
+        // Act 
+        var result = await userRepository.FindUsersByCreatedDate(selectedDate);
+
+        // Assert
+        var expectedUsers = users
+            .Where(u => u.CreatedOn == selectedDate)
+            .ToList();
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Count, Is.EqualTo(expectedUsers.Count));
+        Assert.That(result.Select(u => u.Id), Is.EquivalentTo(expectedUsers.Select(u => u.Id)));
+    }
+
+    [Test]
+    public async Task Given_InvalidDateOnly_When_FindByCreatedDate_Should_Throw_NotFoundByKeyException()
+    {
+        // Arrange 
+        var date = _fixture.Create<DateOnly>();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        // Act & Assert 
+        Assert.ThrowsAsync<NotFoundByKeyException<DateOnly>>(async () => await userRepository.FindUsersByCreatedDate(date));
+    }
 }

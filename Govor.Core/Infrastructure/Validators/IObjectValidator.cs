@@ -6,4 +6,4 @@ public interface IObjectValidator<T>
     bool TryValidate(T objectToValidate);
 }
 
-class InvalidObjectException<T>(Exception ex) : GovorCoreException($"The object {typeof(T).FullName} is invalid.", ex);
+public class InvalidObjectException<T>(Exception ex) : GovorCoreException($"The object {typeof(T).FullName} is invalid.", ex);
