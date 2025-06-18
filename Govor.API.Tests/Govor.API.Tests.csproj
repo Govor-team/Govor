@@ -26,10 +26,10 @@
 
     <ItemGroup>
       <Folder Include="IntegrationTests\Controllers\" />
-      <Folder Include="UnitTests\Services\" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Govor.API\Govor.API.csproj" />
       <ProjectReference Include="..\Govor.Data\Govor.Data.csproj" />
     </ItemGroup>
 
