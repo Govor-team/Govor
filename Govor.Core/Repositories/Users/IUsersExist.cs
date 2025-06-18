@@ -1,6 +1,6 @@
 using Govor.Core.Models;
 
-namespace Govor.Core.Repositories;
+namespace Govor.Core.Repositories.Users;
 
 public interface IUsersExist
 {

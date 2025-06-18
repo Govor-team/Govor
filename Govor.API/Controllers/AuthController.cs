@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Govor.API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class AuthController : Controller
 {
     private IAccountService _accountService;
@@ -18,7 +18,7 @@ public class AuthController : Controller
         _logger = logger;
     }
     
-    [HttpPost("register")]
+    [HttpPost("register")]// api/auth/register
     [RequireHttps] 
     public async Task<IActionResult> Register([FromBody] UserDto userDto)
     {
@@ -29,8 +29,9 @@ public class AuthController : Controller
                 return BadRequest(ModelState);
             }
 
-            await _accountService.RegistrationAsync(userDto.Name, userDto.Password);
-            return Ok(new { Message = "User registered successfully" });
+            var token = await _accountService.RegistrationAsync(userDto.Name, userDto.Password);
+            _logger.LogInformation($"Register request for {userDto.Name}");
+            return Ok(new { token });
         }
         catch (UserAlreadyExistException ex)
         {
@@ -44,7 +45,7 @@ public class AuthController : Controller
         }
     }
     
-    [HttpPost("login")]
+    [HttpPost("login")]// api/auth/login
     [RequireHttps] 
     public async Task<IActionResult> Login([FromBody] UserDto userDto)
     {
@@ -55,8 +56,9 @@ public class AuthController : Controller
                 return BadRequest(ModelState);
             }
 
-            await _accountService.LoginAsync(userDto.Name, userDto.Password);
-            return Ok(new { Message = "User login successfully" });
+            var token = await _accountService.LoginAsync(userDto.Name, userDto.Password);
+            _logger.LogInformation($"Login request for {userDto.Name}");
+            return Ok(new { token });
         }
         catch (UserNotRegisteredException ex)
         {

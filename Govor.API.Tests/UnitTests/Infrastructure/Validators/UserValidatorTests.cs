@@ -46,7 +46,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = _fixture.Create<string>(),
-            Name = _fixture.Create<string>(),
+            Username = _fixture.Create<string>(),
             Id = Guid.Empty,
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };
@@ -62,7 +62,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = _fixture.Create<string>(),
-            Name = _fixture.Create<string>(),
+            Username = _fixture.Create<string>(),
             Id = Guid.Empty,
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };
@@ -78,7 +78,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = string.Empty,
-            Name = _fixture.Create<string>(),
+            Username = _fixture.Create<string>(),
             Id = Guid.NewGuid(),
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };
@@ -94,7 +94,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = string.Empty,
-            Name = _fixture.Create<string>(),
+            Username = _fixture.Create<string>(),
             Id = Guid.NewGuid(),
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };
@@ -110,7 +110,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = _fixture.Create<string>(),
-            Name = String.Empty,
+            Username = String.Empty,
             Id = Guid.NewGuid(),
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };
@@ -126,7 +126,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = _fixture.Create<string>(),
-            Name = String.Empty,
+            Username = String.Empty,
             Id = Guid.NewGuid(),
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };
@@ -142,7 +142,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = _fixture.Create<string>(),
-            Name = _fixture.Create<string>(),
+            Username = _fixture.Create<string>(),
             Id = Guid.NewGuid(),
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };
@@ -158,7 +158,7 @@ public class UserValidatorTests
         User user = new User()
         {
             PasswordHash = _fixture.Create<string>(),
-            Name = _fixture.Create<string>(),
+            Username = _fixture.Create<string>(),
             Id = Guid.NewGuid(),
             CreatedOn = DateOnly.FromDateTime(DateTime.Now),
         };

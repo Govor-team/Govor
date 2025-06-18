@@ -1,4 +1,5 @@
 using Govor.Core.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers;
@@ -13,8 +14,9 @@ public class InviteController : ControllerBase
     {
         _groupService = groupService;
     }
-
+    
     [HttpGet("{code}")]
+    [Authorize]
     public IActionResult JoinGroup(string code)
     {
         var group = _groupService.GetGroupByInvite(code);

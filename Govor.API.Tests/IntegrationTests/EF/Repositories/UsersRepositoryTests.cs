@@ -53,7 +53,7 @@ public class UsersRepositoryTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(users.Count));
         Assert.That(result.Select(u => u.Id), Is.EquivalentTo(users.Select(u => u.Id)));
-        Assert.That(result.Select(u => u.Name), Is.EquivalentTo(users.Select(u => u.Name)));
+        Assert.That(result.Select(u => u.Username), Is.EquivalentTo(users.Select(u => u.Username)));
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class UsersRepositoryTests
 
         // Assert 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Name, Is.EqualTo(user.Name));
+        Assert.That(result.Username, Is.EqualTo(user.Username));
         Assert.That(result.Id, Is.EqualTo(user.Id));
     }
 
@@ -109,7 +109,7 @@ public class UsersRepositoryTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(users.Count));
         Assert.That(result.Select(r => r.Id), Is.EquivalentTo(users.Select(u => u.Id)));
-        Assert.That(result.Select(u => u.Name), Is.EquivalentTo(users.Select(u => u.Name)));
+        Assert.That(result.Select(u => u.Username), Is.EquivalentTo(users.Select(u => u.Username)));
     }
 
     [Test]
@@ -140,10 +140,10 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
 
         // Act 
-        var result = await userRepository.FindByUsernameAsync(user.Name);
+        var result = await userRepository.FindByUsernameAsync(user.Username);
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Name, Is.EqualTo(user.Name));
+        Assert.That(result.Username, Is.EqualTo(user.Username));
         Assert.That(result.Id, Is.EqualTo(user.Id));
     }
 
@@ -174,11 +174,11 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
 
         // Act 
-        var result = await userRepository.FindByRangeUsernamesAsync(users.Select(u => u.Name));
+        var result = await userRepository.FindByRangeUsernamesAsync(users.Select(u => u.Username));
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Select(u => u.Name), Is.EquivalentTo(users.Select(u => u.Name)));
+        Assert.That(result.Select(u => u.Username), Is.EquivalentTo(users.Select(u => u.Username)));
         Assert.That(result.Select(u => u.Id), Is.EquivalentTo(users.Select(u => u.Id)));
     }
 
@@ -254,7 +254,7 @@ public class UsersRepositoryTests
         // Assert 
 
         Assert.That(res, Is.Not.Null);
-        Assert.That(res.Name, Is.EqualTo(user.Name));
+        Assert.That(res.Username, Is.EqualTo(user.Username));
         Assert.That(res.Id, Is.EqualTo(user.Id));
     }
 
@@ -262,7 +262,7 @@ public class UsersRepositoryTests
     public async Task Given_InvalidUser_When_AddUser_Should_Throw_AdditionUserException()
     {
         var user = _fixture.Create<User>();
-        user.Name = string.Empty;
+        user.Username = string.Empty;
 
         await using var context = new GovorDbContext(_options);
         var userRepository = new UsersRepository(context, _userValidator);
@@ -361,7 +361,7 @@ public class UsersRepositoryTests
         await context.SaveChangesAsync();
         
         // Act 
-        var res = await userRepository.ExistsUsernameAsync(user.Name);
+        var res = await userRepository.ExistsUsernameAsync(user.Username);
         
         // Assert 
         Assert.That(res, Is.True);
@@ -378,7 +378,7 @@ public class UsersRepositoryTests
         
         
         // Act 
-        var res = await userRepository.ExistsUsernameAsync(user.Name);
+        var res = await userRepository.ExistsUsernameAsync(user.Username);
         
         // Assert 
         Assert.That(res, Is.False);

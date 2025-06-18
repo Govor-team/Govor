@@ -16,10 +16,10 @@ public class UserValidator : IObjectValidator<User>
                 throw new ArgumentNullException(nameof(user));
             if(user.Id == Guid.Empty)
                 throw new ArgumentException("User ID cannot be empty", nameof(user.Id));
-            if(user.Name is null 
-               || user.Name.Length < MIN_LENGHT_OF_NAME 
-               || user.Name.Length > MAX_LENGHT_OF_NAME)
-                throw new ArgumentException($"Username cannot be empty or less then {MIN_LENGHT_OF_NAME} chars or more then {MAX_LENGHT_OF_NAME}", nameof(user.Name));
+            if(user.Username is null 
+               || user.Username.Length < MIN_LENGHT_OF_NAME 
+               || user.Username.Length > MAX_LENGHT_OF_NAME)
+                throw new ArgumentException($"Username cannot be empty or less then {MIN_LENGHT_OF_NAME} chars or more then {MAX_LENGHT_OF_NAME}", nameof(user.Username));
             if(user.PasswordHash is null || user.PasswordHash == string.Empty)
                 throw new ArgumentException("Password cannot be empty", nameof(user.PasswordHash));
             if(user.CreatedOn == DateOnly.MinValue)

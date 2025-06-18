@@ -2,6 +2,7 @@ using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Core.Repositories;
+using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,7 +55,7 @@ public class UsersRepository : IUsersRepository
         
         return await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Name == username) 
+            .FirstOrDefaultAsync(x => x.Username == username) 
                ?? throw new NotFoundByKeyException<string>(username, "User with given username does not exist");
     }
     
@@ -65,7 +66,7 @@ public class UsersRepository : IUsersRepository
 
         return await _context.Users
             .AsNoTracking()
-            .Where(x => usernames.Contains(x.Name))
+            .Where(x => usernames.Contains(x.Username))
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<string>>(usernames, "Users with given usernames not found"));
     }
 
@@ -109,7 +110,7 @@ public class UsersRepository : IUsersRepository
             var rowsAffected = await _context.Users
                 .Where(u => u.Id == user.Id)
                 .ExecuteUpdateAsync(u => u
-                    .SetProperty(a => a.Name, user.Name)
+                    .SetProperty(a => a.Username, user.Username)
                     .SetProperty(u => u.IconId, user.IconId)
                     .SetProperty(u => u.Description, user.Description)
                     .SetProperty(u => u.CreatedOn, user.CreatedOn)
@@ -168,7 +169,7 @@ public class UsersRepository : IUsersRepository
 
         return _context.Users.AnyAsync(u =>
             u.Id == user.Id &&
-            u.Name == user.Name &&
+            u.Username == user.Username &&
             u.PasswordHash == user.PasswordHash
         );
     }
@@ -180,7 +181,7 @@ public class UsersRepository : IUsersRepository
 
     public Task<bool> ExistsUsernameAsync(string username)
     {
-        return _context.Users.AnyAsync(u => u.Name == username);
+        return _context.Users.AnyAsync(u => u.Username == username);
     }
 
 }
