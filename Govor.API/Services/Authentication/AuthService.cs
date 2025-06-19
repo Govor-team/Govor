@@ -4,6 +4,7 @@ using Govor.Core.Models;
 using Govor.Core.Repositories;
 using Govor.Core.Repositories.Users;
 using Govor.Core.Services;
+using Govor.Data.Repositories;
 
 namespace Govor.API.Services.Authentication;
 
@@ -39,7 +40,7 @@ public class AuthService : IAccountService
             //Role = role == "Admin" ? "Admin" : "User" // Ограничение ролей
         };
         
-        //await _usersRepository.AddAsync(user);
+        await _usersRepository.AddAsync(user);
         
         return _jwtService.GenerateJwtToken(user);
     }
