@@ -1,3 +1,5 @@
+using System.Text;
+using Govor.API.Hubs;
 using Govor.API.Services;
 using Govor.API.Services.Authentication;
 using Govor.Core.Infrastructure.Extensions;
@@ -11,6 +13,7 @@ using Govor.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,14 +21,53 @@ var configuration = builder.Configuration;
 var services = builder.Services;
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.Configure<JwtOption>(configuration.GetSection(nameof(JwtOption)));
 
 // Add services
 builder.Services.AddSignalR();
 
-builder.Services.AddAuthorization();  
-builder.Services.AddAuthentication("Bearer")  
-    .AddJwtBearer();      
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtOption:SecretKeу"]!))
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/chats"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization(); 
+
+
 
 
 builder.Services.AddControllers();
@@ -66,8 +108,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatsHub>("/api/chats"); 
 
-app.Map("/hello", [Authorize]() => "Hello World!");
-app.Map("/", () => "Not for browser");
+app.Map("/", () => "Not for browsers");
 
 app.Run();

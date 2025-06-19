@@ -25,7 +25,8 @@ public class JwtService : IJwtService
             SecurityAlgorithms.HmacSha256Signature);
 
         var token = new JwtSecurityToken(signingCredentials: singing,
-            expires: DateTime.UtcNow.AddHours(_jwtOption.Hours));
+            expires: DateTime.UtcNow.AddHours(_jwtOption.Hours),
+            claims: claims);
         
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
