@@ -8,6 +8,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
 {
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<ChatGroup> ChatGroups { get; set; }
+    public virtual DbSet<Message> Messages { get; set; }
     public virtual DbSet<GroupMembership> GroupMemberships { get; set; }
     public virtual DbSet<GroupAdmins> GroupAdmins { get; set; }
 }

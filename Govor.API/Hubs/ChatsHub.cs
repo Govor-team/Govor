@@ -42,6 +42,11 @@ public class ChatsHub : Hub
         }
         await base.OnDisconnectedAsync(exception);
     }
+
+    public async Task Edit(string newMessage, Guid messageId)
+    {
+        
+    }
     
     public async Task Send(string message, Guid toUserId)
     {
