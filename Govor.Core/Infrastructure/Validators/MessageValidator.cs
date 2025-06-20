@@ -20,8 +20,8 @@ public class MessageValidator : IObjectValidator<Message>
                 throw new ArgumentException("Encrypted content cannot be empty", nameof(message.EncryptedContent));
             if(message.IsEdited && message.EditedAt == DateTime.MinValue)
                 throw new ArgumentException("Edited at time cannot be empty", nameof(message.EditedAt));
-            if (message.EditedAt == DateTime.MinValue)
-                throw new ArgumentException("Edited at time cannot be empty", nameof(message.EditedAt));
+            if (message.SentAt == DateTime.MinValue)
+                throw new ArgumentException("Sent at time cannot be empty", nameof(message.EditedAt));
         }
         catch (Exception ex)
         {
