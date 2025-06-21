@@ -2,17 +2,15 @@ using System.Text;
 using Govor.API.Hubs;
 using Govor.API.Services;
 using Govor.API.Services.Authentication;
+using Govor.API.Services.Authentication.Interfaces;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
-using Govor.Core.Repositories;
 using Govor.Core.Repositories.Users;
-using Govor.Core.Services;
 using Govor.Data;
 using Govor.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);

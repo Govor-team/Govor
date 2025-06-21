@@ -1,10 +1,10 @@
+using Govor.API.Services.Authentication.Interfaces;
 using Govor.Core;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models;
-using Govor.Core.Repositories;
 using Govor.Core.Repositories.Users;
-using Govor.Core.Services;
-using Govor.Data.Repositories;
+using Govor.API.Services;
+
 
 namespace Govor.API.Services.Authentication;
 

@@ -1,4 +1,4 @@
-using Govor.Core.Services;
+using Govor.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,6 +1,6 @@
 using Govor.Core.Models;
 
-namespace Govor.Core.Services;
+namespace Govor.API.Services;
 
 public interface IGroupService
 {

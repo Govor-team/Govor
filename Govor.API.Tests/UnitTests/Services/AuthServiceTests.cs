@@ -3,7 +3,7 @@ using Govor.API.Services.Authentication;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
-using Govor.Core.Services;
+using Govor.API.Services.Authentication.Interfaces;
 using Moq;
 
 namespace Govor.API.Tests.UnitTests.Services;

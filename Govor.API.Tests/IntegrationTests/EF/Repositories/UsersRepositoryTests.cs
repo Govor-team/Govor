@@ -39,6 +39,10 @@ public class UsersRepositoryTests
         var random = new Random();
         var users = _fixture.CreateMany<User>(random.Next(2, 10)).ToList();
 
+        _options = new DbContextOptionsBuilder<GovorDbContext>()
+            .UseInMemoryDatabase(databaseName: "DbGovor_users_getall")
+            .Options;
+        
         await using var context = new GovorDbContext(_options);
         var userRepository = new UsersRepository(context, _userValidator);
 

@@ -10,6 +10,8 @@ public class Message
     public DateTime SentAt { get; set; }
     public bool IsEdited { get; set; } = false;
     public DateTime? EditedAt { get; set; }
+    public List<MessageReaction> Reactions { get; set; } = new List<MessageReaction>();
+    public List<MediaAttachments> MediaAttachments { get; set; } = new List<MediaAttachments>();
 }
 
 public enum RecipientType

@@ -1,6 +1,6 @@
 using Govor.API.Services.Authentication;
 using Govor.Core.DTOs;
-using Govor.Core.Services;
+using Govor.API.Services.Authentication.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers;
