@@ -53,7 +53,7 @@ public class LocalStorageServiceTests
         // _tempDirectory/uploads/yyyy/MM/url
         var datePath = saveDate.ToString("yyyy/MM");
         var expectedFilePath = Path.Combine(_tempDirectory, "uploads", url);
-        Assert.That(File.Exists(expectedFilePath), Is.True, $"Файл не найден по пути: {expectedFilePath}");
+        Assert.That(File.Exists(expectedFilePath), Is.True);
     }
     
     [Test]
@@ -74,5 +74,66 @@ public class LocalStorageServiceTests
         
         // Act & Assert 
         Assert.ThrowsAsync<ArgumentException>(async () => await _service.SaveAsync(default, name));
+    }
+    
+    [Test]
+    public async Task Given_ValidUrl_When_LoadAsync_Then_Returns_FileStream()
+    {
+        // Arrange
+        var date = DateTime.UtcNow.ToString("yyyy/MM");
+        var corePath = Path.Combine(_tempDirectory, "uploads", date);
+        Directory.CreateDirectory(corePath);
+        
+        var fileName = _fixture.Create<string>() + ".txt";
+        var fileContent = _fixture.Create<string>();
+        var filePath = Path.Combine(corePath, fileName);
+        await File.WriteAllTextAsync(filePath, fileContent);
+
+        // Act
+        var url = Path.Combine(date, fileName);
+        await using var stream = await _service.LoadAsync(url);
+
+        // Assert
+        Assert.That(stream, Is.Not.Null);
+        Assert.That(stream.Length, Is.GreaterThan(0));
+    
+        // Дополнительная проверка: содержимое файла
+        using var reader = new StreamReader(stream);
+        var content = await reader.ReadToEndAsync();
+        Assert.That(content, Is.EqualTo(fileContent));
+    }
+    
+    [Test]
+    public void Given_EmptyUrl_When_LoadAsync_Should_Throw_FileNotFoundException()
+    {
+        // Act & Assert 
+        Assert.ThrowsAsync<FileNotFoundException>(async () => await _service.LoadAsync(_fixture.Create<string>()+".txt"));
+    }
+
+    [Test]
+    public async Task Given_ValidUrl_When_DeleteAsync_Then_FileIsDeleted()
+    {
+        // Arrange
+        var date = DateTime.UtcNow.ToString("yyyy/MM");
+        var corePath = Path.Combine(_tempDirectory, "uploads", date);
+        Directory.CreateDirectory(corePath);
+        
+        var fileName = _fixture.Create<string>() + ".txt";
+        var fileContent = _fixture.Create<string>();
+        var filePath = Path.Combine(corePath, fileName);
+        await File.WriteAllTextAsync(filePath, fileContent);
+        
+        // Act
+        var url = Path.Combine(date, fileName);
+        await _service.RemoveAsync(url);
+        
+        Assert.That(File.Exists(filePath), Is.False);
+    }
+    
+    [Test]
+    public async Task Given_InvalidUrl_When_DeleteAsync_TShould_Not_Throw()
+    {
+        // Act & Assert 
+        Assert.DoesNotThrowAsync(async () => await _service.RemoveAsync(_fixture.Create<string>()+".txt"));
     }
 }
