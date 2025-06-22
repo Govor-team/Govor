@@ -11,7 +11,6 @@ public class MessagesRepository : IMessagesRepository
 {
     private GovorDbContext _context;
     private IObjectValidator<Message> _validator;
-    
     public MessagesRepository(GovorDbContext context, IObjectValidator<Message> validator)
     {
         _context = context;
@@ -44,16 +43,26 @@ public class MessagesRepository : IMessagesRepository
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(senderId, "Messages with given sender id do not exist"));
     }
 
-    public Task<List<Message>> FindByReceiverIdAsync(Guid receiverId)
+    public async Task<List<Message>> FindByReceiverIdAsync(Guid receiverId)
     {
-        throw new NotImplementedException();
+        return await _context.Messages
+            .AsNoTracking()
+            .Include(m => m.ReplyToMessage)
+            .Where(m => m.RecipientId == receiverId)
+            .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(receiverId, "Messages with given recipient id do not exist"));
     }
 
-    public Task<List<Message>> FindBySenderAndReceiverIdAsync(Guid senderId, Guid receiverId, RecipientType recipientType = RecipientType.User)
+    public async Task<List<Message>> FindBySenderAndReceiverIdAsync(Guid senderId, Guid receiverId, RecipientType recipientType = RecipientType.User)
     {
-        throw new NotImplementedException();
+        return await _context.Messages
+            .AsNoTracking()
+            .Include(m => m.ReplyToMessage)
+            .Where(m => m.SenderId == senderId 
+                        && m.RecipientId == receiverId 
+                        && m.RecipientType == recipientType)
+            .ToListOrThrowIfEmpty(new NotFoundException("No messages found in the database"));
     }
-
+    
     public Task<List<Message>> FindBySentAtAsync(DateTime date)
     {
         throw new NotImplementedException();
