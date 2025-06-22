@@ -16,8 +16,8 @@ public class MessageValidator : IObjectValidator<Message>
                 throw new ArgumentException("Sender ID cannot be empty", nameof(message.SenderId));
             if (message.RecipientId == Guid.Empty)
                 throw new ArgumentException("Recipient ID cannot be empty", nameof(message.RecipientId));
-            if(string.IsNullOrWhiteSpace(message.EncryptedContent))
-                throw new ArgumentException("Encrypted content cannot be empty", nameof(message.EncryptedContent));
+            if(string.IsNullOrWhiteSpace(message.EncryptedContent) && (message.MediaAttachments is null || message.MediaAttachments.Count == 0))
+                throw new ArgumentException("Encrypted content cannot be empty when media attachments are empty", nameof(message.EncryptedContent));
             if(message.IsEdited && message.EditedAt == DateTime.MinValue)
                 throw new ArgumentException("Edited at time cannot be empty", nameof(message.EditedAt));
             if (message.SentAt == DateTime.MinValue)

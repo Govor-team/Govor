@@ -12,6 +12,10 @@ public class Message
     public DateTime? EditedAt { get; set; }
     public List<MessageReaction> Reactions { get; set; } = new List<MessageReaction>();
     public List<MediaAttachments> MediaAttachments { get; set; } = new List<MediaAttachments>();
+    public List<MessageView> MessageViews { get; set; } = new List<MessageView>();
+    
+    public Guid? ReplyToMessageId { get; set; }
+    public Message? ReplyToMessage { get; set; } // navigation
 }
 
 public enum RecipientType

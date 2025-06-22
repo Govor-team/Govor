@@ -73,13 +73,25 @@ public class MessageValidatorTests
         Assert.ThrowsAsync<InvalidObjectException<Message>>(async () => _messageValidator.Validate(message));
         Assert.That(_messageValidator.TryValidate(message), Is.False);
     }
-
+    
     [Test]
-    public void Given_EmptyEncryptedMessage_When_Validate_Should_Throw_InvalidObjectException()
+    public void Given_EmptyEncryptedMessageAndNotEmptyMedia_When_Validate_Should_Throw_InvalidObjectException()
     {
         // Arrange
         Message message = _fixture.Create<Message>();
         message.EncryptedContent = string.Empty;
+        
+        Assert.DoesNotThrowAsync(async () => _messageValidator.Validate(message));
+        Assert.That(_messageValidator.TryValidate(message), Is.True);
+    }
+    
+    [Test]
+    public void Given_EmptyEncryptedMessageAndEmptyMedia_When_Validate_Should_Throw_InvalidObjectException()
+    {
+        // Arrange
+        Message message = _fixture.Create<Message>();
+        message.EncryptedContent = string.Empty;
+        message.MediaAttachments = default;
         
         Assert.ThrowsAsync<InvalidObjectException<Message>>(async () => _messageValidator.Validate(message));
         Assert.That(_messageValidator.TryValidate(message), Is.False);

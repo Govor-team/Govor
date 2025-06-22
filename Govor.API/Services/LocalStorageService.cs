@@ -38,7 +38,7 @@ public class LocalStorageService : IStorageService
 
     public async Task<Stream> LoadAsync(string url)
     {
-        var filePath = Path.Combine(_storagePath, url); // url уже включает yyyy/MM
+        var filePath = Path.Combine(_storagePath, url); 
 
         if (!File.Exists(filePath))
             throw new FileNotFoundException("File not found.", filePath);
