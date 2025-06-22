@@ -1,11 +1,15 @@
 using System.Text;
 using Govor.API.Hubs;
 using Govor.API.Services;
+using Govor.API.Services.AdminsStuff;
+using Govor.API.Services.AdminsStuff.Interfaces;
 using Govor.API.Services.Authentication;
 using Govor.API.Services.Authentication.Interfaces;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
+using Govor.Core.Repositories.MediasAttachments;
+using Govor.Core.Repositories.Messages;
 using Govor.Core.Repositories.Users;
 using Govor.Data;
 using Govor.Data.Repositories;
@@ -75,6 +79,11 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAccountService, AuthService>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IObjectValidator<User>, UserValidator>();
+builder.Services.AddScoped<IObjectValidator<Message>, MessageValidator>();
+builder.Services.AddScoped<IObjectValidator<MediaAttachments>, MediaAttachmentsValidator>();
+builder.Services.AddScoped<IMessagesRepository, MessagesRepository>();
+builder.Services.AddScoped<IMediaAttachmentsRepository, MediaAttachmentsRepository>();
+builder.Services.AddScoped<IUsersAdministration, UsersService>();
 
 builder.Services.AddDbContext<GovorDbContext>(
     options =>

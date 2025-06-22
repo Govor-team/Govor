@@ -18,7 +18,7 @@ public class UsersRepository : IUsersRepository
         _validator = validator;
     }
     
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<List<User>> GetAllAsync()
     {
         return await _context.Users
             .AsNoTracking()
