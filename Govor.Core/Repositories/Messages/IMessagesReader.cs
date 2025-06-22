@@ -8,6 +8,6 @@ public interface IMessagesReader
     Task<Message> FindByIdAsync(Guid messageId);
     Task<List<Message>> FindBySenderIdAsync(Guid senderId);
     Task<List<Message>> FindByReceiverIdAsync(Guid receiverId);
-    Task<List<Message>> FindBySenderAndReceiverIdAsync(Guid senderId, Guid receiverId);
+    Task<List<Message>> FindBySenderAndReceiverIdAsync(Guid senderId, Guid receiverId, RecipientType recipientType = RecipientType.User);
     Task<List<Message>> FindBySentAtAsync(DateTime date);
 }

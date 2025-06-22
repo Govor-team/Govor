@@ -16,6 +16,21 @@ public class Message
     
     public Guid? ReplyToMessageId { get; set; }
     public Message? ReplyToMessage { get; set; } // navigation
+    
+    public override bool Equals(object? obj)
+    {
+        if (obj is not Message other) return false;
+
+        return Id == other.Id &&
+               SenderId == other.SenderId &&
+               RecipientId == other.RecipientId &&
+               RecipientType == other.RecipientType &&
+               EncryptedContent == other.EncryptedContent &&
+               SentAt == other.SentAt &&
+               IsEdited == other.IsEdited &&
+               EditedAt == other.EditedAt &&
+               ReplyToMessageId == other.ReplyToMessageId;
+    }
 }
 
 public enum RecipientType

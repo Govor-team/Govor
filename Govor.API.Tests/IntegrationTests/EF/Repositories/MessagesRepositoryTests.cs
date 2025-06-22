@@ -3,6 +3,7 @@ using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Data;
 using Govor.Data.Repositories;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Govor.API.Tests.IntegrationTests.EF.Repositories;
@@ -51,16 +52,42 @@ public class MessagesRepositoryTests
         // Assert 
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count, Is.EqualTo(messages.Count));
-        Assert.That(result.Select(u => u.Id), Is.EquivalentTo(messages.Select(u => u.Id)));
-        Assert.That(result.Select(u => u.SentAt), Is.EquivalentTo(messages.Select(u => u.SentAt)));
-        Assert.That(result.Select(r => r.SenderId), Is.EquivalentTo(messages.Select(u => u.SenderId)));
-        Assert.That(result.Select(r => r.RecipientId), Is.EquivalentTo(messages.Select(u => u.RecipientId)));
-        Assert.That(result.Select(r => r.RecipientType), Is.EquivalentTo(messages.Select(u => u.RecipientType)));
+        Assert.That(result, Is.EquivalentTo(messages));
     }
     
     [Test]
     public void Given_EmptySetDb_When_GetAllMessages_Should_Throw_NotFoundException()
     {
+        using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        // Act & Assert 
+        Assert.ThrowsAsync<NotFoundException>(async () => await messagesRepository.GetAllAsync());
+    }
+    
+    [Test]
+    public async Task Given_ValidMessageId_When_FindMessageById_Then_ReturnMessage()
+    {
+        var messages = _fixture.CreateMany<Message>(10);
+        var id = messages.First().Id;
         
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        context.Messages.AddRange(messages);
+        await context.SaveChangesAsync();
+        
+        var result = await messagesRepository.FindByIdAsync(id);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.EqualTo(messages.First()));
+    }
+    
+    [Test]
+    public async Task Given_InvalidMessageId_When_FindById_Should_Throw_NotFoundByKeyException()
+    {
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        Assert.ThrowsAsync<NotFoundByKeyException<Guid>>(async () => await messagesRepository.FindByIdAsync(_fixture.Create<Guid>()));
     }
 }

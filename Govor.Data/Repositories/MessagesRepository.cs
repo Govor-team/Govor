@@ -22,13 +22,17 @@ public class MessagesRepository : IMessagesRepository
     {
         return await _context.Messages
             .AsNoTracking()
-            .Where(x => true)
-            .ToListOrThrowIfEmpty(new NotFoundException("Messages in Database not exists"));
+            .Include(m => m.ReplyToMessage)
+            .ToListOrThrowIfEmpty(new NotFoundException("No messages found in the database"));
     }
 
-    public Task<Message> FindByIdAsync(Guid messageId)
+    public async Task<Message> FindByIdAsync(Guid messageId)
     {
-        throw new NotImplementedException();
+        return await _context.Messages
+                   .AsNoTracking()
+                   .Include(m => m.ReplyToMessage)
+                   .FirstOrDefaultAsync(m => m.Id == messageId)
+               ?? throw new NotFoundByKeyException<Guid>(messageId, "Message with given id does not exist");
     }
 
     public Task<List<Message>> FindBySenderIdAsync(Guid senderId)
@@ -41,7 +45,7 @@ public class MessagesRepository : IMessagesRepository
         throw new NotImplementedException();
     }
 
-    public Task<List<Message>> FindBySenderAndReceiverIdAsync(Guid senderId, Guid receiverId)
+    public Task<List<Message>> FindBySenderAndReceiverIdAsync(Guid senderId, Guid receiverId, RecipientType recipientType = RecipientType.User)
     {
         throw new NotImplementedException();
     }

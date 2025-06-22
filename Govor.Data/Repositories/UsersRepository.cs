@@ -22,7 +22,6 @@ public class UsersRepository : IUsersRepository
     {
         return await _context.Users
             .AsNoTracking()
-            .Where(x => true)
             .ToListOrThrowIfEmpty(new NotFoundException("Users in Database not exists"));
     }
 
