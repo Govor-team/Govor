@@ -35,28 +35,98 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(messageId, "No media attachments found by given message Id"));
     }
 
-    public Task AddAsync(MediaAttachments mediaAttachments)
+    public async Task<MediaAttachments> FindByIdAsync(Guid id)
     {
-        throw new NotImplementedException();
+        return await _context.MediaAttachments
+            .AsNoTracking()
+            .Include(ma => ma.Message)
+            .FirstOrDefaultAsync(m => m.Id == id)
+            ?? throw new NotFoundByKeyException<Guid>(id, "No media attachments found by given Id");
+    }
+    
+    public async Task AddAsync(MediaAttachments mediaAttachments)
+    {
+        try
+        {
+            _validator.Validate(mediaAttachments);
+
+            _context.MediaAttachments.Add(mediaAttachments);
+            await _context.SaveChangesAsync();
+        }
+        catch (InvalidObjectException<Message> ex)
+        {
+            throw new AdditionException("Attachments with given data invalid", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new AdditionException("Cannot add Attachments", ex);
+        }
     }
 
-    public Task UpdateAsync(MediaAttachments mediaAttachments)
+    public async Task UpdateAsync(MediaAttachments attachments)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _validator.Validate(attachments);
+
+            var rowsAffected = await _context.MediaAttachments
+                .Where(m => m.Id == attachments.Id)
+                .ExecuteUpdateAsync(u => u
+                    .SetProperty(m => m.MessageId, attachments.MessageId)
+                    .SetProperty(m => m.Message, attachments.Message)
+                    .SetProperty(m => m.FilePath, attachments.FilePath)
+                    .SetProperty(m => m.MimeType, attachments.MimeType)
+                    .SetProperty(m => m.EncryptedKey, attachments.EncryptedKey)
+                );
+
+            if (rowsAffected == 0)
+                throw new NotFoundByKeyException<Guid>(attachments.Id);
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new UpdateException($"Not found attachments by given id {attachments.Id}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new UpdateException($"Error when updating the attachments {attachments.Id}", ex);
+        }
     }
 
-    public Task RemoveAsync(Guid Id)
+    public async Task RemoveAsync(Guid Id)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var result = await FindByIdAsync(Id);
+
+            _context.MediaAttachments.Remove(result);
+            await _context.SaveChangesAsync();
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new RemoveException($"Not found attachments by given id {Id}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new RemoveException("Error when removing the attachments", ex);
+        }
     }
 
-    public bool Exists(Guid id)
+    public bool Exist(Guid id)
     {
-        throw new NotImplementedException();
+        return _context.MediaAttachments.Any(e => e.Id == id);
     }
 
-    public bool Exists(MediaAttachments attachments)
+    public bool Exist(MediaAttachments attachments)
     {
-        throw new NotImplementedException();
+        _validator.Validate(attachments);
+        
+        return _context.MediaAttachments.Any(
+            e => e.Id == attachments.Id &&
+            e.EncryptedKey == attachments.EncryptedKey &&
+            e.MimeType == attachments.MimeType &&
+            e.FilePath == attachments.FilePath && 
+            e.MessageId == attachments.MessageId &&
+            e.Type == attachments.Type
+            );
     }
 }

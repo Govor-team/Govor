@@ -292,7 +292,7 @@ public class MessagesRepositoryTests
         var messagesRepository = new MessagesRepository(context, _messageValidator);
     
         // Act 
-        messagesRepository.AddAsync(message);
+        await messagesRepository.AddAsync(message);
         
         // Assert 
         Assert.That(context.Messages.Count, Is.EqualTo(1));
