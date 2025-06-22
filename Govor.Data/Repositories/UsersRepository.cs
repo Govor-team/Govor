@@ -91,11 +91,11 @@ public class UsersRepository : IUsersRepository
         }
         catch (InvalidObjectException<User> ex)
         {
-            throw new AdditionUserException("User with given data invalid", ex);
+            throw new AdditionException("User with given data invalid", ex);
         }
         catch (Exception ex)
         {
-            throw new AdditionUserException("Cannot add user", ex);
+            throw new AdditionException("Cannot add user", ex);
         }
     }
     
@@ -122,11 +122,11 @@ public class UsersRepository : IUsersRepository
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            throw new UserUpdateException($"Not found user by given id {user.Id}", ex);
+            throw new UpdateException($"Not found user by given id {user.Id}", ex);
         }
         catch (Exception ex)
         {
-            throw new UserUpdateException($"Error when updating the user {user.Id}", ex);
+            throw new UpdateException($"Error when updating the user {user.Id}", ex);
         }
     }
 
@@ -139,7 +139,7 @@ public class UsersRepository : IUsersRepository
         }
         catch (InvalidObjectException<User> ex)
         {
-            throw new UserRemoveException("User with given data invalid", ex);
+            throw new RemoveException("User with given data invalid", ex);
         }
     }
 
@@ -154,11 +154,11 @@ public class UsersRepository : IUsersRepository
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            throw new UserRemoveException($"Not found user by given id {userId}", ex);
+            throw new RemoveException($"Not found user by given id {userId}", ex);
         }
         catch (Exception ex)
         {
-            throw new UserRemoveException("Error when removing the user", ex);
+            throw new RemoveException("Error when removing the user", ex);
         }
     }
 
@@ -184,13 +184,3 @@ public class UsersRepository : IUsersRepository
     }
 
 }
-
-public class UserRemoveException(string s, Exception exception)
-    : Exception(s, exception);
-
-public class AdditionUserException(string s, Exception ex) 
-    : Exception(s, ex);
-
-public class UserUpdateException(string s, Exception ex)
-    : Exception(s, ex);
-    

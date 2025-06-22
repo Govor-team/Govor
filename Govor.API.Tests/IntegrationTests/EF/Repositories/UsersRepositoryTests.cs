@@ -272,7 +272,7 @@ public class UsersRepositoryTests
         var userRepository = new UsersRepository(context, _userValidator);
 
         // Act & Assert
-        Assert.ThrowsAsync<AdditionUserException>(async () => await userRepository.AddAsync(user));
+        Assert.ThrowsAsync<AdditionException>(async () => await userRepository.AddAsync(user));
     }
     
     [Test]

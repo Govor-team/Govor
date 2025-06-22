@@ -255,4 +255,143 @@ public class MessagesRepositoryTests
         // Act & Assert 
         Assert.ThrowsAsync<NotFoundException>(async () => await messagesRepository.FindBySenderAndReceiverIdAsync(senderId, receiverId, recipientType));
     }
+    
+    [Test]
+    public async Task Given_ValidDateTime_When_FindByValidDateTimeAsync_Then_ReturnMessages()
+    {
+        // Assert 
+        var messages = _fixture.CreateMany<Message>(10).ToList();
+        var dateTime = _fixture.Create<DateTime>();
+
+        foreach (var message in messages)
+        {
+            message.SentAt = dateTime;
+        }
+        
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        context.Messages.AddRange(messages);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var results = await messagesRepository.FindBySentAtAsync(dateTime);
+        
+        // Assert 
+        Assert.That(results, Is.Not.Null);
+        Assert.That(results, Is.EquivalentTo(messages));
+    }
+
+    [Test]
+    public async Task Given_ValidMessage_When_AddAsync_Then_MessageAdded()
+    {
+        // Arrange
+        var message = _fixture.Create<Message>();
+        
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+    
+        // Act 
+        messagesRepository.AddAsync(message);
+        
+        // Assert 
+        Assert.That(context.Messages.Count, Is.EqualTo(1));
+        Assert.That(context.Messages.First(), Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task Given_InvalidMessage_When_AddAsync_Should_Throw_AdditionException()
+    {
+        // Arrange
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        // Act & Assert 
+        Assert.ThrowsAsync<AdditionException>(async () => await messagesRepository.AddAsync(default));
+    }
+    
+    [Test]
+    public async Task Given_ExistMessage_When_Exist_Then_ReturnTrue()
+    {
+        // Arrange
+        var message = _fixture.Create<Message>();
+        
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        context.Messages.Add(message);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var result = messagesRepository.Exist(message);
+        var result2 = messagesRepository.Exist(message.Id);
+        
+        // Assert 
+        Assert.That(result, Is.True);
+        Assert.That(result2, Is.True);
+    }
+
+    [Test]
+    public async Task Given_NotExistMessage_When_Exist_Then_ReturnFalse()
+    {
+        // Arrange
+        var message = _fixture.Create<Message>();
+        
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        // Act 
+        var result = messagesRepository.Exist(message);
+        var result2 = messagesRepository.Exist(message.Id);
+        
+        // Assert 
+        Assert.That(result, Is.False);
+        Assert.That(result2, Is.False);
+    }
+    
+    [Test]
+    public async Task Given_NotEqualMessage_When_Exist_Then_ReturnFalse()
+    {
+        // Arrange
+        var message = _fixture.Create<Message>();
+        var message2 = _fixture.Create<Message>();
+        message.Id = message2.Id;
+        
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        context.Messages.Add(message);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var result = messagesRepository.Exist(message2);
+        
+        // Assert 
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task Given_InvalidMessage_When_Exist_Should_Throw_InvalidObjectException()
+    {
+        // Arrange 
+        var message = _fixture.Create<Message>();
+        message.SentAt = DateTime.MinValue;
+        message.RecipientId = Guid.Empty;
+        
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        // Act & Assert 
+        Assert.Throws<InvalidObjectException<Message>>(() => messagesRepository.Exist(message));
+    }
+
+    [Test]
+    public void Given_NullMessage_When_Exist_Should_Throw_InvalidObjectException()
+    {
+        using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        // Act & Assert 
+        Assert.Throws<InvalidObjectException<Message>>(() => messagesRepository.Exist(default(Message)));
+    }
 }

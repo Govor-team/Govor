@@ -63,28 +63,108 @@ public class MessagesRepository : IMessagesRepository
             .ToListOrThrowIfEmpty(new NotFoundException("No messages found in the database"));
     }
     
-    public Task<List<Message>> FindBySentAtAsync(DateTime date)
+    public async Task<List<Message>> FindBySentAtAsync(DateTime date)
     {
-        throw new NotImplementedException();
+        return await _context.Messages
+            .AsNoTracking()
+            .Include(m => m.ReplyToMessage)
+            .Where(m => m.SentAt == date)
+            .ToListOrThrowIfEmpty(new NotFoundByKeyException<DateTime>(date, "Messages sent at date do not exist"));
     }
 
-    public void Add(Message message)
+    public async Task AddAsync(Message message)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _validator.Validate(message);
+
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+        }
+        catch (InvalidObjectException<Message> ex)
+        {
+            throw new AdditionException("Message with given data invalid", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new AdditionException("Cannot add message", ex);
+        }
+    }
+    
+    // TODO: Test this block
+    public async Task UpdateAsync(Message message)
+    {
+        try
+        {
+            _validator.Validate(message);
+
+            var rowsAffected = await _context.Messages
+                .Where(m => m.Id == message.Id)
+                .ExecuteUpdateAsync(u => u
+                    .SetProperty(m => m.SenderId, message.SenderId)
+                    .SetProperty(m => m.RecipientId, message.RecipientId)
+                    .SetProperty(m => m.SentAt, message.SentAt)
+                    .SetProperty(m => m.RecipientType, message.RecipientType)
+                    .SetProperty(m => m.EncryptedContent, message.EncryptedContent)
+                    .SetProperty(m => m.EditedAt, message.EditedAt)
+                    .SetProperty(m => m.IsEdited, message.IsEdited)
+                    .SetProperty(m => m.Reactions, message.Reactions)
+                    .SetProperty(m => m.ReplyToMessageId, message.ReplyToMessageId)
+                    .SetProperty(m => m.MessageViews, message.MessageViews)
+                    .SetProperty(m => m.MediaAttachments, message.MediaAttachments)
+                   
+                );
+
+            if (rowsAffected == 0)
+                throw new NotFoundByKeyException<Guid>(message.Id);
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new UpdateException($"Not found message by given id {message.Id}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new UpdateException($"Error when updating the message {message.Id}", ex);
+        }
     }
 
-    public void Update(Message message)
+    public async Task RemoveAsync(Guid messageId)
     {
-        throw new NotImplementedException();
-    }
+        try
+        {
+            var result = await FindByIdAsync(messageId);
 
-    public void Delete(Guid messageId)
-    {
-        throw new NotImplementedException();
+            _context.Messages.Remove(result);
+            await _context.SaveChangesAsync();
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new RemoveException($"Not found message by given id {messageId}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new RemoveException("Error when removing the message", ex);
+        }
     }
 
     public bool Exist(Message message)
     {
-        throw new NotImplementedException();
+        _validator.Validate(message);
+        
+        return _context.Messages.Any(
+            m => m.Id == message.Id &&
+            m.SenderId == message.SenderId && 
+            m.RecipientId == message.RecipientId &&
+            m.EncryptedContent == message.EncryptedContent &&
+            m.EditedAt == message.EditedAt &&
+            m.IsEdited == message.IsEdited &&
+            m.SentAt == message.SentAt && 
+            m.ReplyToMessageId == message.ReplyToMessageId
+        );
+    }
+
+    public bool Exist(Guid messageId)
+    {
+        return _context.Messages.Any(m => m.Id == messageId);
     }
 }
