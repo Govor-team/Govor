@@ -26,9 +26,13 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
             .ToListOrThrowIfEmpty(new NotFoundException("No media attachments found."));
     }
 
-    public Task<List<MediaAttachments>> GetAllByMessageId(Guid messageId)
+    public async Task<List<MediaAttachments>> GetAllByMessageId(Guid messageId)
     {
-        throw new NotImplementedException();
+        return await _context.MediaAttachments
+            .AsNoTracking()
+            .Include(ma => ma.Message)
+            .Where(m => m.MessageId == messageId)
+            .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(messageId, "No media attachments found by given message Id"));
     }
 
     public Task AddAsync(MediaAttachments mediaAttachments)

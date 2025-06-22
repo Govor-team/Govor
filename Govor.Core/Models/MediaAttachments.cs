@@ -11,6 +11,18 @@ public class MediaAttachments
 
     public string? EncryptedKey { get; set; } 
     public Message Message { get; set; } = null!;
+    
+    public override bool Equals(object? obj)
+    {
+        if (obj is not MediaAttachments other) return false;
+
+        return Id == other.Id &&
+               MessageId == other.MessageId &&
+               EncryptedKey == other.EncryptedKey &&
+               Type == other.Type && 
+               FilePath == other.FilePath &&
+               MimeType == other.MimeType;
+    }
 }
 
 public enum MediaType
