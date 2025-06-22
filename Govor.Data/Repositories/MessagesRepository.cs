@@ -35,9 +35,13 @@ public class MessagesRepository : IMessagesRepository
                ?? throw new NotFoundByKeyException<Guid>(messageId, "Message with given id does not exist");
     }
 
-    public Task<List<Message>> FindBySenderIdAsync(Guid senderId)
+    public async Task<List<Message>> FindBySenderIdAsync(Guid senderId)
     {
-        throw new NotImplementedException();
+        return await _context.Messages
+            .AsNoTracking()
+            .Include(m => m.ReplyToMessage)
+            .Where(m => m.SenderId == senderId)
+            .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(senderId, "Messages with given sender id do not exist"));
     }
 
     public Task<List<Message>> FindByReceiverIdAsync(Guid receiverId)

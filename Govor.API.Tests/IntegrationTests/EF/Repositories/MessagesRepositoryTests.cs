@@ -58,6 +58,7 @@ public class MessagesRepositoryTests
     [Test]
     public void Given_EmptySetDb_When_GetAllMessages_Should_Throw_NotFoundException()
     {
+        // Arrange 
         using var context = new GovorDbContext(_options);
         var messagesRepository = new MessagesRepository(context, _messageValidator);
         // Act & Assert 
@@ -67,6 +68,7 @@ public class MessagesRepositoryTests
     [Test]
     public async Task Given_ValidMessageId_When_FindMessageById_Then_ReturnMessage()
     {
+        // Arrange 
         var messages = _fixture.CreateMany<Message>(10);
         var id = messages.First().Id;
         
@@ -76,8 +78,10 @@ public class MessagesRepositoryTests
         context.Messages.AddRange(messages);
         await context.SaveChangesAsync();
         
+        // Act
         var result = await messagesRepository.FindByIdAsync(id);
         
+        // Assert 
         Assert.That(result, Is.Not.Null);
         Assert.That(result, Is.EqualTo(messages.First()));
     }
@@ -85,9 +89,54 @@ public class MessagesRepositoryTests
     [Test]
     public async Task Given_InvalidMessageId_When_FindById_Should_Throw_NotFoundByKeyException()
     {
+        // Arrange 
         await using var context = new GovorDbContext(_options);
         var messagesRepository = new MessagesRepository(context, _messageValidator);
         
+        // Act & Assert 
         Assert.ThrowsAsync<NotFoundByKeyException<Guid>>(async () => await messagesRepository.FindByIdAsync(_fixture.Create<Guid>()));
+    }
+
+    [Test]
+    public async Task Given_ValidSenderId_When_FindBySenderIdAsync_Then_ReturnMessages()
+    {
+        // Arrange 
+        var messages = _fixture.CreateMany<Message>(10).ToList();
+        var senderId =_fixture.Create<Guid>();
+        
+        foreach (var message in messages)
+        {
+            message.SenderId = senderId;
+        }
+        
+        await using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        context.Messages.AddRange(messages);
+        await context.SaveChangesAsync();
+        
+        // Act
+        var results = await messagesRepository.FindBySenderIdAsync(senderId);
+        
+        // Assert 
+        Assert.That(results, Is.Not.Null);
+        Assert.That(results, Is.EquivalentTo(messages));
+    }
+    
+    [Test]
+    public void Given_InvalidSenderId_When_FindBySenderId_Should_Throw_NotFoundByKeyException()
+    {  
+        // Arrange 
+        using var context = new GovorDbContext(_options);
+        var messagesRepository = new MessagesRepository(context, _messageValidator);
+        
+        // Act & Assert 
+        Assert.ThrowsAsync<NotFoundByKeyException<Guid>>(async () => await messagesRepository.FindBySenderIdAsync(_fixture.Create<Guid>()));
+    }
+    
+    [Test]
+    public async Task Given_ValidReceiverId_When_FindByReceiverIdAsync_Then_ReturnMessages()
+    {
+        
     }
 }
