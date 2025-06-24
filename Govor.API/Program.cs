@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Govor.API.Extensions;
 using Govor.API.Hubs;
 using Govor.API.Services;
 using Govor.API.Services.AdminsStuff;
@@ -75,25 +76,12 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IAccountService, AuthService>();
-builder.Services.AddScoped<IUsersRepository, UsersRepository>();
-builder.Services.AddScoped<IObjectValidator<User>, UserValidator>();
-builder.Services.AddScoped<IObjectValidator<Message>, MessageValidator>();
-builder.Services.AddScoped<IObjectValidator<MediaAttachments>, MediaAttachmentsValidator>();
-builder.Services.AddScoped<IMessagesRepository, MessagesRepository>();
-builder.Services.AddScoped<IMediaAttachmentsRepository, MediaAttachmentsRepository>();
-builder.Services.AddScoped<IUsersAdministration, UsersService>();
-builder.Services.AddScoped<IInvitesRepository, InvitesRepository>();
-builder.Services.AddScoped<IAdminsRepository, AdminsRepository>();
+// Init DI
+builder.Services.AddServices();
+builder.Services.AddRepositories();
+builder.Services.AddValidators();
 
-builder.Services.AddDbContext<GovorDbContext>(
-    options =>
-    {
-        options.UseNpgsql(builder.Configuration.GetConnectionString(nameof(GovorDbContext)));
-    }
-);
+builder.Services.AddGovorDbContext(configuration); // GovorDbContext init
 
 builder.Services.AddEndpointsApiExplorer();
 
