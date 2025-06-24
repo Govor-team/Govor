@@ -13,21 +13,20 @@ namespace Govor.API.Services.Authentication;
 public class JwtService : IJwtService
 {
     private JwtOption _jwtOption;
-    private IInvitesRepository _invitesRepository;
+    private IInvitesService _invitesService;
     
-    public JwtService(IOptions<JwtOption> options)
+    public JwtService(IOptions<JwtOption> options, IInvitesService invitesService)
     {
         _jwtOption = options.Value;
+        _invitesService = invitesService;
     }
     
     public string GenerateJwtToken(User user)
     {
-        var invite = _invitesRepository.FindByIdAsync(user.InviteId).Result;
-        
         var claims = new[]
         {
             new Claim("userID", user.Id.ToString()),
-            new Claim(ClaimTypes.Role, invite.IsAdmin ? "Admin" : "User", ClaimValueTypes.String)
+            new Claim(ClaimTypes.Role, _invitesService.GetRole(user).Result, ClaimValueTypes.String)
         };
         
         var singing = new SigningCredentials(

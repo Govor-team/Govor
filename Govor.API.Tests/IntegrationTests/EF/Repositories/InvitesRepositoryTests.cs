@@ -204,12 +204,14 @@ public class InvitesRepositoryTests
         
         // Act 
         var result = repository.Exist(Guid.NewGuid());
+        var result2 = repository.Exist(_fixture.Create<string>());
         
         Assert.That(result, Is.False);
+        Assert.That(result2, Is.False);
     }
     
     [Test]
-    public async Task Given_ExistInvitesCode_When_Exist_Then_Returns_False()
+    public async Task Given_ExistInvites_When_Exist_Then_Returns_False()
     {
         // Arrange
         var invitation = _fixture.Create<Invitation>();
@@ -226,10 +228,13 @@ public class InvitesRepositoryTests
         // Act 
         var result = repository.Exist(invitation.Id);
         var result2 = repository.Exist(invitation);
+        var result3 = repository.Exist(invitation.Code); 
         
         Assert.That(result, Is.True);
         Assert.That(result2, Is.True);
+        Assert.That(result3, Is.True);
     }
+    
     
     [Test]
     public async Task Given_InvalidInvites_When_Exist_Then_Returns_False()

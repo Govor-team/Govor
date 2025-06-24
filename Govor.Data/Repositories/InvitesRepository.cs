@@ -59,6 +59,9 @@ public class InvitesRepository : IInvitesRepository
         {
             _validator.Validate(invitation);
 
+            if(Exist(invitation.Code))
+                throw new AdditionException("Invitation with given code already exists");
+                
             _context.Invitations.Add(invitation);
             await _context.SaveChangesAsync();
         }
@@ -136,6 +139,11 @@ public class InvitesRepository : IInvitesRepository
         );
     }
 
+    public bool Exist(string code)
+    {
+        return _context.Invitations.Any(i => i.Code == code);
+    }
+    
     public bool Exist(Guid guid)
     {
         return _context.Invitations.Any(i => i.Id == guid);

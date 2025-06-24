@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Govor.Data.Migrations
 {
     [DbContext(typeof(GovorDbContext))]
-    [Migration("20250622044435_MessagesInit")]
-    partial class MessagesInit
+    [Migration("20250624133431_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,16 @@ namespace Govor.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Govor.Core.Models.Admin", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Admins");
+                });
 
             modelBuilder.Entity("Govor.Core.Models.ChatGroup", b =>
                 {
@@ -90,6 +100,37 @@ namespace Govor.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GroupMemberships");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.Invitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxParticipants")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Invitations");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.MediaAttachments", b =>
@@ -231,6 +272,9 @@ namespace Govor.Data.Migrations
                     b.Property<Guid>("IconId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("InviteId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
@@ -244,7 +288,20 @@ namespace Govor.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("InviteId");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.Admin", b =>
+                {
+                    b.HasOne("Govor.Core.Models.User", "User")
+                        .WithOne()
+                        .HasForeignKey("Govor.Core.Models.Admin", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.MediaAttachments", b =>
@@ -294,6 +351,22 @@ namespace Govor.Data.Migrations
                         .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.User", b =>
+                {
+                    b.HasOne("Govor.Core.Models.Invitation", "Invite")
+                        .WithMany("Users")
+                        .HasForeignKey("InviteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invite");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.Invitation", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.Message", b =>

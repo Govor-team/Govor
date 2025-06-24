@@ -25,6 +25,8 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAccountService, AuthService>();
         services.AddScoped<IUsersAdministration, UsersService>();
+        services.AddScoped<IInvitesService, InvitesService>();
+        services.AddScoped<IInvitationGenerator, InvitationGenerator>();
     }
 
     public static void AddRepositories(this IServiceCollection services)

@@ -15,10 +15,10 @@ public class InvitationValidator : IObjectValidator<Invitation>
                 throw new ArgumentException("Id cannot be empty", nameof(inv.Id));
             if(inv.DateCreated == DateTime.MinValue)
                 throw new ArgumentException("DateCreated cannot be empty", nameof(inv.DateCreated));
-            if(inv.EndDate < inv.DateCreated)
-                throw new ArgumentException("EndDate cannot be less than StartDate", nameof(inv.EndDate));
-            if(inv.MaxParticipants <= 0)
-                throw new ArgumentException("MaxParticipants cannot be less than 0", nameof(inv.MaxParticipants));
+            if(inv.EndDate < inv.DateCreated && inv.IsActive)
+                throw new ArgumentException("EndDate cannot be less than StartDate when is active", nameof(inv.EndDate));
+            if((inv.MaxParticipants <= 0 || inv.MaxParticipants <= inv.Users.Count) && inv.IsActive)
+                throw new ArgumentException("MaxParticipants cannot be less than 0 or users cannot be more then MaxParticipants when is active", nameof(inv.MaxParticipants));
             if(inv.Code == string.Empty || inv.Code.Length < MIN_INVITATION_LENGTH)
                 throw new ArgumentException($"Code cannot be empty or less then {MIN_INVITATION_LENGTH}", nameof(inv.Code));
         }

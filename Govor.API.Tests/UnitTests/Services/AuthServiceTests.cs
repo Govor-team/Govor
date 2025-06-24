@@ -18,7 +18,6 @@ public class AuthServiceTests
     private Mock<IJwtService> _jwtServiceMock;
     private Mock<IUsersRepository> _usersRepositoryMock;
     private Mock<IAdminsRepository> _adminsRepositoryMock;
-    private Mock<IInvitesRepository> _invitesRepositoryMock;
     
     private IAccountService _accountService;
     
@@ -27,15 +26,22 @@ public class AuthServiceTests
     {
         _fixture = new Fixture();
         
+        _fixture.Behaviors
+            .OfType<ThrowingRecursionBehavior>()
+            .ToList()
+            .ForEach(b => _fixture.Behaviors.Remove(b));
+
+        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+        
         _usersRepositoryMock = new Mock<IUsersRepository>();
         _passwordHasherMock = new Mock<IPasswordHasher>();
         _jwtServiceMock = new Mock<IJwtService>();
+        _adminsRepositoryMock = new Mock<IAdminsRepository>();
         
         _accountService = new AuthService(
             _usersRepositoryMock.Object,
             _jwtServiceMock.Object,
             _passwordHasherMock.Object,
-            _invitesRepositoryMock.Object,
             _adminsRepositoryMock.Object
             );
     }
@@ -48,7 +54,7 @@ public class AuthServiceTests
         
         // Act & Assert 
         Assert.ThrowsAsync<UserAlreadyExistException>(async () => await _accountService.RegistrationAsync(
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>()));
+            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<Invitation>()));
     }
 
     [Test]
@@ -59,7 +65,7 @@ public class AuthServiceTests
         
         // Act & Assert 
         Assert.DoesNotThrowAsync(async () => await _accountService.RegistrationAsync(
-            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>()));
+            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<Invitation>()));
     }
     
     [Test]

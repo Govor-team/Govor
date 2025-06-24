@@ -2,7 +2,7 @@ using Govor.API.Services.AdminsStuff.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Govor.API.Controllers;
+namespace Govor.API.Controllers.AdminStuff;
 
 
 [ApiController] 
@@ -12,13 +12,13 @@ public class UsersController : Controller
 {
     private readonly ILogger<UsersController> _logger;
     private readonly IUsersAdministration _users;
-
-    public UsersController(ILogger<UsersController> logger, IUsersAdministration users)
+    
+    public UsersController(ILogger<UsersController> logger, IUsersAdministration users, IInvitationGenerator invitationGenerator)
     {
         _logger = logger;
         _users = users;
     }
-    
+   
     [HttpGet]
     public async Task<IActionResult> AllUsers()
     {

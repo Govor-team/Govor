@@ -5,5 +5,6 @@ namespace Govor.Core.Repositories.Invaites;
 public interface IInvitesExist
 {
     bool Exist(Invitation invitation);
+    bool Exist(string code);
     bool Exist(Guid guid);
 }

@@ -67,23 +67,24 @@ public class InvitationValidatorTests
     }
     
     [Test]
-    public void Given_InvalidEndDate_When_Exist_Then_Returns_False()
+    public void Given_InvalidEndDatesAndIsActive_When_Exist_Then_Returns_False()
     {
         // Arrange 
         var invitation = _fixture.Create<Invitation>();
         invitation.EndDate = invitation.DateCreated.AddDays(-1);
-        
+        invitation.IsActive = true;
         // Act & Assert 
         Assert.Throws<InvalidObjectException<Invitation>>( () => _messageValidator.Validate(invitation));
         Assert.That(_messageValidator.TryValidate(invitation), Is.False);
     }
     
     [Test]
-    public void Given_InvalidMaxParticipants_When_Exist_Then_Returns_False()
+    public void Given_InvalidMaxParticipantsAndIsActive_When_Exist_Then_Returns_False()
     {
         // Arrange 
         var invitation = _fixture.Create<Invitation>();
         invitation.MaxParticipants = new Random().Next(-5, 0);
+        invitation.IsActive = true;
         
         // Act & Assert 
         Assert.Throws<InvalidObjectException<Invitation>>( () => _messageValidator.Validate(invitation));
