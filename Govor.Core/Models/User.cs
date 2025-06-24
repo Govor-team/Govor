@@ -11,4 +11,6 @@ public class User
     public Guid IconId {get; set;} 
     public DateOnly CreatedOn {get; set;}
     public DateTime WasOnline {get; set;}
+    public Guid InviteId {get; set;}
+    public Invitation? Invite { get; set; }
 }

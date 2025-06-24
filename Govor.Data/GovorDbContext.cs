@@ -8,6 +8,9 @@ namespace Govor.Data;
 public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContext(options)
 {
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<Admin> Admins { get; set; }
+    
+    public virtual DbSet<Invitation> Invitations { get; set; }
     
     public virtual DbSet<Message> Messages { get; set; }
     public virtual DbSet<MessageView> MessageViews { get; set; }
@@ -20,6 +23,9 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new InvitationConfiguration());
+        modelBuilder.ApplyConfiguration(new AdminConfiguration());
         modelBuilder.ApplyConfiguration(new MessagesConfiguration());
         modelBuilder.ApplyConfiguration(new MessageReactionConfiguration());
         modelBuilder.ApplyConfiguration(new MediaAttachmentsConfiguration());

@@ -3,7 +3,7 @@ using Govor.Core.Infrastructure.Validators;
 
 namespace Govor.Core.DTOs;
 
-public record UserDto
+public record RegistrationDto
 {
     [Required]
     [StringLength(UserValidator.MAX_LENGHT_OF_NAME,
@@ -13,4 +13,6 @@ public record UserDto
     [Required]
     [MinLength(8)]
     public string Password { get; init; }
+    [MinLength(8)]
+    public string InviteLink { get; init; }
 }

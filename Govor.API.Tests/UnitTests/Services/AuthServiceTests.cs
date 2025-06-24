@@ -4,6 +4,8 @@ using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
 using Govor.API.Services.Authentication.Interfaces;
+using Govor.Core.Repositories.Admins;
+using Govor.Core.Repositories.Invaites;
 using Moq;
 
 namespace Govor.API.Tests.UnitTests.Services;
@@ -15,6 +17,9 @@ public class AuthServiceTests
     private Mock<IPasswordHasher> _passwordHasherMock;
     private Mock<IJwtService> _jwtServiceMock;
     private Mock<IUsersRepository> _usersRepositoryMock;
+    private Mock<IAdminsRepository> _adminsRepositoryMock;
+    private Mock<IInvitesRepository> _invitesRepositoryMock;
+    
     private IAccountService _accountService;
     
     [SetUp]
@@ -29,7 +34,9 @@ public class AuthServiceTests
         _accountService = new AuthService(
             _usersRepositoryMock.Object,
             _jwtServiceMock.Object,
-            _passwordHasherMock.Object
+            _passwordHasherMock.Object,
+            _invitesRepositoryMock.Object,
+            _adminsRepositoryMock.Object
             );
     }
     
@@ -41,7 +48,7 @@ public class AuthServiceTests
         
         // Act & Assert 
         Assert.ThrowsAsync<UserAlreadyExistException>(async () => await _accountService.RegistrationAsync(
-            _fixture.Create<string>(), _fixture.Create<string>()));
+            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>()));
     }
 
     [Test]
@@ -52,7 +59,7 @@ public class AuthServiceTests
         
         // Act & Assert 
         Assert.DoesNotThrowAsync(async () => await _accountService.RegistrationAsync(
-            _fixture.Create<string>(), _fixture.Create<string>()));
+            _fixture.Create<string>(), _fixture.Create<string>(), _fixture.Create<string>()));
     }
     
     [Test]

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Govor.API.Hubs;
 using Govor.API.Services;
@@ -8,6 +9,8 @@ using Govor.API.Services.Authentication.Interfaces;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
+using Govor.Core.Repositories.Admins;
+using Govor.Core.Repositories.Invaites;
 using Govor.Core.Repositories.MediasAttachments;
 using Govor.Core.Repositories.Messages;
 using Govor.Core.Repositories.Users;
@@ -16,6 +19,7 @@ using Govor.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,9 +73,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(); 
 
-
-
-
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -84,6 +85,8 @@ builder.Services.AddScoped<IObjectValidator<MediaAttachments>, MediaAttachmentsV
 builder.Services.AddScoped<IMessagesRepository, MessagesRepository>();
 builder.Services.AddScoped<IMediaAttachmentsRepository, MediaAttachmentsRepository>();
 builder.Services.AddScoped<IUsersAdministration, UsersService>();
+builder.Services.AddScoped<IInvitesRepository, InvitesRepository>();
+builder.Services.AddScoped<IAdminsRepository, AdminsRepository>();
 
 builder.Services.AddDbContext<GovorDbContext>(
     options =>
@@ -93,7 +96,32 @@ builder.Services.AddDbContext<GovorDbContext>(
 );
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Govor API", Version = "v1" });
+    
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer"
+    });
+    
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 //builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -102,10 +130,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
 
 app.UseHttpsRedirection();
 
@@ -116,6 +145,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ChatsHub>("/api/chats"); 
+
+app.MapSwagger().RequireAuthorization();
 
 app.Map("/", () => "Not for browsers");
 

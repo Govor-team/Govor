@@ -20,7 +20,7 @@ public class AuthController : Controller
     
     [HttpPost("register")]// api/auth/register
     [RequireHttps] 
-    public async Task<IActionResult> Register([FromBody] UserDto userDto)
+    public async Task<IActionResult> Register([FromBody] RegistrationDto registrationDto)
     {
         try
         {
@@ -29,25 +29,25 @@ public class AuthController : Controller
                 return BadRequest(ModelState);
             }
 
-            var token = await _accountService.RegistrationAsync(userDto.Name, userDto.Password);
-            _logger.LogInformation($"Register request for {userDto.Name}");
+            var token = await _accountService.RegistrationAsync(registrationDto.Name, registrationDto.Password, registrationDto.InviteLink);
+            _logger.LogInformation($"Register request for {registrationDto.Name}");
             return Ok(new { token });
         }
         catch (UserAlreadyExistException ex)
         {
-            _logger.LogWarning(ex, $"Registration failed for user {userDto.Name}");
+            _logger.LogWarning(ex, $"Registration failed for user {registrationDto.Name}");
             return BadRequest("Registration failed: user already exists.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during registration for user {Name}", userDto.Name);
+            _logger.LogError(ex, "Unexpected error during registration for user {Name}", registrationDto.Name);
             return StatusCode(500, "An unexpected error occurred. Please try again later.");
         }
     }
     
     [HttpPost("login")]// api/auth/login
     [RequireHttps] 
-    public async Task<IActionResult> Login([FromBody] UserDto userDto)
+    public async Task<IActionResult> Login([FromBody] LoginDto userDto)
     {
         try
         {

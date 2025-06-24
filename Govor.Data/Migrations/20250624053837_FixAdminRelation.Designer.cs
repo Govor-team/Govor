@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Govor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Govor.Data.Migrations
 {
     [DbContext(typeof(GovorDbContext))]
-    partial class GovorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250624053837_FixAdminRelation")]
+    partial class FixAdminRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,29 +100,6 @@ namespace Govor.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GroupMemberships");
-                });
-
-            modelBuilder.Entity("Govor.Core.Models.Invitation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsAdmin")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("MaxParticipants")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Invitations");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.MediaAttachments", b =>
@@ -261,9 +241,6 @@ namespace Govor.Data.Migrations
                     b.Property<Guid>("IconId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("InviteId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
@@ -276,8 +253,6 @@ namespace Govor.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("InviteId");
 
                     b.ToTable("Users");
                 });
@@ -340,22 +315,6 @@ namespace Govor.Data.Migrations
                         .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Govor.Core.Models.User", b =>
-                {
-                    b.HasOne("Govor.Core.Models.Invitation", "Invite")
-                        .WithMany("Users")
-                        .HasForeignKey("InviteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Invite");
-                });
-
-            modelBuilder.Entity("Govor.Core.Models.Invitation", b =>
-                {
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.Message", b =>
