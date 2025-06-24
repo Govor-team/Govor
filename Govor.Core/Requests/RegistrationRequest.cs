@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 
-namespace Govor.Core.DTOs;
+namespace Govor.Core.Requests;
 
-public record RegistrationDto
+public record RegistrationRequest
 {
     [Required]
     [StringLength(UserValidator.MAX_LENGHT_OF_NAME,

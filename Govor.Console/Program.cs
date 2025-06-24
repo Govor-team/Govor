@@ -74,7 +74,7 @@ class Program
     {
         try
         {
-            RegistrationDto loginData = new RegistrationDto()
+            RegistrationRequest loginData = new RegistrationRequest()
             {
                 Name = username,
                 Password = password

@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using Govor.Core.Infrastructure.Validators;
 
-namespace Govor.Core.DTOs;
+namespace Govor.Core.Requests;
 
-public class LoginDto
+public class LoginRequest
 {
     [Required]
     [StringLength(UserValidator.MAX_LENGHT_OF_NAME,

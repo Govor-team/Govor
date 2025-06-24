@@ -3,11 +3,14 @@ using Govor.API.Services.AdminsStuff.Interfaces;
 using Govor.Core.DTOs;
 using Govor.Core.Repositories.Invaites;
 using Govor.Core.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.AdminStuff;
 
 [Route("api/[controller]")]
+[ApiController]
+[Authorize]
 public class InviteUserController : Controller
 {
     private readonly IInvitesRepository _repository;
