@@ -32,6 +32,7 @@ public class UsersRepository : IUsersRepository
         
         return await _context.Users
             .AsNoTracking()
+            .Include(u => u.Invite)
             .FirstOrDefaultAsync(x => x.Id == id)
                ?? throw new NotFoundByKeyException<Guid>(id, "User with given id does not exist");
     }
@@ -44,6 +45,7 @@ public class UsersRepository : IUsersRepository
         return await _context.Users
             .AsNoTracking()
             .Where(x => ids.Contains(x.Id))
+            .Include(u => u.Invite)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<Guid>>(ids,"Users with given ids not found"));
     }
     
@@ -54,7 +56,8 @@ public class UsersRepository : IUsersRepository
         
         return await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Username == username) 
+            .Include(u => u.Invite)
+            .FirstOrDefaultAsync(x => x.Username == username)
                ?? throw new NotFoundByKeyException<string>(username, "User with given username does not exist");
     }
     
@@ -66,6 +69,7 @@ public class UsersRepository : IUsersRepository
         return await _context.Users
             .AsNoTracking()
             .Where(x => usernames.Contains(x.Username))
+            .Include(u => u.Invite)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<string>>(usernames, "Users with given usernames not found"));
     }
 
@@ -77,6 +81,7 @@ public class UsersRepository : IUsersRepository
         return await _context.Users
             .AsNoTracking()
             .Where(u => createdDate == u.CreatedOn)
+            .Include(u => u.Invite)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<DateOnly>(createdDate, "Users with given created date do not exist"));
     }
     

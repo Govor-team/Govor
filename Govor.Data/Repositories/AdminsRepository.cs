@@ -1,4 +1,5 @@
 using Govor.Core.Infrastructure.Extensions;
+using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Admins;
 using Govor.Data.Repositories.Exceptions;
@@ -6,10 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Govor.Data.Repositories;
 
-public class AdminsRepository(GovorDbContext context) : IAdminsRepository
+public class AdminsRepository(GovorDbContext context, IObjectValidator<Admin> validator) : IAdminsRepository
 {
     private GovorDbContext _context = context;
-
+    private IObjectValidator<Admin> _validator = validator;
     public async Task<List<Admin>> GetAllAsync()
     {
         return await _context.Admins
@@ -18,33 +19,89 @@ public class AdminsRepository(GovorDbContext context) : IAdminsRepository
             .ToListOrThrowIfEmpty(new NotFoundException("Database is empty"));
     }
 
-    public Task<Admin> GetByIdAsync(Guid id)
+    public async Task<Admin> GetByIdAsync(Guid id)
     {
-        throw new NotImplementedException();
+        return await _context.Admins
+            .AsNoTracking()
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(u => u.UserId == id)
+            ?? throw new NotFoundByKeyException<Guid>(id, "User with given id does not exist");
     }
 
-    public Task AddAsync(Admin admin)
+    public async Task AddAsync(Admin admin)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _validator.Validate(admin);
+
+            _context.Admins.Add(admin);
+            await _context.SaveChangesAsync();
+        }
+        catch (InvalidObjectException<Admin> ex)
+        {
+            throw new AdditionException("Admin with given data invalid", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new AdditionException("Cannot add admin", ex);
+        }
     }
 
-    public Task UpdateAsync(Admin admin)
+    public async Task UpdateAsync(Admin admin)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _validator.Validate(admin);
+
+            var rowsAffected = await _context.Admins
+                .Where(a => a.UserId == admin.UserId)
+                .ExecuteUpdateAsync(u => u
+                    .SetProperty(a => a.UserId, admin.UserId)
+                );
+
+            if (rowsAffected == 0)
+                throw new NotFoundByKeyException<Guid>(admin.UserId);
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new UpdateException($"Not found admin by given id {admin.UserId}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new UpdateException($"Error when updating the admin {admin.UserId}", ex);
+        }
     }
 
-    public Task DeleteAsync(Guid admin)
+    public async Task DeleteAsync(Guid admin)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var result = await GetByIdAsync(admin);
+
+            _context.Admins.Remove(result);
+            await _context.SaveChangesAsync();
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new RemoveException($"Not found admin by given id {admin}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new RemoveException("Error when removing the admin", ex);
+        }
     }
 
-    public bool Exist(Guid guid)
+    public bool Exist(Guid id)
     {
-        throw new NotImplementedException();
+        return _context.Users.Any(u => u.Id == id);
     }
 
     public bool Exist(Admin admin)
     {
-        throw new NotImplementedException();
+        _validator.Validate(admin);
+        
+        return _context.Admins.Any(u =>
+            u.UserId == admin.UserId
+        );
     }
 }
