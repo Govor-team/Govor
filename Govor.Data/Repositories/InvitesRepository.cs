@@ -1,3 +1,4 @@
+using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Invaites;
 
@@ -5,7 +6,16 @@ namespace Govor.Data.Repositories;
 
 public class InvitesRepository : IInvitesRepository
 {
-    public Task<List<Invitation>> GetAllAsync()
+    private GovorDbContext _context;
+    private IObjectValidator<Invitation> _validator;
+
+    public InvitesRepository(GovorDbContext context, IObjectValidator<Invitation> validator)
+    {
+        _context = context;
+        _validator = validator;
+    }
+    
+    public async Task<List<Invitation>> GetAllAsync()
     {
         throw new NotImplementedException();
     }
