@@ -38,7 +38,7 @@ public class AuthService : IAccountService
             throw new UserAlreadyExistException(name);
 
         // 2. Проверка валидности инвайта
-        var invite = await _invitesRepository.GetByCodeAsync(inviteCode);
+        var invite = await _invitesRepository.FindByCodeAsync(inviteCode);
 
         // 3. Генерация пароля
         var passwordHash = _passwordHasher.Hash(password);

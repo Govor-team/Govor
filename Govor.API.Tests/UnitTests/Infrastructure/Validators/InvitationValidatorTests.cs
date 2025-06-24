@@ -89,4 +89,16 @@ public class InvitationValidatorTests
         Assert.Throws<InvalidObjectException<Invitation>>( () => _messageValidator.Validate(invitation));
         Assert.That(_messageValidator.TryValidate(invitation), Is.False);
     }
+    
+    [Test]
+    public void Given_InvalidCode_When_Exist_Then_Returns_False()
+    {
+        // Arrange 
+        var invitation = _fixture.Create<Invitation>();
+        invitation.Code = string.Empty;
+        
+        // Act & Assert 
+        Assert.Throws<InvalidObjectException<Invitation>>( () => _messageValidator.Validate(invitation));
+        Assert.That(_messageValidator.TryValidate(invitation), Is.False);
+    }
 }

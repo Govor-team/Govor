@@ -1,6 +1,9 @@
+using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Invaites;
+using Govor.Data.Repositories.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Govor.Data.Repositories;
 
@@ -17,46 +20,124 @@ public class InvitesRepository : IInvitesRepository
     
     public async Task<List<Invitation>> GetAllAsync()
     {
-        throw new NotImplementedException();
+        return await _context.Invitations
+            .AsNoTracking()
+            .Include(i => i.Users)
+            .ToListOrThrowIfEmpty(new NotFoundException("Database is empty"));
     }
 
-    public Task<Invitation> GetByIdAsync(Guid id)
+    public async Task<Invitation> FindByIdAsync(Guid id)
     {
-        throw new NotImplementedException();
+        return await _context.Invitations
+            .AsNoTracking()
+            .Include(i => i.Users)
+            .FirstOrDefaultAsync(i => i.Id == id)
+            ?? throw new NotFoundByKeyException<Guid>(id, "Invitation with given id does not exist");
     }
 
-    public Task<Invitation> GetByCodeAsync(string code)
+    public async Task<Invitation> FindByCodeAsync(string code)
     {
-        throw new NotImplementedException();
+        return await _context.Invitations
+            .AsNoTracking()
+            .Include(i => i.Users)
+            .FirstOrDefaultAsync(i => i.Code == code)
+            ?? throw new NotFoundByKeyException<string>(code, "Invitation with given code does not exist");
     }
 
-    public Task<List<Invitation>> GetAdminsInvitesAsync()
+    public async Task<List<Invitation>> FindAdminsInvitesAsync()
     {
-        throw new NotImplementedException();
+        return await _context.Invitations
+            .AsNoTracking()
+            .Include(i => i.Users)
+            .Where(i => i.IsAdmin)
+            .ToListOrThrowIfEmpty(new NotFoundByKeyException<bool>(true, "Admins invites do not exist"));
     }
 
-    public Task AddAsync(Invitation invitation)
+    public async Task AddAsync(Invitation invitation)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _validator.Validate(invitation);
+
+            _context.Invitations.Add(invitation);
+            await _context.SaveChangesAsync();
+        }
+        catch (InvalidObjectException<Admin> ex)
+        {
+            throw new AdditionException("Invitation with given data invalid", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new AdditionException("Cannot add invitation", ex);
+        };
     }
 
-    public Task UpdateAsync(Invitation invitation)
+    public async Task UpdateAsync(Invitation invitation)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _validator.Validate(invitation);
+
+            var rowsAffected = await _context.Invitations
+                .Where(a => a.Id == invitation.Id)
+                .ExecuteUpdateAsync(u => u
+                    .SetProperty(i => i.IsAdmin, invitation.IsAdmin)
+                    .SetProperty(i => i.Code, invitation.Code)
+                    .SetProperty(i => i.Description, invitation.Description)
+                    .SetProperty(i => i.DateCreated, invitation.DateCreated)
+                    .SetProperty(i => i.EndDate, invitation.EndDate)
+                    .SetProperty(i => i.MaxParticipants, invitation.MaxParticipants)
+                    .SetProperty(i => i.Users, invitation.Users)
+                );
+
+            if (rowsAffected == 0)
+                throw new NotFoundByKeyException<Guid>(invitation.Id, "Invitation with given data invalid");
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new UpdateException($"Not found invitation by given id {invitation.Id}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new UpdateException($"Error when updating the invitation {invitation.Id}", ex);
+        }
     }
 
-    public Task RemoveAsync(Invitation invitation)
+    public async Task RemoveAsync(Invitation invitation)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var result = await FindByIdAsync(invitation.Id);
+
+            _context.Invitations.Remove(result);
+            await _context.SaveChangesAsync();
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new RemoveException($"Not found invitation by given id {invitation.Id}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new RemoveException("Error when removing the invitation", ex);
+        }
     }
 
     public bool Exist(Invitation invitation)
     {
-        throw new NotImplementedException();
+        _validator.Validate(invitation);
+        return _context.Invitations.Any(i => i.Id == invitation.Id && 
+                                             i.Code == invitation.Code &&
+                                             i.IsAdmin == invitation.IsAdmin &&
+                                             i.DateCreated == invitation.DateCreated &&
+                                             i.EndDate == invitation.EndDate &&
+                                             i.Description == invitation.Description &&
+                                             i.MaxParticipants == invitation.MaxParticipants
+            
+        );
     }
 
     public bool Exist(Guid guid)
     {
-        throw new NotImplementedException();
+        return _context.Invitations.Any(i => i.Id == guid);
     }
 }

@@ -22,7 +22,7 @@ public class JwtService : IJwtService
     
     public string GenerateJwtToken(User user)
     {
-        var invite = _invitesRepository.GetByIdAsync(user.InviteId).Result;
+        var invite = _invitesRepository.FindByIdAsync(user.InviteId).Result;
         
         var claims = new[]
         {

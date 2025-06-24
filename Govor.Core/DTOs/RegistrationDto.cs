@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Govor.Core.Infrastructure.Validators;
+using Govor.Core.Models;
 
 namespace Govor.Core.DTOs;
 
@@ -13,6 +14,6 @@ public record RegistrationDto
     [Required]
     [MinLength(8)]
     public string Password { get; init; }
-    [MinLength(8)]
+    [MinLength(InvitationValidator.MIN_INVITATION_LENGTH)]
     public string InviteLink { get; init; }
 }

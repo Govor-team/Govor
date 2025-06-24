@@ -6,5 +6,5 @@ public interface IAdminsWriter
 {
     Task AddAsync(Admin admin);
     Task UpdateAsync(Admin admin);
-    Task DeleteAsync(Guid admin);
+    Task RemoveAsync(Guid admin);
 }

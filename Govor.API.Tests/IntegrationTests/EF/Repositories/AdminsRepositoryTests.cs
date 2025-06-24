@@ -91,6 +91,7 @@ public class AdminsRepositoryTests
     [Test]
     public async Task Given_InvalidUserId_When_GetByIdAsync_Should_Throw_NotFoundByKeyException()
     {
+        // Arrange 
         await using var context = new GovorDbContext(_options);
         var repository = new AdminsRepository(context, _validator);
         

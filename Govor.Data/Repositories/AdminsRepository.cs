@@ -72,7 +72,7 @@ public class AdminsRepository(GovorDbContext context, IObjectValidator<Admin> va
         }
     }
 
-    public async Task DeleteAsync(Guid admin)
+    public async Task RemoveAsync(Guid admin)
     {
         try
         {
