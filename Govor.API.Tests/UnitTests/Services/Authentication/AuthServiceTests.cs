@@ -1,11 +1,12 @@
 using AutoFixture;
-using Govor.API.Services.Authentication;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
 using Govor.API.Services.Authentication.Interfaces;
+using Govor.Application.Exceptions.AuthService;
+using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Services;
 using Govor.Core.Repositories.Admins;
-using Govor.Core.Repositories.Invaites;
 using Moq;
 
 namespace Govor.API.Tests.UnitTests.Services.Authentication;

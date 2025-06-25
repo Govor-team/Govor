@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Http; // для IFormFile
-
-namespace Govor.API.Services;
+namespace Govor.Application.Interfaces;
 
 public interface IStorageService
 {

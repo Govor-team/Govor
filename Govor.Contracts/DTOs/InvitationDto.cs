@@ -1,4 +1,4 @@
-namespace Govor.Core.DTOs;
+namespace Govor.Contracts.DTOs;
 
 public class InvitationDto
 {

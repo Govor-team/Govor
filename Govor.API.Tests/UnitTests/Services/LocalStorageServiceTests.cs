@@ -1,5 +1,6 @@
 using AutoFixture;
-using Govor.API.Services;
+using Govor.Application.Interfaces;
+using Govor.Application.Services;
 using Microsoft.AspNetCore.Hosting;
 using Moq;
 
@@ -24,7 +25,7 @@ public class LocalStorageServiceTests
 
         _webHostEnvironmentMock.Setup(w => w.ContentRootPath).Returns(_tempDirectory);
 
-        _service = new LocalStorageService(_webHostEnvironmentMock.Object);
+        _service = new LocalStorageService(_webHostEnvironmentMock.Object.ContentRootPath);
     }
 
     [TearDown]

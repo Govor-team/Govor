@@ -1,6 +1,6 @@
 using Govor.Core.Infrastructure.Extensions;
 
-namespace Govor.API.Services;
+namespace Govor.Application.Services;
 
 public class PasswordHasher : IPasswordHasher
 {

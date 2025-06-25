@@ -1,5 +1,5 @@
 using AutoFixture;
-using Govor.API.Services;
+using Govor.Application.Services;
 using Govor.Core.Infrastructure.Extensions;
 
 namespace Govor.API.Tests.UnitTests.Services;

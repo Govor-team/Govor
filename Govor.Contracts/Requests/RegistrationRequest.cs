@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using Govor.Core.Infrastructure.Validators;
 
-namespace Govor.Core.Requests;
+namespace Govor.Contracts.Requests;
 
-public class LoginRequest
+public record RegistrationRequest
 {
     [Required]
     [StringLength(UserValidator.MAX_LENGHT_OF_NAME,
@@ -13,4 +13,6 @@ public class LoginRequest
     [Required]
     [MinLength(8)]
     public string Password { get; init; }
+    [MinLength(InvitationValidator.MIN_INVITATION_LENGTH)]
+    public string InviteLink { get; init; }
 }

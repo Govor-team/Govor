@@ -1,15 +1,12 @@
 using Govor.API.Services.Authentication.Interfaces;
-using Govor.Core;
+using Govor.Application.Exceptions.AuthService;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
-using Govor.API.Services;
-using Govor.API.Services.AdminsStuff.Interfaces;
+using Govor.Application.Interfaces.Authentication;
 using Govor.Core.Repositories.Admins;
-using Govor.Core.Repositories.Invaites;
 
-
-namespace Govor.API.Services.Authentication;
+namespace Govor.Application.Services;
 
 public class AuthService : IAccountService
 {
@@ -76,9 +73,3 @@ public class AuthService : IAccountService
             await _adminsRepository.AddAsync(new Admin() { UserId = user.Id });
     }
 }
-
-public class LoginUserException : GovorCoreException { }
-
-public class UserAlreadyExistException(string username) : GovorCoreException($"{username} is already exists!") { }
-
-public class UserNotRegisteredException(string username) : GovorCoreException($"{username} is not registered!") { }

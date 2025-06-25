@@ -3,12 +3,10 @@ using System.Security.Claims;
 using System.Text;
 using Govor.API.Services.Authentication.Interfaces;
 using Govor.Core.Models;
-using Govor.Core.Repositories.Admins;
-using Govor.Core.Repositories.Invaites;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Govor.API.Services.Authentication;
+namespace Govor.Application.Services;
 
 public class JwtService : IJwtService
 {

@@ -1,8 +1,9 @@
-using Govor.API.Services;
-using Govor.API.Services.AdminsStuff;
 using Govor.API.Services.AdminsStuff.Interfaces;
-using Govor.API.Services.Authentication;
 using Govor.API.Services.Authentication.Interfaces;
+using Govor.Application.Interfaces;
+using Govor.Application.Interfaces.AdminsStuff;
+using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Services;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
@@ -27,6 +28,12 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IUsersAdministration, UsersService>();
         services.AddScoped<IInvitesService, InvitesService>();
         services.AddScoped<IInvitationGenerator, InvitationGenerator>();
+        
+        services.AddScoped<IStorageService>(sp =>
+        {
+            var env = sp.GetRequiredService<IWebHostEnvironment>();
+            return new LocalStorageService(env.ContentRootPath);
+        });
     }
 
     public static void AddRepositories(this IServiceCollection services)

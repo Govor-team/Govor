@@ -1,12 +1,14 @@
-namespace Govor.API.Services;
+using Govor.Application.Interfaces;
+using Microsoft.AspNetCore.Hosting;
+namespace Govor.Application.Services;
 
 public class LocalStorageService : IStorageService
 {
     private readonly string _storagePath;
-
-    public LocalStorageService(IWebHostEnvironment hostingEnvironment)
+    
+    public LocalStorageService(string contentRootPath)
     {
-        _storagePath = Path.Combine(hostingEnvironment.ContentRootPath, "uploads");
+        _storagePath = Path.Combine(contentRootPath, "uploads");
         
         if (!Directory.Exists(_storagePath))
         {

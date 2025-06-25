@@ -1,6 +1,8 @@
-using Govor.API.Services.Authentication;
 using Govor.API.Services.Authentication.Interfaces;
-using Govor.Core.Requests;
+using Govor.Application.Exceptions.AuthService;
+using Govor.Application.Exceptions.InvitesService;
+using Govor.Application.Interfaces.Authentication;
+using Govor.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers;

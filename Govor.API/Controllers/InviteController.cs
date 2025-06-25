@@ -21,8 +21,7 @@ public class InviteController : ControllerBase
     {
         var group = _groupService.GetGroupByInvite(code);
         if (group == null) return NotFound();
-
-        // Вернуть инфу, которая откроется в MAUI-клиенте
+        
         return Ok(new
         {
             groupId = group.Id,

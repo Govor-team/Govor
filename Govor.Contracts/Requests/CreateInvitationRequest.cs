@@ -1,4 +1,4 @@
-namespace Govor.Core.Requests;
+namespace Govor.Contracts.Requests;
 
 public class CreateInvitationRequest
 {

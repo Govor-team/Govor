@@ -1,8 +1,7 @@
-using AutoMapper;
 using Govor.API.Services.AdminsStuff.Interfaces;
-using Govor.Core.DTOs;
+using Govor.Contracts.DTOs;
+using Govor.Contracts.Requests;
 using Govor.Core.Repositories.Invaites;
-using Govor.Core.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

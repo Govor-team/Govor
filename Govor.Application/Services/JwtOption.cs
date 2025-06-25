@@ -1,5 +1,4 @@
-namespace Govor.API.Services.Authentication;
-
+namespace Govor.Application.Services;
 public class JwtOption
 {
     public string SecretKeу {get; set;}

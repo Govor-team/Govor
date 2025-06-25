@@ -1,6 +1,6 @@
 using AutoFixture;
-using Govor.API.Services.AdminsStuff;
 using Govor.API.Services.AdminsStuff.Interfaces;
+using Govor.Application.Interfaces.AdminsStuff;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Invaites;
 using Moq;

@@ -1,6 +1,6 @@
 using Govor.Core.Models;
 
-namespace Govor.API.Services.Authentication.Interfaces;
+namespace Govor.Application.Interfaces.Authentication;
 
 public interface IAccountService
 {

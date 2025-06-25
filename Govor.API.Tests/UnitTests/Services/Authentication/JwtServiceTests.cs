@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using AutoFixture;
-using Govor.API.Services.Authentication;
 using Govor.API.Services.Authentication.Interfaces;
+using Govor.Application.Services;
 using Govor.Core.Models;
 using Microsoft.Extensions.Options;
 using Moq;

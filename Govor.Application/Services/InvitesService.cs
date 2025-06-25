@@ -1,10 +1,10 @@
 using Govor.API.Services.Authentication.Interfaces;
-using Govor.Core;
+using Govor.Application.Exceptions.InvitesService;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Invaites;
 using Govor.Data.Repositories.Exceptions;
 
-namespace Govor.API.Services.Authentication;
+namespace Govor.Application.Services;
 
 public class InvitesService : IInvitesService
 {
@@ -49,4 +49,3 @@ public class InvitesService : IInvitesService
     }
 }
 
-public class InviteLinkInvalidException(string inviteCode) : GovorCoreException($"Invite link invalid: {inviteCode}");
