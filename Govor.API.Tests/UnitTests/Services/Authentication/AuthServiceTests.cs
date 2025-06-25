@@ -8,7 +8,7 @@ using Govor.Core.Repositories.Admins;
 using Govor.Core.Repositories.Invaites;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.API.Tests.UnitTests.Services.Authentication;
 
 [TestFixture]
 public class AuthServiceTests

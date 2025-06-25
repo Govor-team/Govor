@@ -1,7 +1,6 @@
-using Govor.API.Services;
 using Govor.API.Services.Authentication;
-using Govor.Core.DTOs;
 using Govor.API.Services.Authentication.Interfaces;
+using Govor.Core.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers;
@@ -74,6 +73,11 @@ public class AuthController : Controller
         {
             _logger.LogWarning(ex, "Login failed for user {Name}", userRequest.Name);
             return BadRequest("Login failed: user does not exist.");
+        }
+        catch (LoginUserException ex)
+        {
+            _logger.LogWarning(ex, "Login failed for user {Name}", userRequest.Name);
+            return BadRequest("Login failed: username or password is incorrect.");
         }
         catch (Exception ex)
         {
