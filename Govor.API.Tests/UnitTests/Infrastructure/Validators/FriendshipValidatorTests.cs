@@ -28,6 +28,7 @@ public class FriendshipValidatorTests
     [Test]
     public void Given_ValidFriendship_When_Validate_Then_Returns_True()
     {
+        // Arrange 
         var friendship = _fixture.Create<Friendship>();
         
         // Act & Assert 
@@ -38,6 +39,7 @@ public class FriendshipValidatorTests
     [Test]
     public void Given_EmptyFriendshipId_When_Validate_Then_Returns_False()
     {
+        // Arrange 
         var friendship = _fixture.Create<Friendship>();
         friendship.Id = Guid.Empty;
         
@@ -49,8 +51,21 @@ public class FriendshipValidatorTests
     [Test]
     public void Given_EmptyRequesterId_When_Validate_Then_Returns_False()
     {
+        // Arrange 
         var friendship = _fixture.Create<Friendship>();
         friendship.RequesterId = Guid.Empty;
+        
+        // Act & Assert 
+        Assert.Throws<InvalidObjectException<Friendship>>( () => _friendshipValidator.Validate(friendship));
+        Assert.That(_friendshipValidator.TryValidate(friendship), Is.False);
+    }
+
+    [Test]
+    public void GivenSameRequesterId_When_Validate_Then_Returns_False()
+    {
+        // Arrange 
+        var friendship = _fixture.Create<Friendship>();
+        friendship.RequesterId = friendship.AddresseeId;
         
         // Act & Assert 
         Assert.Throws<InvalidObjectException<Friendship>>( () => _friendshipValidator.Validate(friendship));
@@ -60,6 +75,7 @@ public class FriendshipValidatorTests
     [Test]
     public void Given_AddresseeId_When_Validate_Then_Returns_False()
     {
+        // Arrange 
         var friendship = _fixture.Create<Friendship>();
         friendship.AddresseeId = Guid.Empty;
         

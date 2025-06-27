@@ -22,6 +22,9 @@ public class UsersRepository : IUsersRepository
     {
         return await _context.Users
             .AsNoTracking()
+            .Include(u => u.Invite)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
             .ToListOrThrowIfEmpty(new NotFoundException("Users in Database not exists"));
     }
 
@@ -33,6 +36,8 @@ public class UsersRepository : IUsersRepository
         return await _context.Users
             .AsNoTracking()
             .Include(u => u.Invite)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
             .FirstOrDefaultAsync(x => x.Id == id)
                ?? throw new NotFoundByKeyException<Guid>(id, "User with given id does not exist");
     }
@@ -46,6 +51,8 @@ public class UsersRepository : IUsersRepository
             .AsNoTracking()
             .Where(x => ids.Contains(x.Id))
             .Include(u => u.Invite)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<Guid>>(ids,"Users with given ids not found"));
     }
     
@@ -57,9 +64,29 @@ public class UsersRepository : IUsersRepository
         return await _context.Users
             .AsNoTracking()
             .Include(u => u.Invite)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
             .FirstOrDefaultAsync(x => x.Username == username)
                ?? throw new NotFoundByKeyException<string>(username, "User with given username does not exist");
     }
+    
+    public async Task<List<User>> SearchPotentialFriendsAsync(Guid currentUserId, string query)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .Include(u => u.Invite)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
+            .Where(u => u.Id != currentUserId &&
+                        u.Username.ToLower().Contains(query.ToLower()) &&
+                        !_context.Friendships.Any(f =>
+                            (f.RequesterId == currentUserId && f.AddresseeId == u.Id) ||
+                            (f.RequesterId == u.Id && f.AddresseeId == currentUserId)))
+            .Take(20)
+            .OrderBy(u => u.Username)
+            .ToListAsync();
+    }
+
     
     public async Task<List<User>> FindByRangeUsernamesAsync(IEnumerable<string> usernames)
     {
@@ -70,6 +97,8 @@ public class UsersRepository : IUsersRepository
             .AsNoTracking()
             .Where(x => usernames.Contains(x.Username))
             .Include(u => u.Invite)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<string>>(usernames, "Users with given usernames not found"));
     }
 
@@ -82,6 +111,8 @@ public class UsersRepository : IUsersRepository
             .AsNoTracking()
             .Where(u => createdDate == u.CreatedOn)
             .Include(u => u.Invite)
+            .Include(u => u.ReceivedFriendRequests)
+            .Include(u => u.SentFriendRequests)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<DateOnly>(createdDate, "Users with given created date do not exist"));
     }
     

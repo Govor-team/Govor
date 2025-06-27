@@ -9,6 +9,7 @@ using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Admins;
+using Govor.Core.Repositories.Friendships;
 using Govor.Core.Repositories.Invaites;
 using Govor.Core.Repositories.MediasAttachments;
 using Govor.Core.Repositories.Messages;
@@ -30,6 +31,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IInvitesService, InvitesService>();
         services.AddScoped<IInvitationGenerator, InvitationGenerator>();
         services.AddScoped<IUsernameValidator, UsernameValidator>();
+        services.AddScoped<IFriendsService, FriendsService>();
         
         services.AddScoped<IStorageService>(sp =>
         {
@@ -45,6 +47,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IInvitesRepository, InvitesRepository>();
         services.AddScoped<IAdminsRepository, AdminsRepository>();
         services.AddScoped<IMediaAttachmentsRepository, MediaAttachmentsRepository>();
+        services.AddScoped<IFriendshipsRepository, FriendshipsRepository>();
     }
 
     public static void AddValidators(this IServiceCollection services)
@@ -54,6 +57,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IObjectValidator<MediaAttachments>, MediaAttachmentsValidator>();
         services.AddScoped<IObjectValidator<Admin>, AdminValidator>();
         services.AddScoped<IObjectValidator<Invitation>, InvitationValidator>();
+        services.AddScoped<IObjectValidator<Friendship>, FriendshipValidator>();
     }
 
     public static void AddGovorDbContext(this IServiceCollection services, IConfiguration configuration)

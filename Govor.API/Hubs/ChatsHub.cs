@@ -98,14 +98,10 @@ public class ChatsHub : Hub
     private Guid GetUserId()
     {
         var userIdClaim = Context.User?.FindFirst("userID")?.Value;
-        _logger.LogInformation("Claims: {Claims}", string.Join(", ", Context.User?.Claims.Select(c => $"{c.Type}: {c.Value}") ?? new string[0]));
-        
-        if (string.IsNullOrEmpty(userIdClaim))
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
-            _logger.LogError("No userID claim found");
-            return Guid.Empty;
+            throw new UnauthorizedAccessException("userID claim is missing or invalid");
         }
-        
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
+        return userId;
     }
 }

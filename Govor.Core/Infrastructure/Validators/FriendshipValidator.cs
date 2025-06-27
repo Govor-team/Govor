@@ -16,6 +16,8 @@ public class FriendshipValidator : IObjectValidator<Friendship>
                 throw new ArgumentException("Addresses cannot be empty", nameof(friendship.AddresseeId));
             if(friendship.RequesterId == Guid.Empty)
                 throw new ArgumentException("Requester cannot be empty", nameof(friendship.RequesterId));
+            if(friendship.AddresseeId == friendship.RequesterId)
+                throw new ArgumentException("Addresses cannot be same", nameof(friendship.AddresseeId));
         }
         catch (Exception e)
         {

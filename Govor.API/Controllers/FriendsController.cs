@@ -1,3 +1,7 @@
+using Govor.Application.Exceptions.FriendsService;
+using Govor.Application.Interfaces;
+using Govor.Contracts.DTOs;
+using Govor.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,48 +13,151 @@ namespace Govor.API.Controllers;
 public class FriendsController : Controller
 {
     private readonly ILogger<FriendsController> _logger;
+    private readonly IFriendsService _friendsService;
 
-    [HttpGet("search")]
-    public async Task<IActionResult> Search([FromBody] string query)
+    public FriendsController(ILogger<FriendsController> logger, IFriendsService friendsService)
     {
-        return BadRequest("Not a valid request");
+        _logger = logger;
+        _friendsService = friendsService;
+    }
+    
+    [HttpGet("search")]
+    public async Task<IActionResult> Search(string query)
+    {
+        try
+        {
+           var result = await _friendsService.SearchUsersAsync(query, GetCurrentUserId());
+           
+           return Ok(BuildUserDtos(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest("Something happened during the search... try again");
+        }
     }
 
     [HttpPost("request")]
-    public async Task<IActionResult> SendRequest([FromBody] Guid targetUserId)
+    public async Task<IActionResult> SendRequest(Guid targetUserId)
     {
-        return BadRequest("Not a valid request");
+        try
+        {
+           await _friendsService.SendFriendRequestAsync(targetUserId, GetCurrentUserId());
+           return Ok();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning("The user tried to send a friend request to themselves");
+            return BadRequest("You can't send a friend request to themselves");
+        }
+        catch (RequestAlreadySentException ex)
+        {
+            _logger.LogWarning("The user tried to send a friend request but the request is already sent");
+            return BadRequest("You already sent a friend request");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest("Something happened during the request... try again");
+        }
     }
 
     [HttpGet("requests")]
     public async Task<IActionResult> GetIncomingRequests()
     {
-        return BadRequest("Not a valid request");
+        try
+        {
+            _logger.LogInformation($"Getting incoming requests for user {GetCurrentUserId()}...");
+            var result = await _friendsService.GetIncomingRequestsAsync(GetCurrentUserId());
+            return Ok(BuildFriendshipDtos(result));
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest("You can't get real friend requests because we can't find your user data! Try again");
+        }
     }
 
     [HttpPost("accept")]
-    public async Task<IActionResult> AcceptFriend([FromBody] Guid requesterId)
+    public async Task<IActionResult> AcceptFriend(Guid requesterId)
     {
-        return BadRequest("Not a valid request");
+        try
+        {
+            await _friendsService.AcceptFriendRequestAsync(requesterId, GetCurrentUserId());
+            return Ok();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning("The user tried to accept a friend request but the request not exists");
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning("User tried to accept a friend request but addresseeId not equal userId");
+            return BadRequest("You can't accept a friend request");
+        }
     }
 
     [HttpGet]
     public async Task<IActionResult> GetFriends()
     {
-        return BadRequest("Not a valid request");
+        try
+        {
+            _logger.LogInformation($"Getting friends by user {GetCurrentUserId()}...");
+            var result = await _friendsService.GetFriendsAsync(GetCurrentUserId());
+            
+            return Ok(BuildUserDtos(result));
+        }
+        catch(UnauthorizedAccessException ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest("Something happened during the request... try again");
+        }
     }
 
     private Guid GetCurrentUserId()
     {
         var userIdClaim = HttpContext.User?.FindFirst("userID")?.Value;
-        _logger.LogInformation("Claims: {Claims}", string.Join(", ", HttpContext.User?.Claims.Select(c => $"{c.Type}: {c.Value}") ?? new string[0]));
-        
-        if (string.IsNullOrEmpty(userIdClaim))
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
-            _logger.LogError("No userID claim found");
-            return Guid.Empty;
+            throw new UnauthorizedAccessException("userID claim is missing or invalid");
+        }
+        return userId;
+    }
+    
+    private List<UserDto> BuildUserDtos(IEnumerable<User> users)
+    {
+        List<UserDto> userDtos = new List<UserDto>();
+           
+        foreach (var user in users)
+        {
+            userDtos.Add(new UserDto()
+            {
+                Id = user.Id,
+                Description = user.Description,
+                Username = user.Username,
+                WasOnline = user.WasOnline,
+                IconId = user.IconId,
+            });
+        }
+        return userDtos;
+    }
+    
+    private List<FriendshipDto> BuildFriendshipDtos(List<Friendship> result)
+    {
+        List<FriendshipDto> dtos = new List<FriendshipDto>();
+        
+        foreach (var friendship in result)
+        {
+            dtos.Add(new FriendshipDto()
+            {
+                Id = friendship.Id,
+                Status = friendship.Status,
+                AddresseeId =  friendship.AddresseeId,
+                RequesterId = friendship.RequesterId,
+            });    
         }
         
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
+        return dtos;
     }
 }
