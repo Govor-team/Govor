@@ -19,6 +19,7 @@ public class AuthServiceTests
     private Mock<IJwtService> _jwtServiceMock;
     private Mock<IUsersRepository> _usersRepositoryMock;
     private Mock<IAdminsRepository> _adminsRepositoryMock;
+    private Mock<IUsernameValidator> _usernameValidatorMock;
     
     private IAccountService _accountService;
     
@@ -38,12 +39,14 @@ public class AuthServiceTests
         _passwordHasherMock = new Mock<IPasswordHasher>();
         _jwtServiceMock = new Mock<IJwtService>();
         _adminsRepositoryMock = new Mock<IAdminsRepository>();
+        _usernameValidatorMock = new Mock<IUsernameValidator>();
         
         _accountService = new AuthService(
             _usersRepositoryMock.Object,
             _jwtServiceMock.Object,
             _passwordHasherMock.Object,
-            _adminsRepositoryMock.Object
+            _adminsRepositoryMock.Object,
+            _usernameValidatorMock.Object
             );
     }
     

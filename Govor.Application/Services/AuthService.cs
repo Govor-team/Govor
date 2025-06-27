@@ -1,9 +1,11 @@
+using System.Text.RegularExpressions;
 using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
 using Govor.Application.Interfaces.Authentication;
+using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Repositories.Admins;
 
 namespace Govor.Application.Services;
@@ -14,21 +16,26 @@ public class AuthService : IAccountService
     private readonly IJwtService _jwtService;
     private readonly IUsersRepository _usersRepository;
     private readonly IAdminsRepository _adminsRepository;
+    private readonly IUsernameValidator _usernameValidator;
     
     public AuthService(IUsersRepository usersRepository, 
         IJwtService jwtService,
         IPasswordHasher passwordHasher,
-        IAdminsRepository adminsRepository
+        IAdminsRepository adminsRepository,
+        IUsernameValidator usernameValidator
        )
     {
         _usersRepository = usersRepository;
         _jwtService = jwtService;
         _passwordHasher = passwordHasher;
         _adminsRepository = adminsRepository;
+        _usernameValidator = usernameValidator;
     }
     
     public async Task<string> RegistrationAsync(string name, string password, Invitation invitation)
     {
+        _usernameValidator.Validate(name);
+        
         if (await _usersRepository.ExistsUsernameAsync(name))
             throw new UserAlreadyExistException(name);
         

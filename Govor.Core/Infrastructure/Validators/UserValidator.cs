@@ -6,7 +6,7 @@ namespace Govor.Core.Infrastructure.Validators;
 public class UserValidator : IObjectValidator<User>
 {
     public const int MIN_LENGHT_OF_NAME = 4;
-    public const int MAX_LENGHT_OF_NAME = 50;
+    public const int MAX_LENGHT_OF_NAME = 44;
     
     public void Validate(User user)
     {

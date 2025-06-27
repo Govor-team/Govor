@@ -35,7 +35,8 @@ public class AuthController : Controller
 
             var invite = _invitesService.Validate(registrationRequest.InviteLink);
 
-            var token = await _accountService.RegistrationAsync(registrationRequest.Name, registrationRequest.Password, invite);
+            var token = await _accountService.RegistrationAsync(registrationRequest.Name, registrationRequest.Password,
+                invite);
             _logger.LogInformation($"Register request for {registrationRequest.Name}");
             return Ok(new { token });
         }
@@ -48,6 +49,11 @@ public class AuthController : Controller
         {
             _logger.LogWarning(ex, $"Invite link invalid: {registrationRequest.InviteLink}");
             return BadRequest("Invite link invalid.");
+        }
+        catch (InvalidUsernameException ex)
+        {
+            _logger.LogWarning(ex, $"Invalid username: {registrationRequest.Name}");
+            return BadRequest($"Invalid username: {ex.Message}");
         }
         catch (Exception ex)
         {

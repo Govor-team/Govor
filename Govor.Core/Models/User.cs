@@ -13,4 +13,6 @@ public class User
     public DateTime WasOnline {get; set;}
     public Guid InviteId {get; set;}
     public Invitation? Invite { get; set; }
+    public List<Friendship> SentFriendRequests { get; set; } = new();
+    public List<Friendship> ReceivedFriendRequests { get; set; } = new();
 }

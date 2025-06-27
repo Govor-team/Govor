@@ -4,6 +4,7 @@ using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.AdminsStuff;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Services;
+using Govor.Application.Validators;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
@@ -28,6 +29,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IUsersAdministration, UsersService>();
         services.AddScoped<IInvitesService, InvitesService>();
         services.AddScoped<IInvitationGenerator, InvitationGenerator>();
+        services.AddScoped<IUsernameValidator, UsernameValidator>();
         
         services.AddScoped<IStorageService>(sp =>
         {
