@@ -8,6 +8,8 @@ namespace Govor.Data;
 public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContext(options)
 {
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<Friendship> Friendships { get; set; }
+    public virtual DbSet<PrivateChat> PrivateChats { get; set; }
     public virtual DbSet<Admin> Admins { get; set; }
     
     public virtual DbSet<Invitation> Invitations { get; set; }

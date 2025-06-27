@@ -96,7 +96,7 @@ public class AdminsRepositoryTests
         var repository = new AdminsRepository(context, _validator);
         
         // Act & Assert 
-        Assert.ThrowsAsync<NotFoundByKeyException<Guid>>(async () => await repository.GetByIdAsync(Guid.Empty));
+        Assert.ThrowsAsync<NotFoundByKeyException<Guid>>(async () => await repository.GetByIdAsync(_fixture.Create<Guid>()));
     }
     
     [Test]

@@ -24,8 +24,6 @@
     <ItemGroup>
       <ProjectReference Include="..\Govor.Application\Govor.Application.csproj" />
       <ProjectReference Include="..\Govor.Contracts\Govor.Contracts.csproj" />
-      <ProjectReference Include="..\Govor.Core\Govor.Core.csproj" />
-      <ProjectReference Include="..\Govor.Data\Govor.Data.csproj" />
     </ItemGroup>
 
 </Project>

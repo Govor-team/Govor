@@ -25,7 +25,7 @@ public class InvitationValidatorTests
     }
     
     [Test]
-    public void Given_ValidInvitation_When_Exist_Then_Returns_True()
+    public void Given_ValidInvitation_When_Validate_Then_Returns_True()
     {
         var invitation = _fixture.Create<Invitation>();
         
@@ -35,7 +35,7 @@ public class InvitationValidatorTests
     }
 
     [Test]
-    public void Given_NullInvitation_When_Exist_Then_Returns_False()
+    public void Given_NullInvitation_When_Validate_Then_Returns_False()
     {
         // Act & Assert 
         Assert.Throws<InvalidObjectException<Invitation>>( () => _messageValidator.Validate(default));
@@ -43,7 +43,7 @@ public class InvitationValidatorTests
     }
     
     [Test]
-    public void Given_EmptyInvitationId_When_Exist_Then_Returns_False()
+    public void Given_EmptyInvitationId_When_Validate_Then_Returns_False()
     {
         // Arrange 
         var invitation = _fixture.Create<Invitation>();
@@ -55,7 +55,7 @@ public class InvitationValidatorTests
     }
     
     [Test]
-    public void Given_EmptyInvitationCreationDate_When_Exist_Then_Returns_False()
+    public void Given_EmptyInvitationCreationDate_When_Validate_Then_Returns_False()
     {
         // Arrange 
         var invitation = _fixture.Create<Invitation>();
@@ -67,7 +67,7 @@ public class InvitationValidatorTests
     }
     
     [Test]
-    public void Given_InvalidEndDatesAndIsActive_When_Exist_Then_Returns_False()
+    public void Given_InvalidEndDatesAndIsActive_When_Validate_Then_Returns_False()
     {
         // Arrange 
         var invitation = _fixture.Create<Invitation>();
@@ -79,7 +79,7 @@ public class InvitationValidatorTests
     }
     
     [Test]
-    public void Given_InvalidMaxParticipantsAndIsActive_When_Exist_Then_Returns_False()
+    public void Given_InvalidMaxParticipantsAndIsActive_When_Validate_Then_Returns_False()
     {
         // Arrange 
         var invitation = _fixture.Create<Invitation>();
@@ -92,7 +92,7 @@ public class InvitationValidatorTests
     }
     
     [Test]
-    public void Given_InvalidCode_When_Exist_Then_Returns_False()
+    public void Given_InvalidCode_When_Validate_Then_Returns_False()
     {
         // Arrange 
         var invitation = _fixture.Create<Invitation>();

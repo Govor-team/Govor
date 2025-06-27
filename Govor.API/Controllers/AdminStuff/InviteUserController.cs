@@ -9,7 +9,7 @@ namespace Govor.API.Controllers.AdminStuff;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class InviteUserController : Controller
 {
     private readonly IInvitesRepository _repository;
@@ -43,20 +43,22 @@ public class InviteUserController : Controller
             return BadRequest($"An error occured: {e.Message}");
         }
     }
-
-    [HttpGet]
-    public async Task<IActionResult> GetAllInvitations()
+    
+    [HttpGet("[action]")]
+    public async Task<IActionResult> GetAllActiveInvitations()
     {
         try
         {
-            _logger.LogInformation("Getting all invitations by administrator");
-            var read = await _repository.GetAllAsync();
+            _logger.LogInformation("Getting all active invitations by administrator");
 
-            List<InvitationDto> dto = new List<InvitationDto>();
+            var read = await _repository.GetAllAsync();
+            var result = read.Where(x => x.IsActive == true).ToList();
             
-            foreach (var inv in read)
+            List<InvitationDto> dtos = new List<InvitationDto>();
+            
+            foreach (var inv in result)
             {
-                dto.Add(new InvitationDto(){
+                dtos.Add(new InvitationDto(){
                     Id = inv.Id,
                     Description = inv.Description,
                     IsAdmin = inv.IsAdmin, 
@@ -68,7 +70,69 @@ public class InviteUserController : Controller
                 });
             }
             
-            return Ok(dto);
+            return Ok(dtos);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return BadRequest($"An error occured: {e.Message}");
+        }
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetAllInvitations()
+    {
+        try
+        {
+            _logger.LogInformation("Getting all invitations by administrator");
+            var read = await _repository.GetAllAsync();
+
+            List<InvitationDto> dtos = new List<InvitationDto>();
+            
+            foreach (var inv in read)
+            {
+                dtos.Add(new InvitationDto(){
+                    Id = inv.Id,
+                    Description = inv.Description,
+                    IsAdmin = inv.IsAdmin, 
+                    MaxParticipants = inv.MaxParticipants,
+                    Code = inv.Code, 
+                    CreatedAt = inv.DateCreated,
+                    EndAt = inv.EndDate,
+                    IsActive = inv.IsActive,
+                });
+            }
+            
+            return Ok(dtos);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return BadRequest($"An error occured: {e.Message}");
+        }
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetInvitationById(Guid id)
+    {
+        try
+        {
+            _logger.LogInformation("Getting invitations {id} by administrator");
+            var read = await _repository.FindByIdAsync(id);
+            
+            var response = new InvitationDto(){
+                    Id = read.Id,
+                    Description = read.Description,
+                    IsAdmin = read.IsAdmin, 
+                    MaxParticipants = read.MaxParticipants,
+                    Code = read.Code, 
+                    CreatedAt = read.DateCreated,
+                    EndAt = read.EndDate,
+                    IsActive = read.IsActive,
+            };
+            
+            
+            return Ok(response);
         }
         catch (Exception e)
         {
