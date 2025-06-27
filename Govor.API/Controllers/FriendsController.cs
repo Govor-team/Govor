@@ -21,7 +21,7 @@ public class FriendsController : Controller
         _friendsService = friendsService;
     }
     
-    [HttpGet("search")]
+    [HttpGet("search")] //api/friends/search
     public async Task<IActionResult> Search(string query)
     {
         try
@@ -37,7 +37,7 @@ public class FriendsController : Controller
         }
     }
 
-    [HttpPost("request")]
+    [HttpPost("request")] //api/friends/request
     public async Task<IActionResult> SendRequest(Guid targetUserId)
     {
         try
@@ -62,7 +62,7 @@ public class FriendsController : Controller
         }
     }
 
-    [HttpGet("requests")]
+    [HttpGet("requests")] //api/friends/requests
     public async Task<IActionResult> GetIncomingRequests()
     {
         try
@@ -78,7 +78,7 @@ public class FriendsController : Controller
         }
     }
 
-    [HttpPost("accept")]
+    [HttpPost("accept")] //api/friends/accept
     public async Task<IActionResult> AcceptFriend(Guid requesterId)
     {
         try
@@ -98,7 +98,7 @@ public class FriendsController : Controller
         }
     }
 
-    [HttpGet]
+    [HttpGet] //api/friends/
     public async Task<IActionResult> GetFriends()
     {
         try

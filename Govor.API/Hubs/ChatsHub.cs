@@ -58,11 +58,6 @@ public class ChatsHub : Hub
         }
         
         var senderId = GetUserId();
-        if (senderId == Guid.Empty)
-        {
-            _logger.LogError("Could not retrieve sender userId");
-            throw new InvalidOperationException("User not authenticated");
-        }
         
         // Проверка существования получателя
         try
@@ -100,6 +95,7 @@ public class ChatsHub : Hub
         var userIdClaim = Context.User?.FindFirst("userID")?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
+            _logger.LogError("Could not retrieve sender userId");
             throw new UnauthorizedAccessException("userID claim is missing or invalid");
         }
         return userId;
