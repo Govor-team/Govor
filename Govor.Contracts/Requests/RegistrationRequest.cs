@@ -8,7 +8,7 @@ public record RegistrationRequest
     [Required]
     [StringLength(UserValidator.MAX_LENGHT_OF_NAME,
         MinimumLength = UserValidator.MIN_LENGHT_OF_NAME, 
-        ErrorMessage = "Username must be between 4 and 50 characters.")]
+        ErrorMessage = "Username must be between 4 and 44 characters.")]
     public string Name { get; init; }
     [Required]
     [MinLength(8)]
