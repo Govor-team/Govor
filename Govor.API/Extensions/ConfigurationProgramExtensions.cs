@@ -1,12 +1,12 @@
 using Govor.API.Services.AdminsStuff.Interfaces;
 using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.Infrastructure.Validators;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.AdminsStuff;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Services;
-using Govor.Application.Validators;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
@@ -67,11 +67,19 @@ public static class ConfigurationProgramExtensions
 
     public static void AddGovorDbContext(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<GovorDbContext>(
-            options =>
-            {
-                options.UseNpgsql(configuration.GetConnectionString(nameof(GovorDbContext)));
-            }
-        );
+        var useMySql = configuration.GetValue<bool>("UseMySql"); // Получаем значение из конфигурации
+
+        if (useMySql)
+        {
+            services.AddDbContext<GovorDbContext>(options =>
+                options.UseMySql(configuration.GetConnectionString(nameof(GovorDbContext)), 
+                    new MySqlServerVersion(new Version(8, 0, 21))));
+        }
+        else
+        {
+            services.AddDbContext<GovorDbContext>(options =>
+                options.UseNpgsql(configuration.GetConnectionString(nameof(GovorDbContext))));
+        }
     }
+
 }

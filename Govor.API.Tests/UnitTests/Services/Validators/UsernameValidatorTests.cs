@@ -1,5 +1,5 @@
-using Govor.Application.Validators; // или другой namespace
 using Govor.Application.Exceptions.AuthService;
+using Govor.Application.Infrastructure.Validators;
 
 namespace Govor.API.Tests.UnitTests.Services.Validators;
 

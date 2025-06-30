@@ -104,8 +104,6 @@ public class FriendsControllerTests
         var objectResult = result as ObjectResult;
         Assert.That(objectResult.StatusCode, Is.EqualTo(500));
     }
-
-    
     
     [TearDown]
     public void TearDown()

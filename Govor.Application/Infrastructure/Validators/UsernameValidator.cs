@@ -4,7 +4,7 @@ using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Core.Infrastructure.Validators;
 
-namespace Govor.Application.Validators;
+namespace Govor.Application.Infrastructure.Validators;
 
 public class UsernameValidator : IUsernameValidator
 {
