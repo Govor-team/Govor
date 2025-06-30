@@ -15,4 +15,21 @@ public class User
     public Invitation? Invite { get; set; }
     public List<Friendship> SentFriendRequests { get; set; } = new();
     public List<Friendship> ReceivedFriendRequests { get; set; } = new();
+
+    public override bool Equals(object? obj)
+    {
+        var user = obj as User;
+        
+        return Id == user.Id &&
+               Username == user.Username &&
+               Description == user.Description &&
+               PasswordHash == user.PasswordHash &&
+               IconId == user.IconId &&
+               CreatedOn == user.CreatedOn &&
+               WasOnline == user.WasOnline &&
+               InviteId == user.InviteId &&
+               Invite == user.Invite &&
+               SentFriendRequests == user.SentFriendRequests &&
+               ReceivedFriendRequests == user.ReceivedFriendRequests;
+    }
 }

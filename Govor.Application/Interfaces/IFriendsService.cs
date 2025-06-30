@@ -4,7 +4,7 @@ namespace Govor.Application.Interfaces;
 
 public interface IFriendsService
 {
-    Task<List<User>> SearchUsersAsync(string searchTerm, Guid currentId);
+    Task<List<User>> SearchUsersAsync(string query, Guid currentId);
     Task SendFriendRequestAsync(Guid fromUserId, Guid toUserId);
     Task AcceptFriendRequestAsync(Guid requestId, Guid currentUserId);
     Task<List<User>> GetFriendsAsync(Guid userId);

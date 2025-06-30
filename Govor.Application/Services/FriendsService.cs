@@ -19,12 +19,14 @@ public class FriendsService : IFriendsService
         _friendshipsRepository = relationshipsRepository;
     }
     
-    public async Task<List<User>> SearchUsersAsync(string searchTerm, Guid currentId)
+    public async Task<List<User>> SearchUsersAsync(string query, Guid currentId)
     {
-        var all = await _usersRepository.SearchPotentialFriendsAsync(currentId, searchTerm);
-
+        List<User> all = new List<User>();
+        
         try
         {
+            all = await _usersRepository.SearchPotentialFriendsAsync(currentId, query);
+
             var friends = await _friendshipsRepository.FindByUserIdAsync(currentId);
 
             friends = friends.Where(f => f.Status == FriendshipStatus.Accepted).ToList();
@@ -33,13 +35,18 @@ public class FriendsService : IFriendsService
                 .Where(u => u.Id != currentId && !friends.Select(f => f.RequesterId).Contains(u.Id))
                 .ToList();
         }
+        catch (NotFoundByKeyException<(string, Guid)> ex)
+        {
+            throw new SearchUsersException(
+                $"Users with given query: \"{query}\" for user with id {currentId} was not found", ex);
+        }
         catch (NotFoundByKeyException<Guid> ex)
         {
             return all.Where(u => u.Id != currentId).ToList();
         }
         catch (Exception ex)
         {
-            throw new SearchUsersException($"When we try find friends by pattern {searchTerm} something wrong", ex);
+            throw new UnauthorizedAccessException($"When we try find friends by pattern {query} something wrong", ex);
         }
     }
 
@@ -85,21 +92,16 @@ public class FriendsService : IFriendsService
     {
         try
         {
-            var user = await _usersRepository.FindByIdAsync(userId);
+            var friendships = await _friendshipsRepository.FindByUserIdAsync(userId);
 
-            var sent = user.SentFriendRequests
+            return friendships
                 .Where(f => f.Status == FriendshipStatus.Accepted)
-                .Select(f => f.Addressee);
-
-            var received = user.ReceivedFriendRequests
-                .Where(f => f.Status == FriendshipStatus.Accepted)
-                .Select(f => f.Requester);
-
-            return sent.Concat(received).ToList();
+                .Select(f => f.RequesterId == userId ? f.Addressee : f.Requester)
+                .ToList();
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            throw new InvalidOperationException("User not exist", ex);
+            throw new InvalidOperationException("User not found", ex);
         }
     }
 

@@ -20,98 +20,123 @@ public class FriendsController : Controller
         _logger = logger;
         _friendsService = friendsService;
     }
-    
-    [HttpGet("search")] //api/friends/search
+
+    [HttpGet("search")]
     public async Task<IActionResult> Search(string query)
     {
+        if (string.IsNullOrWhiteSpace(query))
+            return BadRequest("Query cannot be empty");
+
         try
         {
-           var result = await _friendsService.SearchUsersAsync(query, GetCurrentUserId());
-           
-           return Ok(BuildUserDtos(result));
+            var result = await _friendsService.SearchUsersAsync(query, GetCurrentUserId());
+            return Ok(BuildUserDtos(result));
+        }
+        catch (SearchUsersException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(new { error = ex.Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
-            return BadRequest("Something happened during the search... try again");
+            return StatusCode(500, new { error = "Internal error during user search." });
         }
     }
 
-    [HttpPost("request")] //api/friends/request
+    [HttpPost("request")]
     public async Task<IActionResult> SendRequest(Guid targetUserId)
     {
+        if (targetUserId == Guid.Empty)
+            return BadRequest("Target user ID is invalid");
+
         try
         {
-           await _friendsService.SendFriendRequestAsync(targetUserId, GetCurrentUserId());
-           return Ok();
+            await _friendsService.SendFriendRequestAsync(targetUserId, GetCurrentUserId());
+            return Ok(new { message = "Friend request sent successfully." });
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning("The user tried to send a friend request to themselves");
-            return BadRequest("You can't send a friend request to themselves");
+            _logger.LogWarning(ex, "Tried to send request to self");
+            return UnprocessableEntity(new { error = ex.Message });
         }
         catch (RequestAlreadySentException ex)
         {
-            _logger.LogWarning("The user tried to send a friend request but the request is already sent");
-            return BadRequest("You already sent a friend request");
+            _logger.LogWarning(ex, ex.Message);
+            return Conflict(new { error = ex.Message });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
-            return BadRequest("Something happened during the request... try again");
+            return StatusCode(500, new { error = "Failed to send friend request." });
         }
     }
 
-    [HttpGet("requests")] //api/friends/requests
+    [HttpGet("requests")]
     public async Task<IActionResult> GetIncomingRequests()
     {
         try
         {
-            _logger.LogInformation($"Getting incoming requests for user {GetCurrentUserId()}...");
             var result = await _friendsService.GetIncomingRequestsAsync(GetCurrentUserId());
             return Ok(BuildFriendshipDtos(result));
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest("You can't get real friend requests because we can't find your user data! Try again");
+            _logger.LogError(ex, ex.Message);
+            return BadRequest(new { error = "Failed to get friend requests. User data missing." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, new { error = "Internal server error." });
         }
     }
 
-    [HttpPost("accept")] //api/friends/accept
+    [HttpPost("accept")]
     public async Task<IActionResult> AcceptFriend(Guid requesterId)
     {
+        if (requesterId == Guid.Empty)
+            return BadRequest("Requester ID is invalid");
+
         try
         {
             await _friendsService.AcceptFriendRequestAsync(requesterId, GetCurrentUserId());
-            return Ok();
+            return Ok(new { message = "Friend request accepted." });
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning("The user tried to accept a friend request but the request not exists");
-            return BadRequest(ex.Message);
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(new { error = ex.Message });
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning("User tried to accept a friend request but addresseeId not equal userId");
-            return BadRequest("You can't accept a friend request");
+            _logger.LogWarning(ex, ex.Message);
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, new { error = "Failed to accept friend request." });
         }
     }
 
-    [HttpGet] //api/friends/
+    [HttpGet]
     public async Task<IActionResult> GetFriends()
     {
         try
         {
-            _logger.LogInformation($"Getting friends by user {GetCurrentUserId()}...");
             var result = await _friendsService.GetFriendsAsync(GetCurrentUserId());
-            
             return Ok(BuildUserDtos(result));
         }
-        catch(UnauthorizedAccessException ex)
+        catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, ex.Message);
-            return BadRequest("Something happened during the request... try again");
+            return BadRequest(new { error = "User data not found." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, new { error = "Internal server error." });
         }
     }
 
@@ -124,40 +149,21 @@ public class FriendsController : Controller
         }
         return userId;
     }
-    
-    private List<UserDto> BuildUserDtos(IEnumerable<User> users)
+
+    private List<UserDto> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserDto
     {
-        List<UserDto> userDtos = new List<UserDto>();
-           
-        foreach (var user in users)
-        {
-            userDtos.Add(new UserDto()
-            {
-                Id = user.Id,
-                Description = user.Description,
-                Username = user.Username,
-                WasOnline = user.WasOnline,
-                IconId = user.IconId,
-            });
-        }
-        return userDtos;
-    }
-    
-    private List<FriendshipDto> BuildFriendshipDtos(List<Friendship> result)
+        Id = user.Id,
+        Username = user.Username,
+        Description = user.Description,
+        WasOnline = user.WasOnline,
+        IconId = user.IconId
+    }).ToList();
+
+    private List<FriendshipDto> BuildFriendshipDtos(IEnumerable<Friendship> friendships) => friendships.Select(f => new FriendshipDto
     {
-        List<FriendshipDto> dtos = new List<FriendshipDto>();
-        
-        foreach (var friendship in result)
-        {
-            dtos.Add(new FriendshipDto()
-            {
-                Id = friendship.Id,
-                Status = friendship.Status,
-                AddresseeId =  friendship.AddresseeId,
-                RequesterId = friendship.RequesterId,
-            });    
-        }
-        
-        return dtos;
-    }
+        Id = f.Id,
+        Status = f.Status,
+        AddresseeId = f.AddresseeId,
+        RequesterId = f.RequesterId
+    }).ToList();
 }

@@ -200,7 +200,41 @@ public class UsersRepositoryTests
         Assert.ThrowsAsync<NotFoundByKeyException<IEnumerable<string>>>(async () =>
             await userRepository.FindByRangeUsernamesAsync(usernames));
     }
-
+    
+    [Test]
+    public async Task Given_ValidQuery_When_SearchPotentialFriendsAsync_Then_Returns_Users()
+    {
+        // Arrange
+        var random = new Random();
+        var users = _fixture.CreateMany<User>(random.Next(3, 10)).ToList();
+        
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        context.Users.AddRange(users);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var result = await userRepository.SearchPotentialFriendsAsync(users[1].Id, users[0].Username[..15]);
+        
+        // Assert 
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Count, Is.EqualTo(1));
+        Assert.That(result.First().Id, Is.EqualTo(users[0].Id));
+    }
+    
+    [Test]
+    public async Task Given_InvalidQuery_When_SearchPotentialFriendsAsync_Should_Throw_NotFoundByKeyException()
+    {
+        // Arrange 
+        await using var context = new GovorDbContext(_options);
+        var userRepository = new UsersRepository(context, _userValidator);
+        
+        // Act & Assert 
+        Assert.ThrowsAsync<NotFoundByKeyException<(string,Guid)>>(async () => await 
+            userRepository.SearchPotentialFriendsAsync(_fixture.Create<Guid>(), _fixture.Create<string>()));
+    }
+    
     [Test]
     public async Task Given_ValidDateOnly_When_FindByCreatedDate_Then_Returns_Users()
     {

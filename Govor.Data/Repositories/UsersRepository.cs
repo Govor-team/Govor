@@ -84,7 +84,7 @@ public class UsersRepository : IUsersRepository
                             (f.RequesterId == u.Id && f.AddresseeId == currentUserId)))
             .Take(20)
             .OrderBy(u => u.Username)
-            .ToListAsync();
+            .ToListOrThrowIfEmpty(new NotFoundByKeyException<(string, Guid)>((query, currentUserId), $"Users with given query for user {currentUserId} not found"));
     }
 
     
