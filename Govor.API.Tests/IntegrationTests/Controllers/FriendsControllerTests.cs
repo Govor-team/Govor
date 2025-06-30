@@ -105,6 +105,70 @@ public class FriendsControllerTests
         Assert.That(objectResult.StatusCode, Is.EqualTo(500));
     }
     
+    // Test for SendRequest action
+    [Test]
+    public async Task SendRequest_ValidRequest_ReturnsOk()
+    {
+        var targetUserId = Guid.NewGuid();
+
+        var result = await _controller.SendRequest(targetUserId);
+
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = result as OkObjectResult;
+        Assert.That(okResult?.Value.ToString(), Does.Contain("Friend request sent"));
+    }
+
+    [Test]
+    public async Task SendRequest_Throws_InvalidOperationException_ReturnsUnprocessableEntity()
+    {
+        var targetUserId = Guid.NewGuid();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId()).Returns(targetUserId);
+        
+        _friendsServiceMock.Setup(f => f.SendFriendRequestAsync(targetUserId, targetUserId))
+            .ThrowsAsync(new InvalidOperationException());
+        
+        var result = await _controller.SendRequest(targetUserId);
+
+        Assert.That(result, Is.InstanceOf<UnprocessableEntityObjectResult>());
+    }
+    
+    [Test]
+    public async Task SendRequest_Throws_RequestAlreadySentException_ReturnsConflict()
+    {
+        var targetUserId = Guid.NewGuid();
+        var currentUserId = Guid.NewGuid();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId()).Returns(currentUserId);
+        
+        _friendsServiceMock.Setup(f => f.SendFriendRequestAsync(targetUserId, currentUserId))
+            .ThrowsAsync(new RequestAlreadySentException(currentUserId, targetUserId));
+        
+        var result = await _controller.SendRequest(targetUserId);
+
+        Assert.That(result, Is.InstanceOf<ConflictObjectResult>());
+    }
+    
+    [Test]
+    public async Task SendRequest_StatusCode500_IfThrowsSomeException()
+    {
+        // Arrange 
+        _friendsServiceMock.Setup(f => f.SendFriendRequestAsync(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .ThrowsAsync(new Exception(_fixture.Create<string>()));
+        
+        // Act 
+        var result = await _controller.Search(_fixture.Create<string>());
+        
+        // Assert
+        Assert.That(result, Is.InstanceOf<ObjectResult>());
+        var objectResult = result as ObjectResult;
+        Assert.That(objectResult.StatusCode, Is.EqualTo(500));
+    }
+    
+    // Tests for GetIncomingRequests action 
+    
+    
+    
     [TearDown]
     public void TearDown()
     {
