@@ -1,4 +1,3 @@
-using Govor.Application.Exceptions;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces;
 using Govor.Core.Models;
@@ -110,7 +109,9 @@ public class FriendsService : IFriendsService
         try
         {
             var user = await _usersRepository.FindByIdAsync(userId);
-            return user.ReceivedFriendRequests;
+            return user.ReceivedFriendRequests
+                .Where(f => f.Status == FriendshipStatus.Pending)
+                .ToList();
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
