@@ -96,7 +96,7 @@ public class FriendsServiceTests
     }
 
     [Test]
-    public async Task SearchUsersAsync_Throws_UnauthorizedAccessException_IfThrowsSomeExceptionInUsersRepository()
+    public void SearchUsersAsync_Throws_UnauthorizedAccessException_IfThrowsSomeExceptionInUsersRepository()
     {
         // Arrange 
         _usersRepositoryMock
@@ -108,7 +108,7 @@ public class FriendsServiceTests
     }
     
     [Test]
-    public async Task SearchUsersAsync_Throws_UnauthorizedAccessException_IfThrowsSomeExceptionInFriendshipsRepository()
+    public void SearchUsersAsync_Throws_UnauthorizedAccessException_IfThrowsSomeExceptionInFriendshipsRepository()
     {
         // Arrange 
         _friendshipsRepositoryMock
@@ -127,7 +127,7 @@ public class FriendsServiceTests
         // Arrange
         var userId = Guid.NewGuid();
 
-        // Act + Assert
+        // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
             _service.SendFriendRequestAsync(userId, userId));
 
@@ -145,7 +145,7 @@ public class FriendsServiceTests
             .Setup(repo => repo.Exist(fromUserId, toUserId))
             .Returns(true);
 
-        // Act + Assert
+        // Act & Assert
         Assert.ThrowsAsync<RequestAlreadySentException>(() =>
             _service.SendFriendRequestAsync(fromUserId, toUserId));
     }
@@ -173,5 +173,40 @@ public class FriendsServiceTests
                     f.Id != Guid.Empty
                 )),
             Times.Once);
+    }
+    
+    // AcceptFriendRequestAsync
+    [Test]
+    public async Task AcceptFriendRequestAsync_ValidRequest_CallsUpdateAsync()
+    {
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
+
+        // Act: вызываем именно Accept, не Send
+        await _service.AcceptFriendRequestAsync(friendship.Id, friendship.AddresseeId);
+
+        // Assert
+        _friendshipsRepositoryMock.Verify(r => r.UpdateAsync(It.Is<Friendship>(f =>
+            f.Id == friendship.Id &&
+            f.RequesterId == friendship.RequesterId &&
+            f.AddresseeId == friendship.AddresseeId &&
+            f.Status == FriendshipStatus.Accepted
+        )), Times.Once);
+    }
+
+    [Test]
+    public void AcceptFriendRequestAsync_Throws_InvalidOperationException_IfStatusNotEqualPending()
+    {
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Accepted)
+            .Create();
+        
+        
+
     }
 }
