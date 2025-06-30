@@ -206,7 +206,69 @@ public class FriendsServiceTests
             .With(f => f.Status, FriendshipStatus.Accepted)
             .Create();
         
-        
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
 
+        // Act & Assert 
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.AcceptFriendRequestAsync(friendship.Id, friendship.AddresseeId));
     }
+    [Test]
+    public void AcceptFriendRequestAsync_Throws_UnauthorizedAccessException_IfCurrentUserIdIsNotAddressee()
+    {
+        // Arrange
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
+
+        var wrongUserId = Guid.NewGuid(); // не совпадает с AddresseeId
+
+        // Act & Assert
+        Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            await _service.AcceptFriendRequestAsync(friendship.Id, wrongUserId));
+    }
+    
+    [Test]
+    public void AcceptFriendRequestAsync_Throws_InvalidOperationException_IfFriendshipNotFound()
+    {
+        // Arrange
+        var requestId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(requestId))
+            .ThrowsAsync(new NotFoundByKeyException<Guid>(requestId));
+
+        // Act & Assert
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _service.AcceptFriendRequestAsync(requestId, userId));
+    }
+
+    [Test]
+    public async Task AcceptFriendRequestAsync_ChangesStatusToAccepted()
+    {
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
+
+        Friendship updatedFriendship = null;
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.UpdateAsync(It.IsAny<Friendship>()))
+            .Callback<Friendship>(f => updatedFriendship = f)
+            .Returns(Task.CompletedTask);
+
+        await _service.AcceptFriendRequestAsync(friendship.Id, friendship.AddresseeId);
+
+        Assert.That(updatedFriendship.Status, Is.EqualTo(FriendshipStatus.Accepted));
+    }
+
 }
