@@ -1,8 +1,10 @@
 using Govor.API.Services.AdminsStuff.Interfaces;
 using Govor.API.Services.Authentication.Interfaces;
+using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.AdminsStuff;
 using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Services;
 using Govor.Application.Validators;
 using Govor.Core.Infrastructure.Extensions;
@@ -38,6 +40,9 @@ public static class ConfigurationProgramExtensions
             var env = sp.GetRequiredService<IWebHostEnvironment>();
             return new LocalStorageService(env.ContentRootPath);
         });
+        
+        services.AddHttpContextAccessor(); // it's very important for CurrentUserService
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
     }
 
     public static void AddRepositories(this IServiceCollection services)

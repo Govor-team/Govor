@@ -1,5 +1,6 @@
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces;
+using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
 using Govor.Core.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -14,11 +15,15 @@ public class FriendsController : Controller
 {
     private readonly ILogger<FriendsController> _logger;
     private readonly IFriendsService _friendsService;
-
-    public FriendsController(ILogger<FriendsController> logger, IFriendsService friendsService)
+    private readonly ICurrentUserService _currentUserService;
+    
+    public FriendsController(ILogger<FriendsController> logger,
+        IFriendsService friendsService, 
+        ICurrentUserService currentUserService)
     {
         _logger = logger;
         _friendsService = friendsService;
+        _currentUserService = currentUserService;
     }
 
     [HttpGet("search")]
@@ -29,7 +34,7 @@ public class FriendsController : Controller
 
         try
         {
-            var result = await _friendsService.SearchUsersAsync(query, GetCurrentUserId());
+            var result = await _friendsService.SearchUsersAsync(query, _currentUserService.GetCurrentUserId());
             return Ok(BuildUserDtos(result));
         }
         catch (SearchUsersException ex)
@@ -52,7 +57,7 @@ public class FriendsController : Controller
 
         try
         {
-            await _friendsService.SendFriendRequestAsync(targetUserId, GetCurrentUserId());
+            await _friendsService.SendFriendRequestAsync(targetUserId, _currentUserService.GetCurrentUserId());
             return Ok(new { message = "Friend request sent successfully." });
         }
         catch (InvalidOperationException ex)
@@ -77,7 +82,7 @@ public class FriendsController : Controller
     {
         try
         {
-            var result = await _friendsService.GetIncomingRequestsAsync(GetCurrentUserId());
+            var result = await _friendsService.GetIncomingRequestsAsync(_currentUserService.GetCurrentUserId());
             return Ok(BuildFriendshipDtos(result));
         }
         catch (InvalidOperationException ex)
@@ -100,7 +105,7 @@ public class FriendsController : Controller
 
         try
         {
-            await _friendsService.AcceptFriendRequestAsync(requesterId, GetCurrentUserId());
+            await _friendsService.AcceptFriendRequestAsync(requesterId, _currentUserService.GetCurrentUserId());
             return Ok(new { message = "Friend request accepted." });
         }
         catch (InvalidOperationException ex)
@@ -125,7 +130,7 @@ public class FriendsController : Controller
     {
         try
         {
-            var result = await _friendsService.GetFriendsAsync(GetCurrentUserId());
+            var result = await _friendsService.GetFriendsAsync(_currentUserService.GetCurrentUserId());
             return Ok(BuildUserDtos(result));
         }
         catch (InvalidOperationException ex)
@@ -138,16 +143,6 @@ public class FriendsController : Controller
             _logger.LogError(ex, ex.Message);
             return StatusCode(500, new { error = "Internal server error." });
         }
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = HttpContext.User?.FindFirst("userID")?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-        {
-            throw new UnauthorizedAccessException("userID claim is missing or invalid");
-        }
-        return userId;
     }
 
     private List<UserDto> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserDto

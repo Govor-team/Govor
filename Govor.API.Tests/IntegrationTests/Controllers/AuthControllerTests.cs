@@ -86,9 +86,9 @@ public class AuthControllerTests
         var result = await _controller.Register(request);
 
         // Assert
-        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
-        var badRequestResult = result as BadRequestObjectResult;
-        Assert.That(badRequestResult.Value, Is.EqualTo("Invite link invalid."));
+        Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+        var notFoundObjectResult = result as NotFoundObjectResult;
+        Assert.That(notFoundObjectResult.Value, Is.EqualTo("Invite link invalid."));
     }
 
     [Test]
