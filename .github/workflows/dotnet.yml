@@ -28,5 +28,6 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test Govor.API.Tests/Govor.API.Tests.csproj --no-build --verbosity normal
+
     
