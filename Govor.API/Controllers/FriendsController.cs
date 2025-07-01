@@ -88,7 +88,7 @@ public class FriendsController : Controller
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, ex.Message);
-            return BadRequest(new { error = "Failed to get friend requests. User data missing." });
+            return BadRequest("Failed to get friend requests. User data missing.");
         }
         catch (Exception ex)
         {

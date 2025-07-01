@@ -166,8 +166,216 @@ public class FriendsControllerTests
     }
     
     // Tests for GetIncomingRequests action 
+    [Test]
+    public async Task GetIncomingRequests_ValidRequest_ReturnsOkResult()
+    {
+        // Arrange
+        var currentId = _fixture.Create<Guid>();
+        var friendships = _fixture.CreateMany<Friendship>().ToList();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+        
+        _friendsServiceMock.Setup(f => f.GetIncomingRequestsAsync(currentId))
+            .ReturnsAsync(friendships);
+        // Act 
+        var result = await _controller.GetIncomingRequests();
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = result as OkObjectResult;
+        List<FriendshipDto> value = okResult.Value as List<FriendshipDto>;
+        Assert.That(value, Is.Not.Null);
+        Assert.That(value.Count, Is.EqualTo(friendships.Count));
+    }
+
+    [Test]
+    public async Task GetIncomingRequests_Throws_InvalidOperationException_ReturnsBadRequest()
+    {
+        // Arrange
+        var currentId = _fixture.Create<Guid>();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+        
+        _friendsServiceMock.Setup(f => f.GetIncomingRequestsAsync(currentId))
+            .ThrowsAsync(new InvalidOperationException());
+        
+        // Act 
+        var result = await _controller.GetIncomingRequests();
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+        var badRequestResult = result as BadRequestObjectResult;
+        dynamic value = badRequestResult.Value;
+        Assert.That(value, Is.EqualTo("Failed to get friend requests. User data missing."));
+    }
+
+    [Test]
+    public async Task GetIncomingRequest_StatusCode500_IfThrowsSomeException()
+    {
+        // Arrange
+        var currentId = _fixture.Create<Guid>();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+        
+        _friendsServiceMock.Setup(f => f.GetIncomingRequestsAsync(currentId))
+            .ThrowsAsync(new Exception());
+        
+        // Act 
+        var result = await _controller.GetIncomingRequests();
+        
+        // Assert
+        Assert.That(result, Is.InstanceOf<ObjectResult>());
+        var objectResult = result as ObjectResult;
+        Assert.That(objectResult.StatusCode, Is.EqualTo(500));
+    }
     
+    // Tests for AcceptFriend action 
+
+    [Test]
+    public async Task AcceptFriend_ValidRequest_ReturnsOkResult()
+    {
+        // Arrange 
+        var currentId = Guid.NewGuid();
+        var targetUserId = Guid.NewGuid();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+        // Act 
+        var result = await _controller.AcceptFriend(targetUserId);
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+    }
     
+    [Test]
+    public async Task AcceptFriend_InvalidOperationException_ReturnsNotFound()
+    {
+        // Arrange 
+        var currentId = Guid.NewGuid();
+        var targetUserId = Guid.NewGuid();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+        
+        _friendsServiceMock.Setup(f => f.AcceptFriendRequestAsync(targetUserId, currentId))
+            .ThrowsAsync(new InvalidOperationException());
+        
+        // Act 
+        var result = await _controller.AcceptFriend(targetUserId);
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+    }
+    [Test]
+    public async Task AcceptFriend_UnauthorizedAccessException_ReturnsForbid()
+    {
+        // Arrange 
+        var currentId = Guid.NewGuid();
+        var targetUserId = Guid.NewGuid();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+        
+        _friendsServiceMock.Setup(f => f.AcceptFriendRequestAsync(targetUserId, currentId))
+            .ThrowsAsync(new UnauthorizedAccessException());
+        
+        // Act 
+        var result = await _controller.AcceptFriend(targetUserId);
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<ForbidResult>());
+    }
+    
+    [Test]
+    public async Task AcceptFriend_Exception_ReturnsStatusCode500()
+    {
+        // Arrange 
+        var currentId = Guid.NewGuid();
+        var targetUserId = Guid.NewGuid();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+        
+        _friendsServiceMock.Setup(f => f.AcceptFriendRequestAsync(targetUserId, currentId))
+            .ThrowsAsync(new Exception());
+        
+        // Act 
+        var result = await _controller.AcceptFriend(targetUserId);
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<ObjectResult>());
+        var objectResult = result as ObjectResult;
+        Assert.That(objectResult.StatusCode, Is.EqualTo(500));
+    }
+    
+    // Tests for GetFriends action 
+    [Test]
+    public async Task GetFriends_ValidRequest_ReturnsOkResult()
+    {
+        // Arrange 
+        var currentId = _fixture.Create<Guid>();
+        var users = _fixture.CreateMany<User>().ToList();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+
+        _friendsServiceMock.Setup(f => f.GetFriendsAsync(currentId))
+            .ReturnsAsync(users);
+        // Act 
+        var result = await _controller.GetFriends();
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = result as OkObjectResult;
+        List<UserDto> value = okResult.Value as List<UserDto>;
+        Assert.That(value, Is.Not.Null);
+        Assert.That(value.Count, Is.EqualTo(users.Count));
+    }
+    
+    [Test]
+    public async Task GetFriends_InvalidOperationException_ReturnsBadRequest()
+    {
+        // Arrange 
+        var currentId = _fixture.Create<Guid>();
+        var users = _fixture.CreateMany<User>().ToList();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+
+        _friendsServiceMock.Setup(f => f.GetFriendsAsync(currentId))
+            .ThrowsAsync(new InvalidOperationException());
+        
+        // Act 
+        var result = await _controller.GetFriends();
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+    
+    [Test]
+    public async Task GetFriends_Exception_ReturnsStatusCode500()
+    {
+        // Arrange 
+        var currentId = _fixture.Create<Guid>();
+        var users = _fixture.CreateMany<User>().ToList();
+        
+        _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
+            .Returns(currentId);
+
+        _friendsServiceMock.Setup(f => f.GetFriendsAsync(currentId))
+            .ThrowsAsync(new Exception());
+        
+        // Act 
+        var result = await _controller.GetFriends();
+        
+        // Assert 
+        Assert.That(result, Is.InstanceOf<ObjectResult>());
+        var objectResult = result as ObjectResult;
+        Assert.That(objectResult.StatusCode, Is.EqualTo(500));
+    }
     
     [TearDown]
     public void TearDown()
