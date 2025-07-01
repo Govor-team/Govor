@@ -23,7 +23,7 @@ namespace Govor.ConsoleClient
     class Program
     {
         static string? AuthToken = null;
-        static HttpClientService HttpService = new("https://localhost:7155"); // поменяй URL на свой
+        static HttpClientService HttpService = new("http://5.129.212.144:5041"); // поменяй URL на свой
         private static FriendsClient friendsClient;
         static Dictionary<string, List<string>> ChatHistory = new();
         static string CurrentChatUser = null;
@@ -67,7 +67,7 @@ namespace Govor.ConsoleClient
                     {
                         AuthToken = await HttpService.LoginAsync(loginUsername, loginPassword);
                         HttpClient sharedClient = new();
-                        sharedClient.BaseAddress = new Uri("https://localhost:7155");
+                        sharedClient.BaseAddress = new Uri("http://5.129.212.144:5041");
                         sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthToken);
 
                         friendsClient = new FriendsClient(sharedClient);
@@ -92,7 +92,7 @@ namespace Govor.ConsoleClient
                     {
                         AuthToken = await HttpService.RegisterAsync(regUsername, regPassword, inviteCode);
                         HttpClient sharedClient = new();
-                        sharedClient.BaseAddress = new Uri("https://localhost:7155");
+                        sharedClient.BaseAddress = new Uri("http://5.129.212.144:5041");
                         sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthToken);
 
                         friendsClient = new FriendsClient(sharedClient);
