@@ -13,6 +13,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4ED5259A-6FB4-4D89-8E6B-4778DC68F7D4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{114F53C1-B0AB-4BA0-9E36-0E811D1B3776}"
+	ProjectSection(SolutionItems) = preProject
+		Dockerfile = Dockerfile
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Contracts", "Govor.Contracts\Govor.Contracts.csproj", "{4E94907F-BE20-42A6-AB15-637850FEAD11}"
 EndProject
