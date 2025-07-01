@@ -25,6 +25,7 @@ public class UsersRepository : IUsersRepository
             .Include(u => u.Invite)
             .Include(u => u.ReceivedFriendRequests)
             .Include(u => u.SentFriendRequests)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("Users in Database not exists"));
     }
 
@@ -38,6 +39,7 @@ public class UsersRepository : IUsersRepository
             .Include(u => u.Invite)
             .Include(u => u.ReceivedFriendRequests)
             .Include(u => u.SentFriendRequests)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == id)
                ?? throw new NotFoundByKeyException<Guid>(id, "User with given id does not exist");
     }
@@ -53,6 +55,7 @@ public class UsersRepository : IUsersRepository
             .Include(u => u.Invite)
             .Include(u => u.ReceivedFriendRequests)
             .Include(u => u.SentFriendRequests)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<Guid>>(ids,"Users with given ids not found"));
     }
     
@@ -66,6 +69,7 @@ public class UsersRepository : IUsersRepository
             .Include(u => u.Invite)
             .Include(u => u.ReceivedFriendRequests)
             .Include(u => u.SentFriendRequests)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Username == username)
                ?? throw new NotFoundByKeyException<string>(username, "User with given username does not exist");
     }
@@ -77,6 +81,7 @@ public class UsersRepository : IUsersRepository
             .Include(u => u.Invite)
             .Include(u => u.ReceivedFriendRequests)
             .Include(u => u.SentFriendRequests)
+            .AsSplitQuery()
             .Where(u => u.Id != currentUserId &&
                         u.Username.ToLower().Contains(query.ToLower()) &&
                         !_context.Friendships.Any(f =>
@@ -99,6 +104,7 @@ public class UsersRepository : IUsersRepository
             .Include(u => u.Invite)
             .Include(u => u.ReceivedFriendRequests)
             .Include(u => u.SentFriendRequests)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<string>>(usernames, "Users with given usernames not found"));
     }
 
@@ -113,6 +119,7 @@ public class UsersRepository : IUsersRepository
             .Include(u => u.Invite)
             .Include(u => u.ReceivedFriendRequests)
             .Include(u => u.SentFriendRequests)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<DateOnly>(createdDate, "Users with given created date do not exist"));
     }
     
@@ -145,20 +152,17 @@ public class UsersRepository : IUsersRepository
             var rowsAffected = await _context.Users
                 .Where(u => u.Id == user.Id)
                 .ExecuteUpdateAsync(u => u
-                    .SetProperty(a => a.Username, user.Username)
-                    .SetProperty(u => u.IconId, user.IconId)
-                    .SetProperty(u => u.Description, user.Description)
-                    .SetProperty(u => u.CreatedOn, user.CreatedOn)
-                    .SetProperty(u => u.PasswordHash, user.PasswordHash)
-                    .SetProperty(u => u.WasOnline, user.WasOnline)
+                        .SetProperty(a => a.Username, user.Username)
+                        .SetProperty(u => u.IconId, user.IconId)
+                        .SetProperty(u => u.Description, user.Description)
+                        .SetProperty(u => u.CreatedOn, user.CreatedOn)
+                        .SetProperty(u => u.PasswordHash, user.PasswordHash)
+                        .SetProperty(u => u.WasOnline, user.WasOnline)
+                        .SetProperty(u => u.InviteId, user.InviteId)
                 );
 
             if (rowsAffected == 0)
-                throw new NotFoundByKeyException<Guid>(user.Id);
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new UpdateException($"Not found user by given id {user.Id}", ex);
+                throw new UpdateException($"Not found user by given id {user.Id}");
         }
         catch (Exception ex)
         {

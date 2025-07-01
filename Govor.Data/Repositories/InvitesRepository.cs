@@ -23,6 +23,7 @@ public class InvitesRepository : IInvitesRepository
         return await _context.Invitations
             .AsNoTracking()
             .Include(i => i.Users)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("Database is empty"));
     }
 
@@ -31,6 +32,7 @@ public class InvitesRepository : IInvitesRepository
         return await _context.Invitations
             .AsNoTracking()
             .Include(i => i.Users)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id)
             ?? throw new NotFoundByKeyException<Guid>(id, "Invitation with given id does not exist");
     }
@@ -40,6 +42,7 @@ public class InvitesRepository : IInvitesRepository
         return await _context.Invitations
             .AsNoTracking()
             .Include(i => i.Users)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Code == code)
             ?? throw new NotFoundByKeyException<string>(code, "Invitation with given code does not exist");
     }
@@ -49,6 +52,7 @@ public class InvitesRepository : IInvitesRepository
         return await _context.Invitations
             .AsNoTracking()
             .Include(i => i.Users)
+            .AsSplitQuery()
             .Where(i => i.IsAdmin)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<bool>(true, "Admins invites do not exist"));
     }
@@ -94,11 +98,7 @@ public class InvitesRepository : IInvitesRepository
                 );
 
             if (rowsAffected == 0)
-                throw new NotFoundByKeyException<Guid>(invitation.Id, "Invitation with given data invalid");
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new UpdateException($"Not found invitation by given id {invitation.Id}", ex);
+                throw new UpdateException($"Not found invitation by given id {invitation.Id}");
         }
         catch (Exception ex)
         {

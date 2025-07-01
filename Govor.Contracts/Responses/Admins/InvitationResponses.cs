@@ -1,6 +1,6 @@
 namespace Govor.Contracts.DTOs;
 
-public class InvitationDto
+public class InvitationResponses
 {
     public Guid Id { get; set; }
     public bool IsAdmin { get; set; }
@@ -9,5 +9,6 @@ public class InvitationDto
     public DateTime CreatedAt { get; set; }
     public DateTime EndAt { get; set; }
     public int MaxParticipants { get; set; }
+    public int ParticipantCount { get; set; }
     public string Description { get; set; }
 }

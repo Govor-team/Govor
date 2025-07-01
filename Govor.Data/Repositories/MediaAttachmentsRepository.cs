@@ -23,6 +23,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         return await _context.MediaAttachments
             .AsNoTracking()
             .Include(ma => ma.Message)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("No media attachments found."));
     }
 
@@ -31,6 +32,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         return await _context.MediaAttachments
             .AsNoTracking()
             .Include(ma => ma.Message)
+            .AsSplitQuery()
             .Where(m => m.MessageId == messageId)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(messageId, "No media attachments found by given message Id"));
     }
@@ -40,6 +42,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         return await _context.MediaAttachments
             .AsNoTracking()
             .Include(ma => ma.Message)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id)
             ?? throw new NotFoundByKeyException<Guid>(id, "No media attachments found by given Id");
     }
@@ -80,11 +83,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
                 );
 
             if (rowsAffected == 0)
-                throw new NotFoundByKeyException<Guid>(attachments.Id);
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new UpdateException($"Not found attachments by given id {attachments.Id}", ex);
+                throw new UpdateException($"Not found attachments by given id {attachments.Id}");
         }
         catch (Exception ex)
         {

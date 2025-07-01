@@ -67,19 +67,29 @@ public static class ConfigurationProgramExtensions
 
     public static void AddGovorDbContext(this IServiceCollection services, IConfiguration configuration)
     {
-        var useMySql = configuration.GetValue<bool>("UseMySql"); // Получаем значение из конфигурации
+        var useMySql = configuration.GetValue<bool>("UseMySql");
 
         if (useMySql)
         {
             services.AddDbContext<GovorDbContext>(options =>
-                options.UseMySql(configuration.GetConnectionString(nameof(GovorDbContext)), 
-                    new MySqlServerVersion(new Version(8, 0, 21))));
+            {
+                options
+                    .UseMySql(
+                        configuration.GetConnectionString(nameof(GovorDbContext)),
+                        new MySqlServerVersion(new Version(8, 0, 21))
+                    );
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+            });
         }
         else
         {
             services.AddDbContext<GovorDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString(nameof(GovorDbContext))));
+            {
+                options.UseNpgsql(configuration.GetConnectionString(nameof(GovorDbContext)));
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+            });
         }
     }
+
 
 }

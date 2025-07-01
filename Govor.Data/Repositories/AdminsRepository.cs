@@ -16,6 +16,7 @@ public class AdminsRepository(GovorDbContext context, IObjectValidator<Admin> va
         return await _context.Admins
             .AsNoTracking()
             .Include(a => a.User)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("Database is empty"));
     }
 
@@ -24,6 +25,7 @@ public class AdminsRepository(GovorDbContext context, IObjectValidator<Admin> va
         return await _context.Admins
             .AsNoTracking()
             .Include(a => a.User)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(u => u.UserId == id)
             ?? throw new NotFoundByKeyException<Guid>(id, "User with given id does not exist");
     }
@@ -60,11 +62,7 @@ public class AdminsRepository(GovorDbContext context, IObjectValidator<Admin> va
                 );
 
             if (rowsAffected == 0)
-                throw new NotFoundByKeyException<Guid>(admin.UserId);
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new UpdateException($"Not found admin by given id {admin.UserId}", ex);
+                throw new UpdateException($"Not found admin by given id {admin.UserId}");
         }
         catch (Exception ex)
         {
