@@ -1,5 +1,4 @@
 using Govor.Application.Interfaces;
-using Microsoft.AspNetCore.Hosting;
 namespace Govor.Application.Services;
 
 public class LocalStorageService : IStorageService
