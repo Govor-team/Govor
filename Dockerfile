@@ -23,8 +23,7 @@ WORKDIR /app
 COPY --from=build /app/Govor.API/out ./
 
 # Указываем порт (если используется нестандартный, замени 80)
-EXPOSE 80
-EXPOSE 443
+EXPOSE 8080
 
 # Запускаем приложение
 ENTRYPOINT ["dotnet", "Govor.API.dll"]

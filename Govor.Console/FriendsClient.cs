@@ -12,6 +12,7 @@ namespace Govor.ConsoleClient
             _client = client;
         }
 
+        // ge
         public async Task<List<UserDto>> SearchAsync(string query)
         {
             var response = await _client.GetAsync($"/api/friends/search?query={query}");
