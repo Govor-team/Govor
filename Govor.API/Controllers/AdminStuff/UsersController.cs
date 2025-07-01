@@ -1,4 +1,6 @@
 using Govor.API.Services.AdminsStuff.Interfaces;
+using Govor.Contracts.Responses.Admins;
+using Govor.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,7 +27,7 @@ public class UsersController : Controller
         _logger.LogInformation("Getting all users by administrator");
         var read = await _users.GetAllUsersAsync();
         
-        return Ok(read);
+        return Ok(BuildUserDtos(read));
     }
 
     [HttpGet("{id:guid}")]
@@ -33,4 +35,18 @@ public class UsersController : Controller
     {
         return Ok(id);
     }
+    
+    private List<UserResponse> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserResponse
+    {
+        Id = user.Id,
+        Username = user.Username,
+        Description = user.Description,
+        WasOnline = user.WasOnline,
+        IconId = user.IconId,
+        PasswordHash = user.PasswordHash,
+        InviteId = user.InviteId,
+        CreatedOn = user.CreatedOn,
+        IsAdmin = user.Invite?.IsAdmin ?? false,
+    }).ToList();
+
 }

@@ -233,7 +233,6 @@ public class FriendsControllerTests
     }
     
     // Tests for AcceptFriend action 
-
     [Test]
     public async Task AcceptFriend_ValidRequest_ReturnsOkResult()
     {

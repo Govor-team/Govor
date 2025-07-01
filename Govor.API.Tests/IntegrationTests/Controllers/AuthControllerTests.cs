@@ -48,7 +48,7 @@ public class AuthControllerTests
         var invitation = _fixture.Create<Invitation>();
         var token = _fixture.Create<string>();
 
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Returns(invitation);
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ReturnsAsync(invitation);
         _accountServiceMock.Setup(s => s.RegistrationAsync(request.Name, request.Password, invitation)).ReturnsAsync(token);
 
         // Act
@@ -80,7 +80,7 @@ public class AuthControllerTests
     {
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Throws(new InviteLinkInvalidException(request.InviteLink));
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ThrowsAsync(new InviteLinkInvalidException(request.InviteLink));
 
         // Act
         var result = await _controller.Register(request);
@@ -97,7 +97,7 @@ public class AuthControllerTests
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
         var invitation = _fixture.Create<Invitation>();
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Returns(invitation);
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ReturnsAsync(invitation);
         _accountServiceMock.Setup(s => s.RegistrationAsync(request.Name, request.Password, invitation))
             .ThrowsAsync(new UserAlreadyExistException(request.Name));
 
@@ -116,7 +116,7 @@ public class AuthControllerTests
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
         var invitation = _fixture.Create<Invitation>();
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Returns(invitation);
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ReturnsAsync(invitation);
         _accountServiceMock.Setup(s => s.RegistrationAsync(request.Name, request.Password, invitation))
             .ThrowsAsync(new System.Exception("Generic error"));
     

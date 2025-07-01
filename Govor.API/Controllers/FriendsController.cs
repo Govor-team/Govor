@@ -26,7 +26,7 @@ public class FriendsController : Controller
         _currentUserService = currentUserService;
     }
 
-    [HttpGet("search")]
+    [HttpGet("search")] // api/friends/search?query=
     public async Task<IActionResult> Search(string query)
     {
         if (string.IsNullOrWhiteSpace(query))

@@ -3,11 +3,13 @@ using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Exceptions.InvitesService;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Contracts.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/[controller]")]
 public class AuthController : Controller
 {
@@ -23,7 +25,7 @@ public class AuthController : Controller
     }
     
     [HttpPost("register")]// api/auth/register
-    [RequireHttps] 
+    //[RequireHttps] 
     public async Task<IActionResult> Register([FromBody] RegistrationRequest registrationRequest)
     {
         try
@@ -33,11 +35,11 @@ public class AuthController : Controller
                 return BadRequest(ModelState);
             }
 
-            var invite = _invitesService.Validate(registrationRequest.InviteLink);
+            var invite = await _invitesService.ValidateAsync(registrationRequest.InviteLink);
 
             var token = await _accountService.RegistrationAsync(registrationRequest.Name, registrationRequest.Password,
                 invite);
-            _logger.LogInformation($"Register request for {registrationRequest.Name}");
+            _logger.LogInformation($"Register request for {registrationRequest.Name} processed successfully");
             return Ok(new { token });
         }
         catch (UserAlreadyExistException ex)
@@ -63,7 +65,7 @@ public class AuthController : Controller
     }
     
     [HttpPost("login")]// api/auth/login
-    [RequireHttps] 
+    //[RequireHttps] 
     public async Task<IActionResult> Login([FromBody] LoginRequest userRequest)
     {
         try
@@ -74,7 +76,7 @@ public class AuthController : Controller
             }
 
             var token = await _accountService.LoginAsync(userRequest.Name, userRequest.Password);
-            _logger.LogInformation($"Login request for {userRequest.Name}");
+            _logger.LogInformation($"Login request for {userRequest.Name} processed successfully");
             return Ok(new { token });
         }
         catch (UserNotRegisteredException ex)

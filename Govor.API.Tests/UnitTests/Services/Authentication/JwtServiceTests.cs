@@ -45,7 +45,7 @@ public class JwtServiceTests
         // Arrange
         var user = _fixture.Create<User>();
         var expectedRole = "User";
-        _invitesServiceMock.Setup(s => s.GetRole(user)).Returns(Task.FromResult(expectedRole));
+        _invitesServiceMock.Setup(s => s.GetRoleAsync(user)).Returns(Task.FromResult(expectedRole));
         // Act 
         var tokenString = _jwtService.GenerateJwtToken(user);
 
