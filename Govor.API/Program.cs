@@ -19,13 +19,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        /*policy.WithOrigins("http://localhost:5000", "https://localhost:5000")
+        policy.WithOrigins("http://localhost:5000", "https://5.129.212.144:5000") // Укажите ваш публичный IP
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();*/
-        policy.AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowCredentials();
     });
 });
 
