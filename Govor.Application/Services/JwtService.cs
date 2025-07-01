@@ -23,7 +23,7 @@ public class JwtService : IJwtService
     {
         var claims = new[]
         {
-            new Claim("userID", user.Id.ToString()),
+            new Claim("userId", user.Id.ToString()),
             new Claim(ClaimTypes.Role, _invitesService.GetRoleAsync(user).Result, ClaimValueTypes.String)
         };
         
