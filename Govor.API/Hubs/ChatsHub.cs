@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Govor.Application.Interfaces;
 using Govor.Contracts.Requests.SignalR;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
@@ -13,6 +14,7 @@ namespace Govor.API.Hubs;
 public class ChatsHub : Hub
 {
     private readonly IUsersRepository _usersRepository;
+    private readonly IVerifyFriendship _verifyFriendship;
     private readonly ILogger<ChatsHub> _logger;
 
     public ChatsHub(IUsersRepository usersRepository, ILogger<ChatsHub> logger)
@@ -60,21 +62,22 @@ public class ChatsHub : Hub
         
         var senderId = GetUserId();
         
-        // Проверка существования получателя
-        /*try
+        // Проверка существования получателя и установленной дружбы 
+        try
         {
-            await _usersRepository.FindByIdAsync(toUserId);
+            await _usersRepository.FindByIdAsync(request.RecipientId);
+            await _verifyFriendship.VerifyAsync(senderId, request.RecipientId);
         }
         catch (NotFoundByKeyException<User> ex)
         {
-            _logger.LogWarning("Recipient user {ToUserId} not found", toUserId);
+            _logger.LogWarning("Recipient user {ToUserId} not found", request.RecipientId);
             throw;
         }
         catch (ArgumentException ex)
         {
             _logger.LogWarning("Invalid recipient userId received from user {UserId}", GetUserId());
             throw;
-        }*/
+        }
         
         try
         {

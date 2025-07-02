@@ -22,10 +22,6 @@ public class UsersRepository : IUsersRepository
     {
         return await _context.Users
             .AsNoTracking()
-            .Include(u => u.Invite)
-            .Include(u => u.ReceivedFriendRequests)
-            .Include(u => u.SentFriendRequests)
-            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("Users in Database not exists"));
     }
 
@@ -52,10 +48,6 @@ public class UsersRepository : IUsersRepository
         return await _context.Users
             .AsNoTracking()
             .Where(x => ids.Contains(x.Id))
-            .Include(u => u.Invite)
-            .Include(u => u.ReceivedFriendRequests)
-            .Include(u => u.SentFriendRequests)
-            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<IEnumerable<Guid>>(ids,"Users with given ids not found"));
     }
     
@@ -78,9 +70,6 @@ public class UsersRepository : IUsersRepository
     {
         return await _context.Users
             .AsNoTracking()
-            .Include(u => u.Invite)
-            .Include(u => u.ReceivedFriendRequests)
-            .Include(u => u.SentFriendRequests)
             .AsSplitQuery()
             .Where(u => u.Id != currentUserId &&
                         u.Username.ToLower().Contains(query.ToLower()) &&

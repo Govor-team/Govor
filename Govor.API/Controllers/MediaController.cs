@@ -14,7 +14,6 @@ public class MediaController : Controller
 {
     private readonly ILogger<MediaController> _logger;
     private readonly IStorageService _storageService;
-    private readonly IMediaAttachmentsRepository _repository;
 
     public MediaController(ILogger<MediaController> logger, IStorageService storageService)
     {
@@ -31,14 +30,6 @@ public class MediaController : Controller
            var url = await _storageService.SaveAsync(request.Data,request.FileName);
            var mediaId = Guid.NewGuid();
            
-           _repository.AddAsync(new MediaAttachments()
-           {
-               Id = mediaId,
-               FilePath = url,
-               EncryptedKey = request.EncryptedKey,
-               MimeType = request.MimeType,
-               Type = request.Type,
-           });
            
            return Ok(mediaId);
         }
