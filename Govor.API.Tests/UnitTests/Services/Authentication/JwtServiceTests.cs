@@ -40,14 +40,14 @@ public class JwtServiceTests
     }
 
     [Test]
-    public void GenerateJwtToken_ShouldReturnValidJwtString()
+    public async Task GenerateJwtToken_ShouldReturnValidJwtString()
     {
         // Arrange
         var user = _fixture.Create<User>();
         var expectedRole = "User";
         _invitesServiceMock.Setup(s => s.GetRoleAsync(user)).Returns(Task.FromResult(expectedRole));
         // Act 
-        var tokenString = _jwtService.GenerateJwtToken(user);
+        var tokenString = await _jwtService.GenerateJwtTokenAsync(user);
 
         // Assert
         Assert.That(tokenString, Is.Not.Null.And.Not.Empty);

@@ -57,7 +57,7 @@ public class AuthService : IAccountService
         
         SetRole(user, invitation);
         
-        return _jwtService.GenerateJwtToken(user);
+        return await _jwtService.GenerateJwtTokenAsync(user);
     }
 
 
@@ -71,7 +71,7 @@ public class AuthService : IAccountService
         if (_passwordHasher.Verify(password, user.PasswordHash) == false)
             throw new LoginUserException();
         
-        return _jwtService.GenerateJwtToken(user);
+        return await _jwtService.GenerateJwtTokenAsync(user);
     }
 
     private async void SetRole(User user, Invitation invitation)

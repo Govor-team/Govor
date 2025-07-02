@@ -24,16 +24,35 @@ public class UsersController : Controller
     [HttpGet]
     public async Task<IActionResult> AllUsers()
     {
-        _logger.LogInformation("Getting all users by administrator");
-        var read = await _users.GetAllUsersAsync();
+        try
+        {
+            _logger.LogInformation("Getting all users by administrator");
+            var read = await _users.GetAllUsersAsync();
         
-        return Ok(BuildUserDtos(read));
+            return Ok(BuildUserDtos(read));
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return StatusCode(500, e.Message);
+        }
+
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetUserById(Guid id)
     {
-        return Ok(id);
+        try
+        {
+            _logger.LogInformation($"Getting user {id} by administrator");
+            var read = await _users.GetUserById(id);
+            return Ok(BuildUserDtos([read]).First());
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return StatusCode(500, e.Message);
+        }
     }
     
     private List<UserResponse> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserResponse

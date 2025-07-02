@@ -26,4 +26,11 @@ public class UsersService : IUsersAdministration
             return new List<User>();
         }
     }
+
+    public async Task<User> GetUserById(Guid userId)
+    {
+        var result = await _usersRepository.FindByIdAsync(userId);
+            
+        return result;
+    }
 }

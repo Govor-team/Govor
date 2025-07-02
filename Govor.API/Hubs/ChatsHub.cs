@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Govor.Contracts.Requests.SignalR;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
@@ -48,19 +49,19 @@ public class ChatsHub : Hub
         
     }
     
-    public async Task Send(string message, Guid toUserId)
+    public async Task Send(MessageRequest request)
     {
         // Валидация входных данных
-        if (string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(request.EncryptedContent))
         {
             _logger.LogWarning("Empty message received from user {UserId}", GetUserId());
-            throw new ArgumentException("Message cannot be empty", nameof(message));
+            throw new ArgumentException("Message cannot be empty", nameof(request.EncryptedContent));
         }
         
         var senderId = GetUserId();
         
         // Проверка существования получателя
-        try
+        /*try
         {
             await _usersRepository.FindByIdAsync(toUserId);
         }
@@ -73,19 +74,19 @@ public class ChatsHub : Hub
         {
             _logger.LogWarning("Invalid recipient userId received from user {UserId}", GetUserId());
             throw;
-        }
+        }*/
         
         try
         {
-            _logger.LogInformation("Message sent from {SenderId} to {RecipientId}: {Message}", senderId, toUserId, message);
+            _logger.LogInformation("Message sent from {SenderId} to {RecipientId} at {UtcNow}", senderId, request.RecipientId, DateTime.UtcNow);
 
             // Отправка сообщения отправителю и получателю
-            await Clients.Group(toUserId.ToString()).SendAsync("Receive", message, senderId);
-            await Clients.Group(senderId.ToString()).SendAsync("Receive", message, senderId);
+            //await Clients.Group(request.RecipientId.ToString()).SendAsync("Receive", message, senderId);
+            // Clients.Group(senderId.ToString()).SendAsync("Receive", message, senderId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending message from {SenderId} to {RecipientId}", senderId, toUserId);
+            //_logger.LogError(ex, "Error sending message from {SenderId} to {RecipientId}", senderId, toUserId);
             throw;
         }
     }

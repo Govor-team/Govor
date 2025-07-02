@@ -19,12 +19,12 @@ public class JwtService : IJwtService
         _invitesService = invitesService;
     }
     
-    public string GenerateJwtToken(User user)
+    public async Task<string> GenerateJwtTokenAsync(User user)
     {
         var claims = new[]
         {
             new Claim("userId", user.Id.ToString()),
-            new Claim(ClaimTypes.Role, _invitesService.GetRoleAsync(user).Result, ClaimValueTypes.String)
+            new Claim(ClaimTypes.Role, await _invitesService.GetRoleAsync(user), ClaimValueTypes.String)
         };
         
         var singing = new SigningCredentials(
