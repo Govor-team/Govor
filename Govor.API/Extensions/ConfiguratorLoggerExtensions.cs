@@ -9,7 +9,7 @@ public static class ConfiguratorLoggerExtensions
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .WriteTo.Console() 
-            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day) // Лог в файл, ежедневно
+            .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day) // Лог в файл, ежедневно
             .CreateLogger();
         
         builder.Host.UseSerilog();
