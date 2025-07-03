@@ -57,7 +57,7 @@ public class FriendsController : Controller
 
         try
         {
-            await _friendsService.SendFriendRequestAsync(targetUserId, _currentUserService.GetCurrentUserId());
+            await _friendsService.SendFriendRequestAsync(_currentUserService.GetCurrentUserId(), targetUserId);
             return Ok(new { message = "Friend request sent successfully." });
         }
         catch (InvalidOperationException ex)
@@ -98,14 +98,14 @@ public class FriendsController : Controller
     }
 
     [HttpPost("accept")]
-    public async Task<IActionResult> AcceptFriend(Guid requesterId)
+    public async Task<IActionResult> AcceptFriend(Guid friendshipId)
     {
-        if (requesterId == Guid.Empty)
+        if (friendshipId == Guid.Empty)
             return BadRequest("Requester ID is invalid");
 
         try
         {
-            await _friendsService.AcceptFriendRequestAsync(requesterId, _currentUserService.GetCurrentUserId());
+            await _friendsService.AcceptFriendRequestAsync(friendshipId, _currentUserService.GetCurrentUserId());
             return Ok(new { message = "Friend request accepted." });
         }
         catch (InvalidOperationException ex)
@@ -136,7 +136,7 @@ public class FriendsController : Controller
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, ex.Message);
-            return BadRequest(new { error = "User data not found." });
+            return Ok(Array.Empty<UserDto>());
         }
         catch (Exception ex)
         {

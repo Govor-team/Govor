@@ -46,7 +46,8 @@ public class FriendshipsRepository : IFriendshipsRepository
             .Include(x => x.Requester)
             .Include(x => x.Addressee)
             .AsSplitQuery()
-            .Where(x => x.RequesterId == userId)
+            .Where(f =>
+                (f.RequesterId == userId || f.AddresseeId == userId))
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(userId, "Friendship with given user id was not found"));
     }
 
@@ -113,6 +114,7 @@ public class FriendshipsRepository : IFriendshipsRepository
 
     public bool Exist(Guid requesterId, Guid addresseeId)
     {
-        return _context.Friendships.AsNoTracking().Any(x => (x.RequesterId == requesterId && x.AddresseeId == addresseeId));
+        return _context.Friendships.AsNoTracking().Any(x => (x.RequesterId == requesterId && x.AddresseeId == addresseeId) ||
+                                                            x.RequesterId == addresseeId && x.AddresseeId == requesterId);
     }
 }

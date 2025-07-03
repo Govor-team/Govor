@@ -54,4 +54,10 @@ public class OnlinePingingController : Controller
             return StatusCode(500, new { error = "Failed to send friend request." });
         }
     }
+
+    [HttpGet("is-online")]
+    public async Task<IActionResult> IsOnline(Guid userId)
+    {
+        return BadRequest();
+    }
 }

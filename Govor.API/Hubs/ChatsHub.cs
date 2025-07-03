@@ -1,11 +1,9 @@
-using System.Security.Claims;
-using Govor.Application.Interfaces;
+using Govor.API.Services;
+using Govor.Application.Interfaces.Messages;
+using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Contracts.Requests.SignalR;
 using Govor.Core.Models;
-using Govor.Core.Repositories.Users;
-using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Govor.API.Hubs;
@@ -13,14 +11,16 @@ namespace Govor.API.Hubs;
 [Authorize]
 public class ChatsHub : Hub
 {
-    private readonly IUsersRepository _usersRepository;
-    private readonly IVerifyFriendship _verifyFriendship;
     private readonly ILogger<ChatsHub> _logger;
-
-    public ChatsHub(IUsersRepository usersRepository, ILogger<ChatsHub> logger)
+    private readonly IChatService _chatService;
+    private readonly IGroupService _groupService;
+    
+    public ChatsHub(ILogger<ChatsHub> logger,
+        IChatService chatService
+        )
     {
-        _usersRepository = usersRepository;
         _logger = logger;
+        _chatService = chatService;
     }
 
     public override async Task OnConnectedAsync()
@@ -28,7 +28,7 @@ public class ChatsHub : Hub
         var userId = GetUserId();
         if (userId != Guid.Empty)
         {
-            // Привязываем ConnectionId к UserId
+            // Binding ConnectionId to UserId
             await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
             _logger.LogInformation("User {UserId} connected with ConnectionId {ConnectionId}", userId, Context.ConnectionId);
         }
@@ -46,6 +46,11 @@ public class ChatsHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
+    public async Task Remove(Guid recipientId, Guid messageId)
+    {
+        
+    }
+    
     public async Task Edit(string newMessage, Guid messageId)
     {
         
@@ -53,7 +58,6 @@ public class ChatsHub : Hub
     
     public async Task Send(MessageRequest request)
     {
-        // Валидация входных данных
         if (string.IsNullOrWhiteSpace(request.EncryptedContent))
         {
             _logger.LogWarning("Empty message received from user {UserId}", GetUserId());
@@ -62,36 +66,41 @@ public class ChatsHub : Hub
         
         var senderId = GetUserId();
         
-        // Проверка существования получателя и установленной дружбы 
-        try
-        {
-            await _usersRepository.FindByIdAsync(request.RecipientId);
-            await _verifyFriendship.VerifyAsync(senderId, request.RecipientId);
-        }
-        catch (NotFoundByKeyException<User> ex)
-        {
-            _logger.LogWarning("Recipient user {ToUserId} not found", request.RecipientId);
-            throw;
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning("Invalid recipient userId received from user {UserId}", GetUserId());
-            throw;
-        }
-        
         try
         {
             _logger.LogInformation("Message sent from {SenderId} to {RecipientId} at {UtcNow}", senderId, request.RecipientId, DateTime.UtcNow);
+            
+            var message = new SendMessage(
+                EncryptContent: request.EncryptedContent,
+                ReplyToMessageId: request.ReplyToMessageId,
+                FromUserId: senderId,
+                RecipientId: request.RecipientId,
+                SendAt: DateTime.UtcNow,
+                Media: request.MediaAttachments?.Select(f => new SendMedia(
+                    f.MediaId, f.EncryptedKey, f.Type, f.MimeType)) ?? Array.Empty<SendMedia>());
 
-            // Отправка сообщения отправителю и получателю
-            //await Clients.Group(request.RecipientId.ToString()).SendAsync("Receive", message, senderId);
-            // Clients.Group(senderId.ToString()).SendAsync("Receive", message, senderId);
+            if (request.RecipientType == RecipientType.User)
+            {
+                await SendUser(message);
+            }
+            // TODO: Send to Group 
         }
         catch (Exception ex)
         {
-            //_logger.LogError(ex, "Error sending message from {SenderId} to {RecipientId}", senderId, toUserId);
+            _logger.LogError(ex, "Error sending message from {SenderId} to {RecipientId}", senderId, request.RecipientId);
             throw;
         }
+    }
+    
+    private async Task SendUser(SendMessage sendMessage)
+    {
+        Result result = await _chatService.SendMessageAsync(sendMessage);
+        if(result.IsSuccess == false)
+            throw result.Exception;
+        
+        // Sending a message to the sender and recipient
+        await Clients.Group(sendMessage.RecipientId.ToString()).SendAsync("Receive", sendMessage);
+        await Clients.Group(sendMessage.FromUserId.ToString()).SendAsync("Receive", sendMessage);
     }
     
     private Guid GetUserId()

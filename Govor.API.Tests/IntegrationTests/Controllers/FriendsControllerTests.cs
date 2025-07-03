@@ -141,7 +141,7 @@ public class FriendsControllerTests
         
         _currentUserServiceMock.Setup(c => c.GetCurrentUserId()).Returns(currentUserId);
         
-        _friendsServiceMock.Setup(f => f.SendFriendRequestAsync(targetUserId, currentUserId))
+        _friendsServiceMock.Setup(f => f.SendFriendRequestAsync(currentUserId, targetUserId))
             .ThrowsAsync(new RequestAlreadySentException(currentUserId, targetUserId));
         
         var result = await _controller.SendRequest(targetUserId);
@@ -351,7 +351,7 @@ public class FriendsControllerTests
         var result = await _controller.GetFriends();
         
         // Assert 
-        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
     }
     
     [Test]
