@@ -118,7 +118,7 @@ public class MessagesRepository : IMessagesRepository
                     .SetProperty(m => m.ReplyToMessageId, message.ReplyToMessageId)
                     .SetProperty(m => m.MessageViews, message.MessageViews)
                     .SetProperty(m => m.MediaAttachments, message.MediaAttachments)
-                   
+                
                 );
 
             if (rowsAffected == 0)

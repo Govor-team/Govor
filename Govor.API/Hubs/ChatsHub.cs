@@ -2,6 +2,7 @@ using Govor.API.Services;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Contracts.Requests.SignalR;
+using Govor.Contracts.Responses.SignalR;
 using Govor.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -26,12 +27,14 @@ public class ChatsHub : Hub
     public override async Task OnConnectedAsync()
     {
         var userId = GetUserId();
+        
         if (userId != Guid.Empty)
         {
             // Binding ConnectionId to UserId
             await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
             _logger.LogInformation("User {UserId} connected with ConnectionId {ConnectionId}", userId, Context.ConnectionId);
         }
+        
         await base.OnConnectedAsync();
     }
 
@@ -54,6 +57,33 @@ public class ChatsHub : Hub
     public async Task Edit(string newMessage, Guid messageId)
     {
         
+    }
+    
+    public async Task SendGroup(GroupMessageRequest request)
+    {
+        var senderId = GetUserId();
+
+        // Создание сообщения
+        var message = new SendMessage(
+            EncryptContent: request.EncryptedContent,
+            ReplyToMessageId: request.ReplyToMessageId,
+            FromUserId: senderId,
+            RecipientId: request.GroupId,
+            SendAt: DateTime.UtcNow,
+            Media: request.MediaAttachments?.Select(f => new SendMedia(
+                f.MediaId, f.EncryptedKey, f.Type, f.MimeType)) ?? Array.Empty<SendMedia>());
+
+        var result = await _groupService.SendMessageAsync(message);
+        
+        if (!result.IsSuccess)
+            throw result.Exception!;
+
+        // Шлём всем участникам группы, кроме отправителя
+        await Clients.GroupExcept($"group_{request.GroupId}", Context.ConnectionId)
+            .SendAsync("ReceiveGroupMessage", message);
+
+        // Отправителю тоже
+        await Clients.Caller.SendAsync("ReceiveGroupMessage", message);
     }
     
     public async Task Send(MessageRequest request)
@@ -79,10 +109,13 @@ public class ChatsHub : Hub
                 Media: request.MediaAttachments?.Select(f => new SendMedia(
                     f.MediaId, f.EncryptedKey, f.Type, f.MimeType)) ?? Array.Empty<SendMedia>());
 
-            if (request.RecipientType == RecipientType.User)
-            {
-                await SendUser(message);
-            }
+            Result result = await _chatService.SendMessageAsync(message);
+            if(result.IsSuccess == false)
+                throw result.Exception;
+            
+            // Sending a message to the sender and recipient
+            await Clients.Group(message.RecipientId.ToString()).SendAsync("Receive", message);
+            await Clients.Group(message.FromUserId.ToString()).SendAsync("Receive", message);
             // TODO: Send to Group 
         }
         catch (Exception ex)
@@ -90,17 +123,6 @@ public class ChatsHub : Hub
             _logger.LogError(ex, "Error sending message from {SenderId} to {RecipientId}", senderId, request.RecipientId);
             throw;
         }
-    }
-    
-    private async Task SendUser(SendMessage sendMessage)
-    {
-        Result result = await _chatService.SendMessageAsync(sendMessage);
-        if(result.IsSuccess == false)
-            throw result.Exception;
-        
-        // Sending a message to the sender and recipient
-        await Clients.Group(sendMessage.RecipientId.ToString()).SendAsync("Receive", sendMessage);
-        await Clients.Group(sendMessage.FromUserId.ToString()).SendAsync("Receive", sendMessage);
     }
     
     private Guid GetUserId()

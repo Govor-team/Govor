@@ -48,11 +48,12 @@ public class PrivateChatService : IChatService
             };
             
             await _messages.AddAsync(message);
-            return new Result(true, null);
+            
+            return new Result(true, null, messageId);
         }
         catch (Exception ex)
         {
-            return new Result(false, ex);
+            return new Result(false, ex, Guid.Empty);
         }
     }
 
