@@ -1,9 +1,16 @@
-using Govor.Application.Interfaces.Messages;
+using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Core.Models;
 
-namespace Govor.API.Services;
+namespace Govor.Application.Interfaces;
 
-public interface IGroupService : IMessageSendingService, IMessageManagementService
+public interface IGroupService
 {
-    ChatGroup GetGroupByInvite(string code);
+    Task<ChatGroup> GetGroupByIdAsync(Guid groupId);
+    Task<ChatGroup> CreateGroupAsync(string name, Guid creatorId, IEnumerable<Guid> initialMemberIds);
+    Task<Result> AddUserToGroupByInvitationAsync(Guid userId, string invitationCode);
+    Task<Result> RemoveUserFromGroupAsync(Guid groupId, Guid userId, Guid removedByUserId);
+    Task<Result> DeleteGroupAsync(Guid groupId, Guid userId); 
+    Task<List<User>> GetGroupMembersAsync(Guid groupId); 
+    Task<List<ChatGroup>>GetUserGroupsAsync(Guid userId); 
+    ChatGroup GetGroupByInviteCode(string code);
 }

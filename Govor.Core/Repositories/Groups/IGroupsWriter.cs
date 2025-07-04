@@ -1,6 +1,6 @@
 namespace Govor.Core.Repositories.Groups;
 
-public interface IGroupsReader
+public interface IGroupsWriter
 {
     
 }
