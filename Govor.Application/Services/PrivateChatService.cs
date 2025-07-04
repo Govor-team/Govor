@@ -1,69 +1,48 @@
 using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Messages;
-using Govor.Application.Interfaces.Messages.Parameters;
-using Govor.Core.Models;
-using Govor.Core.Repositories.Messages;
-using Govor.Data;
-using Microsoft.EntityFrameworkCore;
+// using Govor.Application.Interfaces.Messages; // No longer needed
+// using Govor.Application.Interfaces.Messages.Parameters; // No longer needed
+// using Govor.Core.Models; // No longer needed unless other methods use Core models
+// using Govor.Core.Repositories.Messages; // No longer needed
+using Microsoft.Extensions.Logging;
 
 namespace Govor.Application.Services;
 
-public class PrivateChatService : IChatService
+// This service might handle creation/deletion of private chat sessions if that's
+// more than just sending a message to a user (e.g., if private chats are explicit entities).
+// For now, it primarily relies on IVerifyFriendship.
+// If friendship verification is the only role, its methods could be absorbed elsewhere,
+// or this service could be enhanced with other private chat management features.
+public class PrivateChatService // No longer implements IChatService
 {
     private readonly IVerifyFriendship _verifyFriendship;
-    private readonly IMessagesRepository _messages;
-    
-    public PrivateChatService(IMessagesRepository messages, IVerifyFriendship verifyFriendship)
+    private readonly ILogger<PrivateChatService> _logger;
+
+    public PrivateChatService(IVerifyFriendship verifyFriendship, ILogger<PrivateChatService> logger)
     {
-        _messages = messages;
         _verifyFriendship = verifyFriendship;
-    }
-    
-    public async Task<Result> SendMessageAsync(SendMessage newMessage)
-    {
-        try
-        {
-            await _verifyFriendship.VerifyAsync(newMessage.FromUserId, newMessage.RecipientId);
-
-            var messageId = Guid.NewGuid();
-            
-            var message = new Message()
-            {
-                Id = messageId,
-                EncryptedContent = newMessage.EncryptContent,
-                IsEdited = false,
-                SenderId = newMessage.FromUserId,
-                RecipientId = newMessage.RecipientId,
-                RecipientType = RecipientType.User,
-                ReplyToMessageId = newMessage.ReplyToMessageId,
-                
-                MediaAttachments = newMessage.Media.Select(m => new MediaAttachments()
-                {
-                    Id = m.Id,
-                    MessageId = messageId,
-                    Type = m.Type,
-                    MimeType = m.MimeType,
-                    EncryptedKey = m.EncryptedKey,
-                }).ToList()
-            };
-            
-            await _messages.AddAsync(message);
-            
-            return new Result(true, null, messageId);
-        }
-        catch (Exception ex)
-        {
-            return new Result(false, ex, Guid.Empty);
-        }
+        _logger = logger;
     }
 
-    public Task<Result> EditMessageAsync(Guid editorId, Guid messageId, string newContent)
-    {
-        throw new NotImplementedException();
-    }
+    // Example of a method that might remain or be added:
+    // public async Task<bool> CanUserChatWithAsync(Guid userId1, Guid userId2)
+    // {
+    //     try
+    //     {
+    //         await _verifyFriendship.VerifyAsync(userId1, userId2);
+    //         return true;
+    //     }
+    //     catch (FriendshipException) // Or whatever exception VerifyAsync throws
+    //     {
+    //         return false;
+    //     }
+    // }
 
-    public Task<Result> DeleteMessageAsync(Guid editorId, Guid messageId)
+    // All message sending, editing, deleting methods are removed as they are now in MessageService.
+    // If this service has no other responsibilities, it could be a candidate for removal,
+    // and IVerifyFriendship could be injected directly where needed (e.g. MessageService).
+    // However, keeping it allows for future expansion of private chat-specific logic.
+    public void PlaceholderMethod()
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("PrivateChatService is currently a placeholder after message management refactoring.");
     }
 }

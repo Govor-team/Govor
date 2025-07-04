@@ -17,10 +17,14 @@ public class MessagesRepository : IMessagesRepository
         _validator = validator;
     }
     
+    private IQueryable<Message> GetBaseQuery()
+    {
+        return _context.Messages.AsNoTracking();
+    }
+
     public async Task<List<Message>> GetAllAsync()
     {
-        return await _context.Messages
-            .AsNoTracking()
+        return await GetBaseQuery()
             .Include(m => m.ReplyToMessage)
             .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("No messages found in the database"));
@@ -28,18 +32,17 @@ public class MessagesRepository : IMessagesRepository
 
     public async Task<Message> FindByIdAsync(Guid messageId)
     {
-        return await _context.Messages
-                   .AsNoTracking()
+        return await GetBaseQuery()
                    .Include(m => m.ReplyToMessage)
+                   .Include(m => m.MediaAttachments)
                    .AsSplitQuery()
                    .FirstOrDefaultAsync(m => m.Id == messageId)
-               ?? throw new NotFoundByKeyException<Guid>(messageId, "Message with given id does not exist");
+               ?? throw new NotFoundByKeyException<Guid>(messageId, "Message with given id does not exist.");
     }
 
     public async Task<List<Message>> FindBySenderIdAsync(Guid senderId)
     {
-        return await _context.Messages
-            .AsNoTracking()
+        return await GetBaseQuery()
             .Include(m => m.ReplyToMessage)
             .AsSplitQuery()
             .Where(m => m.SenderId == senderId)
@@ -48,8 +51,7 @@ public class MessagesRepository : IMessagesRepository
 
     public async Task<List<Message>> FindByReceiverIdAsync(Guid receiverId)
     {
-        return await _context.Messages
-            .AsNoTracking()
+        return await GetBaseQuery()
             .Include(m => m.ReplyToMessage)
             .AsSplitQuery()
             .Where(m => m.RecipientId == receiverId)
@@ -58,8 +60,7 @@ public class MessagesRepository : IMessagesRepository
 
     public async Task<List<Message>> FindBySenderAndReceiverIdAsync(Guid senderId, Guid receiverId, RecipientType recipientType = RecipientType.User)
     {
-        return await _context.Messages
-            .AsNoTracking()
+        return await GetBaseQuery()
             .Include(m => m.ReplyToMessage)
             .AsSplitQuery()
             .Where(m => m.SenderId == senderId 
@@ -70,8 +71,7 @@ public class MessagesRepository : IMessagesRepository
     
     public async Task<List<Message>> FindBySentAtAsync(DateTime date)
     {
-        return await _context.Messages
-            .AsNoTracking()
+        return await GetBaseQuery()
             .Include(m => m.ReplyToMessage)
             .AsSplitQuery()
             .Where(m => m.SentAt == date)
@@ -107,45 +107,42 @@ public class MessagesRepository : IMessagesRepository
             var rowsAffected = await _context.Messages
                 .Where(m => m.Id == message.Id)
                 .ExecuteUpdateAsync(u => u
-                    .SetProperty(m => m.SenderId, message.SenderId)
-                    .SetProperty(m => m.RecipientId, message.RecipientId)
-                    .SetProperty(m => m.SentAt, message.SentAt)
-                    .SetProperty(m => m.RecipientType, message.RecipientType)
                     .SetProperty(m => m.EncryptedContent, message.EncryptedContent)
                     .SetProperty(m => m.EditedAt, message.EditedAt)
                     .SetProperty(m => m.IsEdited, message.IsEdited)
-                    .SetProperty(m => m.Reactions, message.Reactions)
-                    .SetProperty(m => m.ReplyToMessageId, message.ReplyToMessageId)
-                    .SetProperty(m => m.MessageViews, message.MessageViews)
-                    .SetProperty(m => m.MediaAttachments, message.MediaAttachments)
-                
                 );
 
             if (rowsAffected == 0)
-                throw new UpdateException($"Not found message by given id {message.Id}");
+                throw new UpdateException($"Message with ID {message.Id} not found or no changes detected.");
+        }
+        catch (InvalidObjectException<Message> ex)
+        {
+            throw new UpdateException($"Invalid message data for ID {message.Id}", ex);
         }
         catch (Exception ex)
         {
-            throw new UpdateException($"Error when updating the message {message.Id}", ex);
+            throw new UpdateException($"Error when updating message {message.Id}", ex);
         }
     }
 
-    public async Task RemoveAsync(Guid messageId)
+    public async Task RemoveAsync(Guid messageId) // Reverted to Hard Delete
     {
         try
         {
-            var result = await FindByIdAsync(messageId);
+            var message = await _context.Messages.FindAsync(messageId); // Find first, to ensure it exists
+            if (message == null)
+                throw new NotFoundByKeyException<Guid>(messageId, "Message not found.");
 
-            _context.Messages.Remove(result);
+            _context.Messages.Remove(message);
             await _context.SaveChangesAsync();
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            throw new RemoveException($"Not found message by given id {messageId}", ex);
+            throw new RemoveException($"Message with ID {messageId} not found.", ex);
         }
-        catch (Exception ex)
+        catch (Exception ex) // Catches DbUpdateException if there are FK constraints, etc.
         {
-            throw new RemoveException("Error when removing the message", ex);
+            throw new RemoveException($"Error when deleting message {messageId}", ex);
         }
     }
 
@@ -153,13 +150,11 @@ public class MessagesRepository : IMessagesRepository
     {
         _validator.Validate(message);
         
-        return _context.Messages.Any(
+        return GetBaseQuery().Any(
             m => m.Id == message.Id &&
             m.SenderId == message.SenderId && 
             m.RecipientId == message.RecipientId &&
             m.EncryptedContent == message.EncryptedContent &&
-            m.EditedAt == message.EditedAt &&
-            m.IsEdited == message.IsEdited &&
             m.SentAt == message.SentAt && 
             m.ReplyToMessageId == message.ReplyToMessageId
         );
@@ -167,6 +162,6 @@ public class MessagesRepository : IMessagesRepository
 
     public bool Exist(Guid messageId)
     {
-        return _context.Messages.Any(m => m.Id == messageId);
+        return GetBaseQuery().Any(m => m.Id == messageId);
     }
 }
