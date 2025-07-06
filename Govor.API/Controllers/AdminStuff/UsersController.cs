@@ -1,6 +1,7 @@
 using Govor.API.Services.AdminsStuff.Interfaces;
 using Govor.Contracts.Responses.Admins;
 using Govor.Core.Models;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,12 +49,18 @@ public class UsersController : Controller
             var read = await _users.GetUserById(id);
             return Ok(BuildUserDtos([read]).First());
         }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(ex.Message);
+        }
         catch (Exception e)
         {
             _logger.LogError(e, e.Message);
             return StatusCode(500, e.Message);
         }
     }
+    
     
     private List<UserResponse> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserResponse
     {

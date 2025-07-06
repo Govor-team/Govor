@@ -90,6 +90,7 @@ public class FriendsService : IFriendsService
             var friendships = await _friendshipsRepository.FindByUserIdAsync(userId);
 
             return friendships
+                .Where(f => f.Status == FriendshipStatus.Accepted)
                 .Select(f => f.RequesterId == userId ? f.Addressee : f.Requester)
                 .ToList();
         }
@@ -103,10 +104,8 @@ public class FriendsService : IFriendsService
     {
         try
         {
-            var user = await _usersRepository.FindByIdAsync(userId);
-            return user.ReceivedFriendRequests
-                .Where(f => f.Status == FriendshipStatus.Pending)
-                .ToList();
+            var friendships = await _friendshipsRepository.FindByUserIdAsync(userId);
+            return friendships.Where(f => f.AddresseeId == userId && f.Status == FriendshipStatus.Pending).ToList();
         }
         catch (NotFoundByKeyException<Guid> ex)
         {

@@ -98,7 +98,7 @@ public class FriendsController : Controller
     }
 
     [HttpPost("accept")]
-    public async Task<IActionResult> AcceptFriend(Guid friendshipId)
+    public async Task<IActionResult> AcceptFriend([FromQuery] Guid friendshipId)
     {
         if (friendshipId == Guid.Empty)
             return BadRequest("Requester ID is invalid");
@@ -144,7 +144,7 @@ public class FriendsController : Controller
             return StatusCode(500, new { error = "Internal server error." });
         }
     }
-
+    
     private List<UserDto> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserDto
     {
         Id = user.Id,
@@ -159,6 +159,7 @@ public class FriendsController : Controller
         Id = f.Id,
         Status = f.Status,
         AddresseeId = f.AddresseeId,
-        RequesterId = f.RequesterId
+        RequesterId = f.RequesterId,
+        Requester = BuildUserDtos([f.Requester]).First(),
     }).ToList();
 }

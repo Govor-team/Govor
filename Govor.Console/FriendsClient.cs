@@ -36,8 +36,7 @@ namespace Govor.ConsoleClient
 
         public async Task AcceptFriendRequestAsync(Guid requesterId)
         {
-            var content = JsonContent.Create(requesterId);
-            var response = await _client.PostAsync("/api/friends/accept", content);
+            var response = await _client.PostAsync($"/api/friends/accept?friendshipId={requesterId}", null);
             response.EnsureSuccessStatusCode();
         }
 

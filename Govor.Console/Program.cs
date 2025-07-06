@@ -25,8 +25,10 @@ namespace Govor.ConsoleClient
 {
     class Program
     {
+        //static string baseUrl = "https://govor-team-govor-88b3.twc1.net";
+        static string baseUrl = "https://localhost:7155";
         static string? AuthToken = null;
-        static HttpClientService HttpService = new("https://govor-team-govor-88b3.twc1.net"); // поменяй URL на свой
+        static HttpClientService HttpService = new(baseUrl); // поменяй URL на свой
         private static FriendsClient? friendsClient;
         static HubConnection? _hubConnection;
         static Dictionary<string, List<string>> ChatHistory = new();
@@ -72,7 +74,7 @@ namespace Govor.ConsoleClient
                     {
                         AuthToken = await HttpService.LoginAsync(loginUsername, loginPassword);
                         HttpClient sharedClient = new();
-                        sharedClient.BaseAddress = new Uri("https://govor-team-govor-88b3.twc1.net");
+                        sharedClient.BaseAddress = new Uri(baseUrl);
                         sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthToken);
 
                         friendsClient = new FriendsClient(sharedClient);
@@ -98,7 +100,7 @@ namespace Govor.ConsoleClient
                     {
                         AuthToken = await HttpService.RegisterAsync(regUsername, regPassword, inviteCode);
                         HttpClient sharedClient = new();
-                        sharedClient.BaseAddress = new Uri("https://govor-team-govor-88b3.twc1.net");
+                        sharedClient.BaseAddress = new Uri(baseUrl);
                         sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthToken);
 
                         friendsClient = new FriendsClient(sharedClient);
@@ -165,7 +167,7 @@ namespace Govor.ConsoleClient
                         Console.WriteLine("[Ошибка] Сначала войдите в систему.");
                         break;
                     }
-                    Console.Write("Введите ID пользователя, чью заявку принимаете: ");
+                    Console.Write("Введите ID заявки, которую хотите принять принимаете: ");
                     var acceptId = Guid.Parse(Console.ReadLine());
                     await friendsClient.AcceptFriendRequestAsync(acceptId);
                     Console.WriteLine("Принято");
@@ -179,7 +181,7 @@ namespace Govor.ConsoleClient
                     var requests = await friendsClient.GetIncomingRequestsAsync();
                     foreach (var r in requests)
                     {
-                        Console.WriteLine($"Запрос от: {r.RequesterId} (добавьте через /accept {r.RequesterId})");
+                        Console.WriteLine($"Запрос от: {r.Requester.Username}| {r.RequesterId} | Был онлайн: {r.Requester.WasOnline}  (добавьте через /accept {r.Id})");
                     }
                     break;
                 case "/chat":
@@ -221,7 +223,7 @@ namespace Govor.ConsoleClient
             }
 
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl("https://govor-team-govor-88b3.twc1.net/api/chats", options =>
+                .WithUrl($"{baseUrl}/api/chats", options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult(AuthToken);
                 })

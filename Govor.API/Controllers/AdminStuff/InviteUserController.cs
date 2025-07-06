@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.AdminStuff;
 
-[Route("api/[controller]")]
+[Route("api/admin/[controller]")]
 [ApiController]
 [Authorize(Roles = "Admin")]
 public class InviteUserController : Controller

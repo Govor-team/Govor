@@ -8,4 +8,5 @@ public class FriendshipDto
     public Guid RequesterId { get; set; }
     public Guid AddresseeId { get; set; }
     public FriendshipStatus Status { get; set; }
+    public UserDto Requester { get; set; }
 }
