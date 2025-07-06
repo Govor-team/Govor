@@ -15,7 +15,6 @@ public class Message
     public List<MessageView> MessageViews { get; set; } = new List<MessageView>();
     
     public Guid? ReplyToMessageId { get; set; }
-    public Message? ReplyToMessage { get; set; } // navigation
     
     public override bool Equals(object? obj)
     {

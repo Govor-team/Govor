@@ -18,6 +18,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
     public virtual DbSet<MessageView> MessageViews { get; set; }
     public virtual DbSet<MessageReaction> MessageReactions { get; set; }
     public virtual DbSet<MediaAttachments> MediaAttachments { get; set; }
+    public virtual DbSet<MediaFile> MediaFiles { get; set; }
    
     public virtual DbSet<ChatGroup> ChatGroups { get; set; }
     public virtual DbSet<GroupMembership> GroupMemberships { get; set; }
@@ -33,6 +34,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new MessageReactionConfiguration());
         modelBuilder.ApplyConfiguration(new MediaAttachmentsConfiguration());
         modelBuilder.ApplyConfiguration(new MessageViewConfiguration());
+        modelBuilder.ApplyConfiguration(new MediaFileConfiguration());
         
         base.OnModelCreating(modelBuilder);
     }

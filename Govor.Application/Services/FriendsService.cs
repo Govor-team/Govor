@@ -105,7 +105,8 @@ public class FriendsService : IFriendsService
         try
         {
             var friendships = await _friendshipsRepository.FindByUserIdAsync(userId);
-            return friendships.Where(f => f.AddresseeId == userId && f.Status == FriendshipStatus.Pending).ToList();
+            return friendships.Where(f => f.AddresseeId == userId && f.Status == FriendshipStatus.Pending).ToList()
+                   ?? new List<Friendship>();
         }
         catch (NotFoundByKeyException<Guid> ex)
         {

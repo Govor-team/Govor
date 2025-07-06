@@ -21,7 +21,8 @@ public class MessagesRepository : IMessagesRepository
     {
         return await _context.Messages
             .AsNoTracking()
-            .Include(m => m.ReplyToMessage)
+            .Include(m => m.MediaAttachments)
+                .ThenInclude(m => m.MediaFile)
             .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("No messages found in the database"));
     }
@@ -30,7 +31,6 @@ public class MessagesRepository : IMessagesRepository
     {
         return await _context.Messages
                    .AsNoTracking()
-                   .Include(m => m.ReplyToMessage)
                    .AsSplitQuery()
                    .FirstOrDefaultAsync(m => m.Id == messageId)
                ?? throw new NotFoundByKeyException<Guid>(messageId, "Message with given id does not exist");
@@ -40,7 +40,8 @@ public class MessagesRepository : IMessagesRepository
     {
         return await _context.Messages
             .AsNoTracking()
-            .Include(m => m.ReplyToMessage)
+            .Include(m => m.MediaAttachments)
+                .ThenInclude(m => m.MediaFile)
             .AsSplitQuery()
             .Where(m => m.SenderId == senderId)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(senderId, "Messages with given sender id do not exist"));
@@ -50,7 +51,8 @@ public class MessagesRepository : IMessagesRepository
     {
         return await _context.Messages
             .AsNoTracking()
-            .Include(m => m.ReplyToMessage)
+            .Include(m => m.MediaAttachments)
+                .ThenInclude(m => m.MediaFile)
             .AsSplitQuery()
             .Where(m => m.RecipientId == receiverId)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(receiverId, "Messages with given recipient id do not exist"));
@@ -60,7 +62,8 @@ public class MessagesRepository : IMessagesRepository
     {
         return await _context.Messages
             .AsNoTracking()
-            .Include(m => m.ReplyToMessage)
+            .Include(m => m.MediaAttachments)
+                .ThenInclude(m => m.MediaFile)
             .AsSplitQuery()
             .Where(m => m.SenderId == senderId 
                         && m.RecipientId == receiverId 
@@ -72,7 +75,8 @@ public class MessagesRepository : IMessagesRepository
     {
         return await _context.Messages
             .AsNoTracking()
-            .Include(m => m.ReplyToMessage)
+            .Include(m => m.MediaAttachments)
+                .ThenInclude(m => m.MediaFile)
             .AsSplitQuery()
             .Where(m => m.SentAt == date)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<DateTime>(date, "Messages sent at date do not exist"));
@@ -161,7 +165,7 @@ public class MessagesRepository : IMessagesRepository
             m.EditedAt == message.EditedAt &&
             m.IsEdited == message.IsEdited &&
             m.SentAt == message.SentAt && 
-            m.ReplyToMessageId == message.ReplyToMessageId
+            m.ReplyToMessageId == message.ReplyToMessageId 
         );
     }
 

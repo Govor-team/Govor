@@ -13,5 +13,5 @@ public record UserMessageResponse
     public Guid? ReplyToMessageId { get; init; }
     public DateTime SentAt { get; init; }
     public bool IsEdited { get; init; } = false;
-    public List<MediaReference> MediaAttachments { get; init; } = new List<MediaReference>();
+    public List<MediaFile> MediaAttachments { get; init; } = new List<MediaFile>();
 }

@@ -92,14 +92,14 @@ public class ChatsHub : Hub
             RecipientType: request.RecipientType,
             SendAt: DateTime.UtcNow,
             Media: request.MediaAttachments?.Select(f => new SendMedia(
-                f.MediaId, f.EncryptedKey, f.Type, f.MimeType)) ?? Array.Empty<SendMedia>()
+                f.MediaId, f.EncryptedKey)) ?? Array.Empty<SendMedia>()
         );
 
         try
         {
             var result = await _messageService.SendMessageAsync(sendMessageParams);
             
-            if (!result.IsSuccess || result.MessageId == Guid.Empty)
+            if (!result.IsSuccess || result.Message.Id == Guid.Empty)
             {
                 _logger.LogError(result.Exception, "Failed to send message from {SenderId} to {RecipientId}. Error: {ErrorMessage}", senderId, request.RecipientId, result.Exception?.Message ?? "Unknown error");
                 if (result.Exception != null) throw result.Exception;
@@ -108,14 +108,15 @@ public class ChatsHub : Hub
 
             var messageResponse = new UserMessageResponse // Assuming a response DTO
             {
-                MessageId = result.MessageId,
-                SenderId = senderId,
-                RecipientId = request.RecipientId,
-                RecipientType = request.RecipientType,
-                EncryptedContent = request.EncryptedContent,
-                SentAt = sendMessageParams.SendAt, 
+                MessageId = result.Message.Id,
+                SenderId = result.Message.SenderId,
+                RecipientId = result.Message.RecipientId,
+                RecipientType = result.Message.RecipientType,
+                EncryptedContent = result.Message.EncryptedContent,
+                SentAt = result.Message.SentAt, 
                 IsEdited = false,
-                MediaAttachments = request.MediaAttachments,
+                MediaAttachments = result.Message.MediaAttachments
+                    .Select(m => m.MediaFile).ToList(),
                 ReplyToMessageId = request.ReplyToMessageId
             };
 
@@ -134,7 +135,7 @@ public class ChatsHub : Hub
             // Notify sender (confirmation) on their connection
             await Clients.Caller.SendAsync("MessageSent", messageResponse); // Or use "ReceiveMessage" if the sender should also just get it like anyone else
 
-            _logger.LogInformation("Message {MessageId} sent successfully from {SenderId} to {RecipientId} ({RecipientType})", result.MessageId, senderId, request.RecipientId, request.RecipientType);
+            _logger.LogInformation("Message {MessageId} sent successfully from {SenderId} to {RecipientId} ({RecipientType})", result.Message.Id, senderId, request.RecipientId, request.RecipientType);
         }
         catch (Exception ex)
         {
@@ -145,16 +146,15 @@ public class ChatsHub : Hub
         }
     }
 
-    public async Task Remove(Guid recipientId, Guid messageId)
+    public async Task Remove(RemoveMessageRequest request)
     {
         
     }
     
-    public async Task Edit(string newMessage, Guid messageId)
+    public async Task Edit(EditMessageRequest request)
     {
         
     }
-    
     
     
     private Guid GetUserId(bool suppressException = false)

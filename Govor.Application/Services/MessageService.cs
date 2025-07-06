@@ -38,10 +38,10 @@ public class MessageService : IMessageService
             // Validate recipient
             if (sendParams.RecipientType == RecipientType.User)
             {
-                if (!await _usersRepository.ExistsByIdAsync(sendParams.RecipientId)) // Changed to ExistsByIdAsync
+                if (!await _usersRepository.ExistsByIdAsync(sendParams.RecipientId))
                 {
                     _logger.LogWarning("Attempt to send message to non-existent user {RecipientId}", sendParams.RecipientId);
-                    return new SendMessageResult(false, new KeyNotFoundException($"Recipient user {sendParams.RecipientId} not found."), Guid.Empty);
+                    return new SendMessageResult(false, new KeyNotFoundException($"Recipient user {sendParams.RecipientId} not found."), default);
                 }
                 // Verify friendship for private messages
                 await _verifyFriendship.VerifyAsync(sendParams.FromUserId, sendParams.RecipientId);
@@ -51,7 +51,7 @@ public class MessageService : IMessageService
                 if (!_groupsRepository.Exists(sendParams.RecipientId))
                 {
                     _logger.LogWarning("Attempt to send message to non-existent group {GroupId}", sendParams.RecipientId);
-                    return new SendMessageResult(false, new KeyNotFoundException($"Recipient group {sendParams.RecipientId} not found."), Guid.Empty);
+                    return new SendMessageResult(false, new KeyNotFoundException($"Recipient group {sendParams.RecipientId} not found."), default);
                 }
                 // TODO: Optionally, verify if sender is a member of the group
                 // bool isMember = await _groupsRepository.IsUserMemberOfGroupAsync(sendParams.FromUserId, sendParams.RecipientId);
@@ -64,7 +64,7 @@ public class MessageService : IMessageService
             else
             {
                 _logger.LogError("Invalid recipient type specified: {RecipientType}", sendParams.RecipientType);
-                return new SendMessageResult(false, new ArgumentException("Invalid recipient type."), Guid.Empty);
+                return new SendMessageResult(false, new ArgumentException("Invalid recipient type."), default);
             }
 
             var messageId = Guid.NewGuid();
@@ -80,23 +80,20 @@ public class MessageService : IMessageService
                 ReplyToMessageId = sendParams.ReplyToMessageId,
                 MediaAttachments = sendParams.Media?.Select(m => new MediaAttachments
                 {
-                    Id = m.MediaId, // Assuming SendMedia provides Id or it's generated here/by repo
+                    Id = Guid.NewGuid(),
                     MessageId = messageId,
-                    Type = m.Type,
-                    MimeType = m.MimeType,
-                    EncryptedKey = m.EncryptedKey,
-                    // FilePath will be set by storage service or handled by repository if media ID is pre-generated
+                    MediaFileId = m.MediaId
                 }).ToList() ?? new List<MediaAttachments>()
             };
 
             await _messagesRepository.AddAsync(message);
             _logger.LogInformation("Message {MessageId} from {SenderId} to {RecipientId} ({RecipientType}) saved successfully.", messageId, sendParams.FromUserId, sendParams.RecipientId, sendParams.RecipientType);
-            return new SendMessageResult(true, null, messageId);
+            return new SendMessageResult(true, null, message);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending message from {SenderId} to {RecipientId} ({RecipientType})", sendParams.FromUserId, sendParams.RecipientId, sendParams.RecipientType);
-            return new SendMessageResult(false, ex, Guid.Empty);
+            return new SendMessageResult(false, ex, default);
         }
     }
 
@@ -133,12 +130,12 @@ public class MessageService : IMessageService
 
             await _messagesRepository.UpdateAsync(message);
             _logger.LogInformation("Message {MessageId} edited successfully by user {EditorId}", editParams.MessageId, editParams.EditorId);
-            return new EditMessageResult(true, null, originalMessageForNotification);
+            return new EditMessageResult(true, default, originalMessageForNotification);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing message {MessageId} by user {EditorId}", editParams.MessageId, editParams.EditorId);
-            return new EditMessageResult(false, ex, null);
+            return new EditMessageResult(false, ex, default);
         }
     }
 
@@ -159,7 +156,7 @@ public class MessageService : IMessageService
                 //    }
                 // } else {
                    _logger.LogWarning("User {DeleterId} attempted to delete message {MessageId} not sent by them (sender was {SenderId})", deleteParams.DeleterId, deleteParams.MessageId, message.SenderId);
-                   return new DeleteMessageResult(false, new UnauthorizedAccessException("User is not authorized to delete this message."), null);
+                   return new DeleteMessageResult(false, new UnauthorizedAccessException("User is not authorized to delete this message."), default);
                 // }
             }
             
@@ -174,12 +171,12 @@ public class MessageService : IMessageService
             await _messagesRepository.RemoveAsync(deleteParams.MessageId);
             
             _logger.LogInformation("Message {MessageId} deleted successfully by user {DeleterId}", deleteParams.MessageId, deleteParams.DeleterId);
-            return new DeleteMessageResult(true, null, originalMessageForNotification);
+            return new DeleteMessageResult(true, default, originalMessageForNotification);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting message {MessageId} by user {DeleterId}", deleteParams.MessageId, deleteParams.DeleterId);
-            return new DeleteMessageResult(false, ex, null);
+            return new DeleteMessageResult(false, ex, default);
         }
     }
 }

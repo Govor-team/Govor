@@ -25,11 +25,6 @@ public class MessagesConfiguration : IEntityTypeConfiguration<Message>
             .HasForeignKey(mv => mv.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(m => m.ReplyToMessage)
-            .WithMany()
-            .HasForeignKey(m => m.ReplyToMessageId)
-            .OnDelete(DeleteBehavior.Restrict); 
-
         builder.Property(m => m.EncryptedContent)
             .IsRequired();
     }

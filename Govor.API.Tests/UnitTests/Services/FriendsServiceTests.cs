@@ -329,8 +329,8 @@ public class FriendsServiceTests
             f.Status = FriendshipStatus.Pending;
         });
         
-        _usersRepositoryMock.Setup(f => f.FindByIdAsync(userId))
-            .ReturnsAsync(user);
+        _friendshipsRepositoryMock.Setup(f => f.FindByUserIdAsync(userId))
+            .ReturnsAsync(friendships);
         
         // Act 
         var result = await _service.GetIncomingRequestsAsync(userId);
@@ -346,8 +346,8 @@ public class FriendsServiceTests
         // Arrange
         var userId = Guid.NewGuid();
 
-        _usersRepositoryMock
-            .Setup(r => r.FindByIdAsync(userId))
+        _friendshipsRepositoryMock
+            .Setup(r => r.FindByUserIdAsync(userId))
             .ThrowsAsync(new NotFoundByKeyException<Guid>(userId));
 
         // Act & Assert

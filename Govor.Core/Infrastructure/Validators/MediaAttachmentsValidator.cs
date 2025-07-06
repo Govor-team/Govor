@@ -15,10 +15,8 @@ public class MediaAttachmentsValidator : IObjectValidator<MediaAttachments>
                 throw new ArgumentException("Id cannot be empty", nameof(attachments));
             if(attachments.MessageId == Guid.Empty)
                 throw new ArgumentException("MessageId cannot be empty", nameof(attachments));
-            if(string.IsNullOrWhiteSpace(attachments.FilePath))
+            if(string.IsNullOrWhiteSpace(attachments.MediaFile.Url))
                 throw new ArgumentException("File path cannot be empty", nameof(attachments));
-            if(string.IsNullOrWhiteSpace(attachments.EncryptedKey))
-                throw new ArgumentException("Encrypted key cannot be empty", nameof(attachments));
         }
         catch (Exception ex)
         {

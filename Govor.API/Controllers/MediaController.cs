@@ -1,4 +1,5 @@
 using Govor.Application.Interfaces;
+using Govor.Application.Interfaces.Medias;
 using Govor.Contracts.Requests;
 using Govor.Core.Models;
 using Govor.Core.Repositories.MediasAttachments;
@@ -13,12 +14,12 @@ namespace Govor.API.Controllers;
 public class MediaController : Controller
 {
     private readonly ILogger<MediaController> _logger;
-    private readonly IStorageService _storageService;
-
-    public MediaController(ILogger<MediaController> logger, IStorageService storageService)
+    private readonly IMediaService _mediaService;
+    
+    public MediaController(ILogger<MediaController> logger, IMediaService mediaService)
     {
         _logger = logger;
-        _storageService = storageService;
+        _mediaService = mediaService;
     }
 
     [HttpPost("upload")]
@@ -27,11 +28,10 @@ public class MediaController : Controller
     {
         try
         {
-           var url = await _storageService.SaveAsync(request.Data,request.FileName);
-           var mediaId = Guid.NewGuid();
-           
-           
-           return Ok(mediaId);
+            var result = await _mediaService.UploadMediaAsync(new Media(request.Data, request.FileName, request.Type,
+                request.MimeType, request.EncryptedKey));
+            
+           return Ok(result);
         }
         catch (Exception ex)
         {

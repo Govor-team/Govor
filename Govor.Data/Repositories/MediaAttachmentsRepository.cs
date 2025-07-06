@@ -77,9 +77,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
                 .ExecuteUpdateAsync(u => u
                     .SetProperty(m => m.MessageId, attachments.MessageId)
                     .SetProperty(m => m.Message, attachments.Message)
-                    .SetProperty(m => m.FilePath, attachments.FilePath)
-                    .SetProperty(m => m.MimeType, attachments.MimeType)
-                    .SetProperty(m => m.EncryptedKey, attachments.EncryptedKey)
+                    .SetProperty(m => m.MediaFileId, attachments.MediaFileId)
                 );
 
             if (rowsAffected == 0)
@@ -121,11 +119,8 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         
         return _context.MediaAttachments.Any(
             e => e.Id == attachments.Id &&
-            e.EncryptedKey == attachments.EncryptedKey &&
-            e.MimeType == attachments.MimeType &&
-            e.FilePath == attachments.FilePath && 
             e.MessageId == attachments.MessageId &&
-            e.Type == attachments.Type
+            e.MediaFileId == attachments.MediaFileId
             );
     }
 }
