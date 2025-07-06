@@ -2,10 +2,10 @@ using Govor.Application.Exceptions.VerifyFriendship;
 using Govor.Application.Interfaces;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Friendships;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Govor.Application.Services;
-
 
 public class VerifyFriendship : IVerifyFriendship
 {
@@ -21,23 +21,38 @@ public class VerifyFriendship : IVerifyFriendship
 
     public async Task VerifyAsync(Guid targetUserId, Guid friendUserId)
     {
-        if (targetUserId == Guid.Empty || friendUserId == Guid.Empty)
+        try
         {
-            _logger?.LogWarning("Invalid user IDs provided: targetUserId={TargetUserId}, friendUserId={FriendUserId}", targetUserId, friendUserId);
-            throw new ArgumentException("User IDs cannot be empty.", nameof(targetUserId));
-        }
+            if (targetUserId == Guid.Empty || friendUserId == Guid.Empty)
+            {
+                _logger?.LogWarning(
+                    "Invalid user IDs provided: targetUserId={TargetUserId}, friendUserId={FriendUserId}", targetUserId,
+                    friendUserId);
+                throw new ArgumentException("User IDs cannot be empty.", nameof(targetUserId));
+            }
 
-        var friendships = await _friendshipsRepository.FindByUserIdAsync(targetUserId);
-        var friendship = friendships.Where(f => f.AddresseeId == friendUserId || f.RequesterId == friendUserId)?.FirstOrDefault();
-        
-        if (friendship == null || friendship.Status != FriendshipStatus.Accepted)
+            var friendships = await _friendshipsRepository.FindByUserIdAsync(targetUserId);
+            var friendship = friendships.Where(f => f.AddresseeId == friendUserId || f.RequesterId == friendUserId)
+                ?.FirstOrDefault();
+
+            if (friendship == null || friendship.Status != FriendshipStatus.Accepted)
+            {
+                var errorMessage = string.Format(FriendshipNotAcceptedError, targetUserId, friendUserId);
+                _logger?.LogError(errorMessage);
+                throw new FriendshipException(errorMessage);
+            }
+
+            _logger?.LogInformation(
+                "Friendship verified successfully for targetUserId={TargetUserId}, friendUserId={FriendUserId}",
+                targetUserId, friendUserId);
+        }
+        catch (NotFoundByKeyException<Guid> ex)
         {
             var errorMessage = string.Format(FriendshipNotAcceptedError, targetUserId, friendUserId);
             _logger?.LogError(errorMessage);
+            
             throw new FriendshipException(errorMessage);
         }
-
-        _logger?.LogInformation("Friendship verified successfully for targetUserId={TargetUserId}, friendUserId={FriendUserId}", targetUserId, friendUserId);
     }
 
     public async Task<bool> TryVerifyAsync(Guid targetUserId, Guid friendUserId)
@@ -47,7 +62,7 @@ public class VerifyFriendship : IVerifyFriendship
             await VerifyAsync(targetUserId, friendUserId);
             return true;
         }
-        catch (FriendshipException ex)
+        catch (Exception ex)
         {
             return false;
         }

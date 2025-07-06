@@ -6,6 +6,7 @@ using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.AdminsStuff;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Interfaces.Messages;
 using Govor.Application.Services;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
@@ -46,6 +47,9 @@ public static class ConfigurationProgramExtensions
         
         services.AddMemoryCache();
         services.AddScoped<IPingHandlerService, PingHandlerService>();
+        
+        services.AddScoped<IMessageService, MessageService>();
+        services.AddScoped<IVerifyFriendship, VerifyFriendship>();
     }
 
     public static void AddRepositories(this IServiceCollection services)

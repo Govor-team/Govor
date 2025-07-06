@@ -114,14 +114,17 @@ public class MessageService : IMessageService
 
             // TODO: Add a time limit for editing messages? e.g., if (message.SentAt < DateTime.UtcNow.AddMinutes(-15)) throw new Exception("Edit time limit exceeded");
             
-            // Keep a copy of the original message state for the result, if needed by Hub for notifications
             var originalMessageForNotification = new Message
             {
                 Id = message.Id,
                 SenderId = message.SenderId,
                 RecipientId = message.RecipientId,
                 RecipientType = message.RecipientType,
-                // Populate other fields if necessary for the notification
+                SentAt = message.SentAt,
+                ReplyToMessageId = message.ReplyToMessageId,
+                Reactions = message.Reactions,
+                MediaAttachments = message.MediaAttachments,
+                MessageViews = message.MessageViews,
             };
 
             message.EncryptedContent = editParams.NewContent;
@@ -160,20 +163,16 @@ public class MessageService : IMessageService
                 // }
             }
             
-            // Keep a copy of the original message state for the result, if needed by Hub for notifications
             var originalMessageForNotification = new Message
             {
                 Id = message.Id,
                 SenderId = message.SenderId,
                 RecipientId = message.RecipientId,
                 RecipientType = message.RecipientType,
-                // Populate other fields if necessary for the notification
             };
             
             await _messagesRepository.RemoveAsync(deleteParams.MessageId);
             
-            // TODO: Delete associated media attachments from storage if they are no longer referenced.
-
             _logger.LogInformation("Message {MessageId} deleted successfully by user {DeleterId}", deleteParams.MessageId, deleteParams.DeleterId);
             return new DeleteMessageResult(true, null, originalMessageForNotification);
         }
