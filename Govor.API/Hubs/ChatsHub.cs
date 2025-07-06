@@ -159,7 +159,7 @@ public class ChatsHub : Hub
     
     private Guid GetUserId(bool suppressException = false)
     {
-        var userIdClaim = Context.User?.FindFirst("userID")?.Value;
+        var userIdClaim = Context.User?.FindFirst("userId")?.Value;
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
             if (!suppressException)
