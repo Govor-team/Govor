@@ -13,6 +13,7 @@ using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Admins;
 using Govor.Core.Repositories.Friendships;
+using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Invaites;
 using Govor.Core.Repositories.MediasAttachments;
 using Govor.Core.Repositories.Messages;
@@ -60,6 +61,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IAdminsRepository, AdminsRepository>();
         services.AddScoped<IMediaAttachmentsRepository, MediaAttachmentsRepository>();
         services.AddScoped<IFriendshipsRepository, FriendshipsRepository>();
+        services.AddScoped<IGroupsRepository, GroupRepository>();
     }
 
     public static void AddValidators(this IServiceCollection services)

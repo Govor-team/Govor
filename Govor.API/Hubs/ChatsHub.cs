@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Govor.API.Hubs;
 
-[Authorize]
+[Authorize] // api/chats
 public class ChatsHub : Hub
 {
     private readonly ILogger<ChatsHub> _logger;
