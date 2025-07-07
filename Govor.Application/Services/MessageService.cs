@@ -4,6 +4,7 @@ using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Messages;
+using Govor.Core.Repositories.PrivateChats;
 using Govor.Core.Repositories.Users;
 using Microsoft.Extensions.Logging;
 
@@ -14,6 +15,7 @@ public class MessageService : IMessageService
     private readonly IMessagesRepository _messagesRepository;
     private readonly IUsersRepository _usersRepository; // For validating user recipients
     private readonly IGroupsRepository _groupsRepository; // For validating group recipients and fetching members
+    private readonly IPrivateChatsRepository _privateChats;
     private readonly IVerifyFriendship _verifyFriendship; // For private messages
     private readonly ILogger<MessageService> _logger;
 
@@ -22,17 +24,20 @@ public class MessageService : IMessageService
         IUsersRepository usersRepository,
         IGroupsRepository groupsRepository,
         IVerifyFriendship verifyFriendship,
+        IPrivateChatsRepository privateChats,
         ILogger<MessageService> logger)
     {
         _messagesRepository = messagesRepository;
         _usersRepository = usersRepository;
         _groupsRepository = groupsRepository;
         _verifyFriendship = verifyFriendship;
+        _privateChats = privateChats;
         _logger = logger;
     }
 
     public async Task<SendMessageResult> SendMessageAsync(SendMessage sendParams)
     {
+        Guid recipientId;
         try
         {
             // Validate recipient
@@ -45,6 +50,7 @@ public class MessageService : IMessageService
                 }
                 // Verify friendship for private messages
                 await _verifyFriendship.VerifyAsync(sendParams.FromUserId, sendParams.RecipientId);
+                recipientId = await GetPrivateChatsIdAsync(sendParams.FromUserId, sendParams.RecipientId);
             }
             else if (sendParams.RecipientType == RecipientType.Group)
             {
@@ -54,25 +60,28 @@ public class MessageService : IMessageService
                     return new SendMessageResult(false, new KeyNotFoundException($"Recipient group {sendParams.RecipientId} not found."), default);
                 }
                 // TODO: Optionally, verify if sender is a member of the group
-                // bool isMember = await _groupsRepository.IsUserMemberOfGroupAsync(sendParams.FromUserId, sendParams.RecipientId);
-                // if (!isMember)
-                // {
-                //    _logger.LogWarning("User {UserId} attempted to send message to group {GroupId} but is not a member", sendParams.FromUserId, sendParams.RecipientId);
-                //    return new SendMessageResult(false, new UnauthorizedAccessException("Sender is not a member of the group."), Guid.Empty);
-                // }
+                bool isMember = await _groupsRepository.IsUserMemberOfGroupAsync(sendParams.FromUserId, sendParams.RecipientId);
+                if (!isMember)
+                {
+                   _logger.LogWarning("User {UserId} attempted to send message to group {GroupId} but is not a member", sendParams.FromUserId, sendParams.RecipientId);
+                    return new SendMessageResult(false, new UnauthorizedAccessException("Sender is not a member of the group."), default);
+                }
+                
+                recipientId = sendParams.RecipientId;
             }
             else
             {
                 _logger.LogError("Invalid recipient type specified: {RecipientType}", sendParams.RecipientType);
                 return new SendMessageResult(false, new ArgumentException("Invalid recipient type."), default);
             }
-
+            
+                        
             var messageId = Guid.NewGuid();
             var message = new Message
             {
                 Id = messageId,
                 SenderId = sendParams.FromUserId,
-                RecipientId = sendParams.RecipientId,
+                RecipientId = recipientId, 
                 RecipientType = sendParams.RecipientType,
                 EncryptedContent = sendParams.EncryptContent,
                 SentAt = sendParams.SendAt,
@@ -97,6 +106,24 @@ public class MessageService : IMessageService
         }
     }
 
+    private async Task<Guid> GetPrivateChatsIdAsync(Guid userA, Guid userB)
+    {
+        Guid recipientId;
+        // Makes new PrivateChat if not exist
+        if (!_privateChats.Exist(userA, userB))
+        {
+            recipientId = Guid.NewGuid();
+            await _privateChats.AddAsync(new PrivateChat()
+                { Id = recipientId, UserAId = userA, UserBId = userB });
+        }
+        else
+        {
+            recipientId = (await _privateChats.GetByMembersAsync(userA, userB)).Id;
+        }
+        
+        return recipientId;
+    }
+
     public async Task<EditMessageResult> EditMessageAsync(EditMessage editParams)
     {
         try
@@ -109,7 +136,8 @@ public class MessageService : IMessageService
                 return new EditMessageResult(false, new UnauthorizedAccessException("User is not authorized to edit this message."), null);
             }
 
-            // TODO: Add a time limit for editing messages? e.g., if (message.SentAt < DateTime.UtcNow.AddMinutes(-15)) throw new Exception("Edit time limit exceeded");
+            /*if (message.SentAt < DateTime.UtcNow.AddMinutes(-15))
+                throw new Exception("Edit time limit exceeded");*/
             
             var originalMessageForNotification = new Message
             {

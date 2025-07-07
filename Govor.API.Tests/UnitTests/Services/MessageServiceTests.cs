@@ -5,6 +5,7 @@ using Govor.Application.Services;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Messages;
+using Govor.Core.Repositories.PrivateChats;
 using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,7 @@ public class MessageServiceTests
     private Mock<IUsersRepository> _mockUsersRepo;
     private Mock<IGroupsRepository> _mockGroupsRepo;
     private Mock<IVerifyFriendship> _mockVerifyFriendship;
+    private Mock<IPrivateChatsRepository> _mockPrivateChats;
     private Mock<ILogger<MessageService>> _mockLogger;
     private MessageService _messageService;
     
@@ -29,6 +31,7 @@ public class MessageServiceTests
         _mockUsersRepo = new Mock<IUsersRepository>();
         _mockGroupsRepo = new Mock<IGroupsRepository>();
         _mockVerifyFriendship = new Mock<IVerifyFriendship>();
+        _mockPrivateChats = new Mock<IPrivateChatsRepository>();
         _mockLogger = new Mock<ILogger<MessageService>>();
 
         _messageService = new MessageService(
@@ -36,6 +39,7 @@ public class MessageServiceTests
             _mockUsersRepo.Object,
             _mockGroupsRepo.Object,
             _mockVerifyFriendship.Object,
+            _mockPrivateChats.Object,
             _mockLogger.Object);
     }
 
@@ -59,7 +63,8 @@ public class MessageServiceTests
         _mockUsersRepo.Setup(r => r.ExistsByIdAsync(recipientId)).ReturnsAsync(true);
         _mockVerifyFriendship.Setup(v => v.VerifyAsync(senderId, recipientId)).Returns(Task.CompletedTask);
         _mockMessagesRepo.Setup(r => r.AddAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
-
+        _mockPrivateChats.Setup(c => c.Exist(senderId, recipientId)).Returns(true);
+        _mockPrivateChats.Setup(c => c.GetByMembersAsync(senderId, recipientId)).ReturnsAsync(new PrivateChat(){Id = recipientId});
         // Act
         var result = await _messageService.SendMessageAsync(sendMessageParams);
         // Assert 
@@ -90,7 +95,7 @@ public class MessageServiceTests
             new List<SendMedia>());
 
         _mockGroupsRepo.Setup(r => r.Exists(groupId)).Returns(true);
-        _mockGroupsRepo.Setup(r => r.IsUserMemberOfGroupAsync(senderId, groupId)).Returns(true); 
+        _mockGroupsRepo.Setup(r => r.IsUserMemberOfGroupAsync(senderId, groupId)).ReturnsAsync(true); 
         _mockMessagesRepo.Setup(r => r.AddAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
 
         // Act
@@ -130,7 +135,7 @@ public class MessageServiceTests
         Assert.That(result.IsSuccess, Is.EqualTo(false));
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<KeyNotFoundException>());
-        Assert.That(result.MessageId, Is.EqualTo(Guid.Empty));
+        Assert.That(result.Message, Is.Null);
     }
 
     [Test]
@@ -160,8 +165,10 @@ public class MessageServiceTests
         Assert.That(result.IsSuccess, Is.EqualTo(false));
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<FriendshipException>());
-        Assert.That(result.MessageId, Is.EqualTo(Guid.Empty));
+        Assert.That(result.Message, Is.Null);
     }
+    
+    
     
     // Test for EditMessageAsync action 
     [Test]

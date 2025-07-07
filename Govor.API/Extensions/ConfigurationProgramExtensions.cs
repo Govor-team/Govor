@@ -17,6 +17,7 @@ using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Invaites;
 using Govor.Core.Repositories.MediasAttachments;
 using Govor.Core.Repositories.Messages;
+using Govor.Core.Repositories.PrivateChats;
 using Govor.Core.Repositories.Users;
 using Govor.Data;
 using Govor.Data.Repositories;
@@ -61,6 +62,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IAdminsRepository, AdminsRepository>();
         services.AddScoped<IMediaAttachmentsRepository, MediaAttachmentsRepository>();
         services.AddScoped<IFriendshipsRepository, FriendshipsRepository>();
+        services.AddScoped<IPrivateChatsRepository, PrivateChatsRepository>();
         services.AddScoped<IGroupsRepository, GroupRepository>();
     }
 
@@ -72,6 +74,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IObjectValidator<Admin>, AdminValidator>();
         services.AddScoped<IObjectValidator<Invitation>, InvitationValidator>();
         services.AddScoped<IObjectValidator<Friendship>, FriendshipValidator>();
+        services.AddScoped<IObjectValidator<PrivateChat>, PrivateChatValidator>();
     }
 
     public static void AddGovorDbContext(this IServiceCollection services, IConfiguration configuration)

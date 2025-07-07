@@ -21,6 +21,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
     public virtual DbSet<MediaFile> MediaFiles { get; set; }
    
     public virtual DbSet<ChatGroup> ChatGroups { get; set; }
+    public virtual DbSet<GroupInvitation> GroupInvitations { get; set; }
     public virtual DbSet<GroupMembership> GroupMemberships { get; set; }
     public virtual DbSet<GroupAdmins> GroupAdmins { get; set; }
 

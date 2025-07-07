@@ -18,7 +18,7 @@ public interface IMessageService
 // Define specific result types for clarity, including original message for notifications if needed
 
 public record SendMessageResult(bool IsSuccess, Exception? Exception, Message Message) 
-    : Result(IsSuccess, Exception, Message.Id);
+    : Result(IsSuccess, Exception, Message?.Id ?? Guid.Empty);
 
 public record EditMessageResult(bool IsSuccess, Exception? Exception, Message? OriginalMessage) 
     : Result(IsSuccess, Exception, OriginalMessage?.Id ?? Guid.Empty)

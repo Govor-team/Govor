@@ -1,10 +1,10 @@
-using System.Text.RegularExpressions;
+using Govor.Core.Models;
 
 namespace Govor.Core.Repositories.Groups;
 
 public interface IGroupsWriter
 {
-   Task Add(Group group);
-   Task Update(Group group);
-   Task Remove(Guid groupId);
+   Task AddAsync(ChatGroup group);
+   Task UpdateAsync(ChatGroup group);
+   Task RemoveAsync(Guid groupId);
 }

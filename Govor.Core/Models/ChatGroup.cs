@@ -6,9 +6,9 @@ public class ChatGroup
     public string Name { get; set; }
     public string Description { get; set; }
     public Guid ImageId { get; set; }
-    
-    public List<string> InviteCode { get; set; }
     public bool IsChannel { get; set; }
     public bool IsPrivate { get; set; }
-    public List<Guid> Admins { get; set; } = new();
+    public List<GroupAdmins> Admins { get; set; } = new();
+    public List<GroupMembership> Members { get; set; } = new();
+    public List<GroupInvitation> InviteCodes { get; set; } = new();
 }

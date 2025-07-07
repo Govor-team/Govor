@@ -1,13 +1,13 @@
-using System.Text.RegularExpressions;
+using Govor.Core.Models;
 
 namespace Govor.Core.Repositories.Groups;
 
 public interface IGroupsReader
 {
-    public Task<List<Group>> GetAllAsync();
-    public Task<Group> GetByIdAsync(Guid id);
-    public Task<List<Group>> FindByNameAsync(string name);
-    public Task<List<Group>> GetByAdminIdAsync(Guid adminId);
-    public Task<List<Group>> GetByUserIdAsync(Guid adminId);
-    public bool IsUserMemberOfGroupAsync(Guid userId, Guid groupId);
+    public Task<List<ChatGroup>> GetAllAsync();
+    public Task<ChatGroup> GetByIdAsync(Guid id);
+    public Task<List<ChatGroup>> SearchByNameAsync(string name);
+    public Task<List<ChatGroup>> GetByAdminIdAsync(Guid userId);
+    public Task<List<ChatGroup>> GetByUserIdAsync(Guid userId);
+    public Task<bool> IsUserMemberOfGroupAsync(Guid userId, Guid groupId);
 }
