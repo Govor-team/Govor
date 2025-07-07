@@ -75,6 +75,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IObjectValidator<Invitation>, InvitationValidator>();
         services.AddScoped<IObjectValidator<Friendship>, FriendshipValidator>();
         services.AddScoped<IObjectValidator<PrivateChat>, PrivateChatValidator>();
+        services.AddScoped<IObjectValidator<ChatGroup>, ChatGroupValidator>();
     }
 
     public static void AddGovorDbContext(this IServiceCollection services, IConfiguration configuration)
