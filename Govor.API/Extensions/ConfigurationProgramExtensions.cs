@@ -52,6 +52,7 @@ public static class ConfigurationProgramExtensions
         
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
+        services.AddScoped<IUserGroupsService, UserGroupsService>();
     }
 
     public static void AddRepositories(this IServiceCollection services)

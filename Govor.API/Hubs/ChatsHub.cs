@@ -1,4 +1,5 @@
 using Govor.API.Services;
+using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Contracts.Requests.SignalR;
@@ -14,6 +15,7 @@ public class ChatsHub : Hub
 {
     private readonly ILogger<ChatsHub> _logger;
     private readonly IMessageService _messageService;
+    private readonly IUserGroupsService _userService;
     
     public ChatsHub(ILogger<ChatsHub> logger, IMessageService messageService)
     {
@@ -34,13 +36,12 @@ public class ChatsHub : Hub
         // Add user to their own group (for private messages and notifications)
         await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
         _logger.LogInformation("User {UserId} connected with ConnectionId {ConnectionId} and added to their group", userId, Context.ConnectionId);
-
-        // TODO: Add user to their chat groups - this might require fetching user's groups from a service
-        // var userGroups = await _userService.GetUserGroupsAsync(userId);
-        // foreach (var group in userGroups)
-        // {
-        //     await Groups.AddToGroupAsync(Context.ConnectionId, $"group_{group.Id}");
-        // }
+        
+        var userGroups = await _userService.GetUserGroupsAsync(userId);
+        foreach (var group in userGroups)
+        {
+             await Groups.AddToGroupAsync(Context.ConnectionId, $"group_{group.Id}");
+        }
 
         await base.OnConnectedAsync();
     }
@@ -54,12 +55,12 @@ public class ChatsHub : Hub
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, userId.ToString());
             _logger.LogInformation("User {UserId} disconnected with ConnectionId {ConnectionId} and removed from their group", userId, Context.ConnectionId);
 
-            // TODO: Remove user from their chat groups
-            // var userGroups = await _userService.GetUserGroupsAsync(userId); // This might be problematic if the service relies on the user being connected
-            // foreach (var group in userGroups)
-            // {
-            //     await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"group_{group.Id}");
-            // }
+           
+            var userGroups = await _userService.GetUserGroupsAsync(userId); // This might be problematic if the service relies on the user being connected
+            foreach (var group in userGroups)
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"group_{group.Id}");
+            }
         }
         else if (exception != null)
         {
