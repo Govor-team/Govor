@@ -43,14 +43,14 @@ public class PrivateChatsRepositoryTests
         var chats = _fixture.CreateMany<PrivateChat>(random.Next(2, 10)).ToList();
 
         await using var context = new GovorDbContext(_options);
-        var messagesRepository = new PrivateChatsRepository(context, _validator);
+        var repository = new PrivateChatsRepository(context, _validator);
 
         context.PrivateChats.AddRange(chats);
         await context.SaveChangesAsync();
 
         // Act 
 
-        var result = await messagesRepository.GetAllAsync();
+        var result = await repository.GetAllAsync();
 
         // Assert 
         Assert.That(result, Is.Not.Null);
@@ -134,7 +134,7 @@ public class PrivateChatsRepositoryTests
     }
     
     [Test]
-    public async Task Given_ValidMessage_When_AddAsync_Then_MessageAdded()
+    public async Task Given_ValidPrivateChat_When_AddAsync_Then_PrivateChatAdded()
     {
         // Arrange
         var chat = _fixture.Create<PrivateChat>();
@@ -151,7 +151,7 @@ public class PrivateChatsRepositoryTests
     }
     
     [Test]
-    public async Task Given_InvalidMessage_When_AddAsync_Should_Throw_AdditionException()
+    public async Task Given_InvalidPrivateChat_When_AddAsync_Should_Throw_AdditionException()
     {
         // Arrange
         await using var context = new GovorDbContext(_options);
@@ -162,7 +162,7 @@ public class PrivateChatsRepositoryTests
     }
     
     [Test]
-    public async Task Given_ExistMessage_When_Exist_Then_ReturnTrue()
+    public async Task Given_ExistPrivateChat_When_Exist_Then_ReturnTrue()
     {
         // Arrange
         var chat = _fixture.Create<PrivateChat>();
@@ -184,7 +184,7 @@ public class PrivateChatsRepositoryTests
     }
 
     [Test]
-    public async Task Given_NotExistMessage_When_Exist_Then_ReturnFalse()
+    public async Task Given_NotExistPrivateChat_When_Exist_Then_ReturnFalse()
     {
         // Arrange
         var chat = _fixture.Create<PrivateChat>();
@@ -200,4 +200,5 @@ public class PrivateChatsRepositoryTests
         Assert.That(result1, Is.False);
         Assert.That(result2, Is.False);
     }
+    
 }

@@ -139,12 +139,12 @@ public class GroupRepository : IGroupsRepository
         }
     }
     
-    public bool Exists(Guid groupId)
+    public bool Exist(Guid groupId)
     {
         return _context.ChatGroups.Any(g => g.Id == groupId);
     }
 
-    public bool Exists(ChatGroup chatGroup)
+    public bool Exist(ChatGroup chatGroup)
     {
         return _context.ChatGroups.Any(g => g.Id == chatGroup.Id &&
                                             g.IsChannel == chatGroup.IsChannel &&

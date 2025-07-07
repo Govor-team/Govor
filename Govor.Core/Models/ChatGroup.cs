@@ -11,4 +11,16 @@ public class ChatGroup
     public List<GroupAdmins> Admins { get; set; } = new();
     public List<GroupMembership> Members { get; set; } = new();
     public List<GroupInvitation> InviteCodes { get; set; } = new();
+
+    public override bool Equals(object? obj)
+    {
+        ChatGroup chatGroup = obj as ChatGroup;
+        
+        return Id == chatGroup.Id &&
+               Name == chatGroup.Name &&
+               Description == chatGroup.Description &&
+               ImageId == chatGroup.ImageId &&
+               IsChannel == chatGroup.IsChannel &&
+               IsPrivate == chatGroup.IsPrivate;
+    }
 }

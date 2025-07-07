@@ -4,6 +4,6 @@ namespace Govor.Core.Repositories.Groups;
 
 public interface IGroupsExist
 {
-    public bool Exists(Guid groupId);
-    public bool Exists(ChatGroup chatGroup);
+    public bool Exist(Guid groupId);
+    public bool Exist(ChatGroup chatGroup);
 }

@@ -94,7 +94,7 @@ public class MessageServiceTests
             DateTime.UtcNow,
             new List<SendMedia>());
 
-        _mockGroupsRepo.Setup(r => r.Exists(groupId)).Returns(true);
+        _mockGroupsRepo.Setup(r => r.Exist(groupId)).Returns(true);
         _mockGroupsRepo.Setup(r => r.IsUserMemberOfGroupAsync(senderId, groupId)).ReturnsAsync(true); 
         _mockMessagesRepo.Setup(r => r.AddAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
 

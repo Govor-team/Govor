@@ -36,6 +36,10 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new MediaAttachmentsConfiguration());
         modelBuilder.ApplyConfiguration(new MessageViewConfiguration());
         modelBuilder.ApplyConfiguration(new MediaFileConfiguration());
+        modelBuilder.ApplyConfiguration(new ChatGroupConfigurator());
+        modelBuilder.ApplyConfiguration(new GroupInvitationConfiguration());
+        modelBuilder.ApplyConfiguration(new GroupMembershipConfiguration());
+        modelBuilder.ApplyConfiguration(new GroupAdminsConfiguration());
         
         base.OnModelCreating(modelBuilder);
     }

@@ -54,7 +54,7 @@ public class MessageService : IMessageService
             }
             else if (sendParams.RecipientType == RecipientType.Group)
             {
-                if (!_groupsRepository.Exists(sendParams.RecipientId))
+                if (!_groupsRepository.Exist(sendParams.RecipientId))
                 {
                     _logger.LogWarning("Attempt to send message to non-existent group {GroupId}", sendParams.RecipientId);
                     return new SendMessageResult(false, new KeyNotFoundException($"Recipient group {sendParams.RecipientId} not found."), default);

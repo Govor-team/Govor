@@ -8,6 +8,16 @@ public class GroupMembershipConfiguration : IEntityTypeConfiguration<GroupMember
 {
     public void Configure(EntityTypeBuilder<GroupMembership> builder)
     {
-        builder.HasKey(m => new { m.GroupId, m.UserId });
+        builder.HasKey(e => e.Id);
+
+        builder.Property(e => e.UserId).IsRequired();
+        builder.Property(e => e.GroupId).IsRequired();
+        builder.Property(e => e.InvitationId).IsRequired();
+
+        // Optional: можно добавить навигацию к GroupInvitation
+        builder.HasOne<GroupInvitation>()
+            .WithMany()
+            .HasForeignKey(e => e.InvitationId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
