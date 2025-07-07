@@ -69,7 +69,7 @@ public class MessageServiceTests
         var result = await _messageService.SendMessageAsync(sendMessageParams);
         // Assert 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(true));
+        Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Exception, Is.Null);
         
         _mockMessagesRepo.Verify(r => r.AddAsync(It.Is<Message>(m => 
@@ -103,7 +103,7 @@ public class MessageServiceTests
         
         // Assert 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(true));
+        Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Exception, Is.Null);
         _mockMessagesRepo.Verify(r => r.AddAsync(It.Is<Message>(m =>
             m.RecipientId == groupId &&
@@ -132,7 +132,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(false));
+        Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<KeyNotFoundException>());
         Assert.That(result.Message, Is.Null);
@@ -162,7 +162,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(false));
+        Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<FriendshipException>());
         Assert.That(result.Message, Is.Null);
@@ -197,7 +197,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(true));
+        Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.OriginalMessage, Is.Not.Null);
         
         Assert.That(messageId, Is.EqualTo(result.OriginalMessage!.Id));
@@ -225,7 +225,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(false));
+        Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<NotFoundByKeyException<Guid>>());
         Assert.That(result.OriginalMessage, Is.Null);
@@ -248,7 +248,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(false));
+        Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<UnauthorizedAccessException>());
         Assert.That(result.OriginalMessage, Is.Null);
@@ -272,7 +272,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(true));
+        Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.OriginalMessage, Is.Not.Null);
         Assert.That(messageId, Is.EqualTo(result.OriginalMessage!.Id));
         _mockMessagesRepo.Verify(r => r.RemoveAsync(messageId), Times.Once);
@@ -294,7 +294,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(false));
+        Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<NotFoundByKeyException<Guid>>());
         Assert.That(result.OriginalMessage, Is.Null);
@@ -317,7 +317,7 @@ public class MessageServiceTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.EqualTo(false));
+        Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Exception, Is.Not.Null);
         Assert.That(result.Exception,Is.TypeOf<UnauthorizedAccessException>());
         Assert.That(result.OriginalMessage, Is.Null);
