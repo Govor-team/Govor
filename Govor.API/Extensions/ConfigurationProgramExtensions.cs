@@ -5,9 +5,11 @@ using Govor.Application.Infrastructure.Validators;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.AdminsStuff;
 using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Services;
+using Govor.Application.Services.Friends;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
@@ -36,7 +38,11 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IInvitesService, InvitesService>();
         services.AddScoped<IInvitationGenerator, InvitationGenerator>();
         services.AddScoped<IUsernameValidator, UsernameValidator>();
-        services.AddScoped<IFriendsService, FriendsService>();
+        
+        // Friends services 
+        services.AddScoped<IFriendshipService, FriendshipService>();
+        services.AddScoped<IFriendRequestService, FriendRequestService>();
+        services.AddScoped<IFriendsBlockService, FriendsBlockService>();
         
         services.AddScoped<IStorageService>(sp =>
         {
@@ -53,6 +59,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
         services.AddScoped<IUserGroupsService, UserGroupsService>();
+        services.AddScoped<IMessagesLoader, MessagesLoader>();
     }
 
     public static void AddRepositories(this IServiceCollection services)
@@ -65,6 +72,8 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IFriendshipsRepository, FriendshipsRepository>();
         services.AddScoped<IPrivateChatsRepository, PrivateChatsRepository>();
         services.AddScoped<IGroupsRepository, GroupRepository>();
+        
+        // other
     }
 
     public static void AddValidators(this IServiceCollection services)

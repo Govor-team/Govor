@@ -19,47 +19,17 @@ namespace Govor.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    InviteCode = table.Column<string>(type: "longtext", nullable: false)
+                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    ImageId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     IsChannel = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    IsPrivate = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    Admins = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    IsPrivate = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ChatGroups", x => x.Id);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "GroupAdmins",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    GroupId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    UserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GroupAdmins", x => x.Id);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "GroupMemberships",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    GroupId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    UserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IsBanned = table.Column<bool>(type: "tinyint(1)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GroupMemberships", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -85,6 +55,25 @@ namespace Govor.Data.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "MediaFiles",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Url = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MediaType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MineType = table.Column<string>(type: "varchar(128)", maxLength: 128, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    DateCreated = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MediaFiles", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "PrivateChats",
                 columns: table => new
                 {
@@ -95,6 +84,26 @@ namespace Govor.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PrivateChats", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "GroupAdmins",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    GroupId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    UserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupAdmins", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GroupAdmins_ChatGroups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "ChatGroups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -145,12 +154,6 @@ namespace Govor.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Messages", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Messages_Messages_ReplyToMessageId",
-                        column: x => x.ReplyToMessageId,
-                        principalTable: "Messages",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Messages_PrivateChats_PrivateChatId",
                         column: x => x.PrivateChatId,
@@ -205,23 +208,55 @@ namespace Govor.Data.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "GroupInvitations",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    GroupId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    UserMakerId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InvitationCode = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EndDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    MaxParticipants = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupInvitations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GroupInvitations_ChatGroups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "ChatGroups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupInvitations_Users_UserMakerId",
+                        column: x => x.UserMakerId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "MediaAttachments",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     MessageId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Type = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    FilePath = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    MimeType = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    EncryptedKey = table.Column<string>(type: "varchar(512)", maxLength: 512, nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    MediaFileId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_MediaAttachments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MediaAttachments_MediaFiles_MediaFileId",
+                        column: x => x.MediaFileId,
+                        principalTable: "MediaFiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_MediaAttachments_Messages_MessageId",
                         column: x => x.MessageId,
@@ -281,6 +316,34 @@ namespace Govor.Data.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.CreateTable(
+                name: "GroupMemberships",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    GroupId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    UserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    InvitationId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
+                    IsBanned = table.Column<bool>(type: "tinyint(1)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupMemberships", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GroupMemberships_ChatGroups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "ChatGroups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupMemberships_GroupInvitations_InvitationId",
+                        column: x => x.InvitationId,
+                        principalTable: "GroupInvitations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Friendships_AddresseeId",
                 table: "Friendships",
@@ -290,6 +353,36 @@ namespace Govor.Data.Migrations
                 name: "IX_Friendships_RequesterId",
                 table: "Friendships",
                 column: "RequesterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupAdmins_GroupId",
+                table: "GroupAdmins",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupInvitations_GroupId",
+                table: "GroupInvitations",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupInvitations_UserMakerId",
+                table: "GroupInvitations",
+                column: "UserMakerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupMemberships_GroupId",
+                table: "GroupMemberships",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupMemberships_InvitationId",
+                table: "GroupMemberships",
+                column: "InvitationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MediaAttachments_MediaFileId",
+                table: "MediaAttachments",
+                column: "MediaFileId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MediaAttachments_MessageId",
@@ -313,11 +406,6 @@ namespace Govor.Data.Migrations
                 column: "PrivateChatId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Messages_ReplyToMessageId",
-                table: "Messages",
-                column: "ReplyToMessageId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_MessageViews_MessageId_UserId",
                 table: "MessageViews",
                 columns: new[] { "MessageId", "UserId" },
@@ -334,9 +422,6 @@ namespace Govor.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Admins");
-
-            migrationBuilder.DropTable(
-                name: "ChatGroups");
 
             migrationBuilder.DropTable(
                 name: "Friendships");
@@ -357,16 +442,25 @@ namespace Govor.Data.Migrations
                 name: "MessageViews");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "GroupInvitations");
+
+            migrationBuilder.DropTable(
+                name: "MediaFiles");
 
             migrationBuilder.DropTable(
                 name: "Messages");
 
             migrationBuilder.DropTable(
-                name: "Invitations");
+                name: "ChatGroups");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "PrivateChats");
+
+            migrationBuilder.DropTable(
+                name: "Invitations");
         }
     }
 }

@@ -17,10 +17,11 @@ public class ChatsHub : Hub
     private readonly IMessageService _messageService;
     private readonly IUserGroupsService _userService;
     
-    public ChatsHub(ILogger<ChatsHub> logger, IMessageService messageService)
+    public ChatsHub(ILogger<ChatsHub> logger, IMessageService messageService, IUserGroupsService userService)
     {
         _logger = logger;
         _messageService = messageService;
+        _userService = userService;
     }
     
     public override async Task OnConnectedAsync()

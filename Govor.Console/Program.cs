@@ -181,7 +181,7 @@ namespace Govor.ConsoleClient
                     var requests = await friendsClient.GetIncomingRequestsAsync();
                     foreach (var r in requests)
                     {
-                        Console.WriteLine($"Запрос от: {r.Requester.Username}| {r.RequesterId} | Был онлайн: {r.Requester.WasOnline}  (добавьте через /accept {r.Id})");
+                        Console.WriteLine($"Запрос от: {r.RequesterId} (добавьте через /accept {r.Id})");
                     }
                     break;
                 case "/chat":

@@ -97,6 +97,26 @@ public class FriendsController : Controller
         }
     }
 
+    [HttpGet("responses")]
+    public async Task<IActionResult> GetResponses()
+    {
+        try
+        {
+            var result = await _friendsService.GetResponsesAsync(_currentUserService.GetCurrentUserId());
+            return Ok(BuildFriendshipDtos(result));
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return Ok(Array.Empty<FriendshipDto>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, new { error = "Internal server error." });
+        }
+    }
+    
     [HttpPost("accept")]
     public async Task<IActionResult> AcceptFriend([FromQuery] Guid friendshipId)
     {
@@ -125,6 +145,34 @@ public class FriendsController : Controller
         }
     }
 
+    [HttpPost("reject")]
+    public async Task<IActionResult> RejectFriend([FromQuery] Guid friendshipId)
+    {
+        if (friendshipId == Guid.Empty)
+            return BadRequest("Requester ID is invalid");
+
+        try
+        {
+            await _friendsService.RejectFriendRequestAsync(friendshipId, _currentUserService.GetCurrentUserId());
+            return Ok(new { message = "Friend request rejected." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, new { error = "Failed to accept friend request." });
+        }
+    }
+    
     [HttpGet]
     public async Task<IActionResult> GetFriends()
     {
@@ -160,6 +208,5 @@ public class FriendsController : Controller
         Status = f.Status,
         AddresseeId = f.AddresseeId,
         RequesterId = f.RequesterId,
-        Requester = BuildUserDtos([f.Requester]).First(),
     }).ToList();
 }

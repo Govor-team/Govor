@@ -104,6 +104,5 @@ public class FriendshipsController : Controller
         Status = f.Status,
         AddresseeId = f.AddresseeId,
         RequesterId = f.RequesterId,
-        Requester = BuildUserDtos([f.Requester]).First(),
     }).ToList();
 }

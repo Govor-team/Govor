@@ -55,7 +55,7 @@ public class AuthService : IAccountService
         
         await _usersRepository.AddAsync(user);
         
-        SetRole(user, invitation);
+        await SetRole(user, invitation);
         
         return await _jwtService.GenerateJwtTokenAsync(user);
     }
@@ -74,7 +74,7 @@ public class AuthService : IAccountService
         return await _jwtService.GenerateJwtTokenAsync(user);
     }
 
-    private async void SetRole(User user, Invitation invitation)
+    private async Task SetRole(User user, Invitation invitation)
     {
         if(invitation.IsAdmin)
             await _adminsRepository.AddAsync(new Admin() { UserId = user.Id });

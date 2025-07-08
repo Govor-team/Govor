@@ -1,5 +1,6 @@
 using AutoFixture;
 using Govor.API.Hubs;
+using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -11,6 +12,7 @@ public class ChatsHubTests
 {
     private Mock<ILogger<ChatsHub>> _loggerMock;
     private Mock<IMessageService> _messageServiceMock;
+    private Mock<IUserGroupsService> _userGroupsServiceMock;
     private Fixture _fixture;
     private ChatsHub _chatsHub;
 
@@ -22,14 +24,20 @@ public class ChatsHubTests
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
         
         _messageServiceMock = new Mock<IMessageService>();
+        _userGroupsServiceMock = new Mock<IUserGroupsService>();
         _loggerMock = new Mock<ILogger<ChatsHub>>();
 
         _chatsHub = new ChatsHub(
             _loggerMock.Object,
-            _messageServiceMock.Object
+            _messageServiceMock.Object,
+            _userGroupsServiceMock.Object
         );
     }
     
     // Test for Send action 
-    
+    [Test]
+    public void SendMessage_Success()
+    {
+        
+    }
 }

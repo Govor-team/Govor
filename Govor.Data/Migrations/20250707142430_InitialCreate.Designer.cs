@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Govor.Data.Migrations
 {
     [DbContext(typeof(GovorDbContext))]
-    [Migration("20250630111826_InitialCreate")]
+    [Migration("20250707142430_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace Govor.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
@@ -41,13 +41,13 @@ namespace Govor.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.PrimitiveCollection<string>("Admins")
+                    b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
-                    b.PrimitiveCollection<string>("InviteCode")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<Guid>("ImageId")
+                        .HasColumnType("char(36)");
 
                     b.Property<bool>("IsChannel")
                         .HasColumnType("tinyint(1)");
@@ -57,7 +57,8 @@ namespace Govor.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
 
@@ -102,7 +103,49 @@ namespace Govor.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GroupId");
+
                     b.ToTable("GroupAdmins");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.GroupInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("InvitationCode")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("MaxParticipants")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserMakerId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("UserMakerId");
+
+                    b.ToTable("GroupInvitations");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.GroupMembership", b =>
@@ -114,6 +157,10 @@ namespace Govor.Data.Migrations
                     b.Property<Guid>("GroupId")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid?>("InvitationId")
+                        .IsRequired()
+                        .HasColumnType("char(36)");
+
                     b.Property<bool>("IsBanned")
                         .HasColumnType("tinyint(1)");
 
@@ -121,6 +168,10 @@ namespace Govor.Data.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("InvitationId");
 
                     b.ToTable("GroupMemberships");
                 });
@@ -165,30 +216,46 @@ namespace Govor.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("EncryptedKey")
-                        .HasMaxLength(512)
-                        .HasColumnType("varchar(512)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<Guid>("MediaFileId")
+                        .HasColumnType("char(36)");
 
                     b.Property<Guid>("MessageId")
                         .HasColumnType("char(36)");
 
-                    b.Property<string>("MimeType")
+                    b.HasKey("Id");
+
+                    b.HasIndex("MediaFileId");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("MediaAttachments");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.MediaFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("MediaType")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Type")
+                    b.Property<string>("MineType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)");
+
+                    b.Property<string>("Url")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MessageId");
-
-                    b.ToTable("MediaAttachments");
+                    b.ToTable("MediaFiles");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.Message", b =>
@@ -228,8 +295,6 @@ namespace Govor.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PrivateChatId");
-
-                    b.HasIndex("ReplyToMessageId");
 
                     b.ToTable("Messages");
                 });
@@ -371,13 +436,62 @@ namespace Govor.Data.Migrations
                     b.Navigation("Requester");
                 });
 
+            modelBuilder.Entity("Govor.Core.Models.GroupAdmins", b =>
+                {
+                    b.HasOne("Govor.Core.Models.ChatGroup", null)
+                        .WithMany("Admins")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.GroupInvitation", b =>
+                {
+                    b.HasOne("Govor.Core.Models.ChatGroup", null)
+                        .WithMany("InviteCodes")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Govor.Core.Models.User", "UserMaker")
+                        .WithMany()
+                        .HasForeignKey("UserMakerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UserMaker");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.GroupMembership", b =>
+                {
+                    b.HasOne("Govor.Core.Models.ChatGroup", null)
+                        .WithMany("Members")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Govor.Core.Models.GroupInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("InvitationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Govor.Core.Models.MediaAttachments", b =>
                 {
+                    b.HasOne("Govor.Core.Models.MediaFile", "MediaFile")
+                        .WithMany()
+                        .HasForeignKey("MediaFileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Govor.Core.Models.Message", "Message")
                         .WithMany("MediaAttachments")
                         .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("MediaFile");
 
                     b.Navigation("Message");
                 });
@@ -387,13 +501,6 @@ namespace Govor.Data.Migrations
                     b.HasOne("Govor.Core.Models.PrivateChat", null)
                         .WithMany("Messages")
                         .HasForeignKey("PrivateChatId");
-
-                    b.HasOne("Govor.Core.Models.Message", "ReplyToMessage")
-                        .WithMany()
-                        .HasForeignKey("ReplyToMessageId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("ReplyToMessage");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.MessageReaction", b =>
@@ -433,6 +540,15 @@ namespace Govor.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Invite");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.ChatGroup", b =>
+                {
+                    b.Navigation("Admins");
+
+                    b.Navigation("InviteCodes");
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.Invitation", b =>

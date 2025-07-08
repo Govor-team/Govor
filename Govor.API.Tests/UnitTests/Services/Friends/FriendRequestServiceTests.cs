@@ -1,22 +1,22 @@
 using AutoFixture;
 using Govor.Application.Exceptions.FriendsService;
-using Govor.Application.Interfaces;
-using Govor.Application.Services;
+using Govor.Application.Interfaces.Friends;
+using Govor.Application.Services.Friends;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Friendships;
 using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.API.Tests.UnitTests.Services.Friends;
 
 [TestFixture]
-public class FriendsServiceTests
+public class FriendRequestServiceTests
 {
     private Fixture _fixture;
     private Mock<IUsersRepository> _usersRepositoryMock;
     private Mock<IFriendshipsRepository> _friendshipsRepositoryMock;
-    private IFriendsService _service;
+    private IFriendRequestService _service;
 
     [SetUp]
     public void SetUp()
@@ -31,96 +31,10 @@ public class FriendsServiceTests
         _usersRepositoryMock = new Mock<IUsersRepository>();
         _friendshipsRepositoryMock = new Mock<IFriendshipsRepository>();
 
-        _service = new FriendsService(_usersRepositoryMock.Object, _friendshipsRepositoryMock.Object);
-    }
-    
-    // SearchUsersAsync
-    [Test]
-    public async Task SearchUsersAsync_ReturnsUsers_IfNotAlreadyFriends()
-    {
-        // Arrange
-        var userId = _fixture.Create<Guid>();
-        var user = _fixture.Create<User>();
-        user.Id = Guid.NewGuid();
-
-        _usersRepositoryMock
-            .Setup(u => u.SearchPotentialFriendsAsync(userId, It.IsAny<string>()))
-            .ReturnsAsync(new List<User> { user });
-
-        _friendshipsRepositoryMock
-            .Setup(f => f.FindByUserIdAsync(userId))
-            .ReturnsAsync(new List<Friendship>()); // No friends
-
-        // Act
-        var result = await _service.SearchUsersAsync("test", userId);
-
-        // Assert
-        Assert.That(result, Has.Count.EqualTo(1));
-        Assert.That(result[0].Id, Is.EqualTo(user.Id));
-    }
-    
-    [Test]
-    public void SearchUsersAsync_Throws_SearchUsersException_IfThrowsNotFoundByKeyException_String_Guid()
-    {
-        // Arrange 
-        _usersRepositoryMock
-            .Setup(u => u.SearchPotentialFriendsAsync(It.IsAny<Guid>(), It.IsAny<string>()))
-            .ThrowsAsync(new NotFoundByKeyException<(string,Guid)>(("test",Guid.NewGuid()),"test"));
-        
-        // Axt & Assert 
-        Assert.ThrowsAsync<SearchUsersException>(async () => await _service.SearchUsersAsync("test", Guid.NewGuid()));
-    }
-    
-    [Test]
-    public async Task SearchUsersAsync_ReturnsUsersWithoutFriendships_IfThrowsNotFoundByKeyException_Guid()
-    {
-        // Arrange
-        var userId = _fixture.Create<Guid>();
-        var user = _fixture.Create<User>();
-        user.Id = Guid.NewGuid();
-
-        _usersRepositoryMock
-            .Setup(u => u.SearchPotentialFriendsAsync(userId, It.IsAny<string>()))
-            .ReturnsAsync(new List<User> { user });
-
-        _friendshipsRepositoryMock
-            .Setup(f => f.FindByUserIdAsync(userId))
-            .ThrowsAsync(new NotFoundByKeyException<Guid>(userId, "test"));
-        
-        // Act 
-        var result = await _service.SearchUsersAsync("test", userId);
-        
-        // Assert 
-        Assert.That(result, Has.Count.EqualTo(1));
-        Assert.That(result[0].Id, Is.EqualTo(user.Id));
-    }
-
-    [Test]
-    public void SearchUsersAsync_Throws_UnauthorizedAccessException_IfThrowsSomeExceptionInUsersRepository()
-    {
-        // Arrange 
-        _usersRepositoryMock
-            .Setup(u => u.SearchPotentialFriendsAsync(It.IsAny<Guid>(), It.IsAny<string>()))
-            .ThrowsAsync(new Exception("test"));
-        
-        // Act & Assert 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _service.SearchUsersAsync("test", Guid.NewGuid()));
-    }
-    
-    [Test]
-    public void SearchUsersAsync_Throws_UnauthorizedAccessException_IfThrowsSomeExceptionInFriendshipsRepository()
-    {
-        // Arrange 
-        _friendshipsRepositoryMock
-            .Setup(u => u.FindByUserIdAsync(It.IsAny<Guid>()))
-            .ThrowsAsync(new Exception("test"));
-        
-        // Act & Assert 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _service.SearchUsersAsync("test", Guid.NewGuid()));
+        _service = new FriendRequestService(_friendshipsRepositoryMock.Object);
     }
     
     // SendFriendRequestAsync
-    
     [Test]
     public void SendFriendRequestAsync_SendingToSelf_ThrowsInvalidOperationException()
     {
@@ -270,45 +184,104 @@ public class FriendsServiceTests
 
         Assert.That(updatedFriendship.Status, Is.EqualTo(FriendshipStatus.Accepted));
     }
-
-    // GetFriendsAsync
+    
+    // RejectFriend
     [Test]
-    public async Task GetFriendsAsync_ReturnsUsers_IfUserExists()
+    public async Task RejectFriendRequestAsync_ValidRequest_CallsRemoveAsync()
     {
-        // Arrange 
-        var userId = Guid.NewGuid();
-        var friendships = _fixture.CreateMany<Friendship>().ToList();
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
         
-        friendships.ForEach(f =>
-        {
-            f.RequesterId = userId;
-            f.Status = FriendshipStatus.Accepted;
-        });
+        await _service.RejectFriendRequestAsync(friendship.Id, friendship.AddresseeId);
+
+        // Assert
+        _friendshipsRepositoryMock.Verify(r => r.UpdateAsync(It.Is<Friendship>(f =>
+            f.Id == friendship.Id &&
+            f.RequesterId == friendship.RequesterId &&
+            f.AddresseeId == friendship.AddresseeId &&
+            f.Status == FriendshipStatus.Rejected
+        )), Times.Once);
+    }
+
+    [Test]
+    public void RejectFriendRequestAsync_Throws_InvalidOperationException_IfStatusNotEqualPendingOrReject()
+    {
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Accepted)
+            .Create();
         
-        _friendshipsRepositoryMock.Setup(f => f.FindByUserIdAsync(userId))
-            .ReturnsAsync(friendships);
-        
-        // Act 
-        var result = await _service.GetFriendsAsync(userId);
-        
-        // Assert 
-        Assert.That(result.Count, Is.EqualTo(friendships.Count));
-        Assert.That(result, Is.EquivalentTo(friendships.Select(f => f.Addressee)));
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
+
+        // Act & Assert 
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.RejectFriendRequestAsync(friendship.Id, friendship.AddresseeId));
     }
     
     [Test]
-    public void GetFriendsAsync_Throws_InvalidOperationException_IfUserNotExists()
+    public void RejectFriendRequestAsync_Throws_UnauthorizedAccessException_IfCurrentUserIdIsNotAddressee()
     {
-        // Arrange 
-        _friendshipsRepositoryMock.Setup(f => f.FindByUserIdAsync(It.IsAny<Guid>()))
-            .ThrowsAsync(new NotFoundByKeyException<Guid>(Guid.NewGuid()));
-        
-        // Act & Assert 
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.GetFriendsAsync(Guid.NewGuid()));
+        // Arrange
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
+
+        var wrongUserId = Guid.NewGuid(); // не совпадает с AddresseeId
+
+        // Act & Assert
+        Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            await _service.RejectFriendRequestAsync(friendship.Id, wrongUserId));
+    }
+    
+    [Test]
+    public void RejectFriendRequestAsync_Throws_InvalidOperationException_IfFriendshipNotFound()
+    {
+        // Arrange
+        var requestId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(requestId))
+            .ThrowsAsync(new NotFoundByKeyException<Guid>(requestId));
+
+        // Act & Assert
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _service.RejectFriendRequestAsync(requestId, userId));
+    }
+
+    [Test]
+    public async Task RejectFriendRequestAsync_ChangesStatusToAccepted()
+    {
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.GetByIdAsync(friendship.Id))
+            .ReturnsAsync(friendship);
+
+        Friendship updatedFriendship = null;
+
+        _friendshipsRepositoryMock
+            .Setup(r => r.UpdateAsync(It.IsAny<Friendship>()))
+            .Callback<Friendship>(f => updatedFriendship = f)
+            .Returns(Task.CompletedTask);
+
+        await _service.RejectFriendRequestAsync(friendship.Id, friendship.AddresseeId);
+
+        Assert.That(updatedFriendship.Status, Is.EqualTo(FriendshipStatus.Rejected));
     }
     
     // GetIncomingRequestsAsync
-
     [Test]
     public async Task GetIncomingRequestsAsync_ReturnsFriendships_IfFriendshipsExists()
     {
@@ -354,5 +327,4 @@ public class FriendsServiceTests
         Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await _service.GetIncomingRequestsAsync(userId));
     }
-
 }
