@@ -1,7 +1,7 @@
 using Govor.Application.Exceptions.VerifyFriendship;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages.Parameters;
-using Govor.Application.Services;
+using Govor.Application.Services.Messages;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Messages;
@@ -11,18 +11,18 @@ using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.Application.Tests.Services.Messages;
 
 [TestFixture]
-public class MessageServiceTests
+public class MessageCommandServiceTests
 {
     private Mock<IMessagesRepository> _mockMessagesRepo;
     private Mock<IUsersRepository> _mockUsersRepo;
     private Mock<IGroupsRepository> _mockGroupsRepo;
     private Mock<IVerifyFriendship> _mockVerifyFriendship;
     private Mock<IPrivateChatsRepository> _mockPrivateChats;
-    private Mock<ILogger<MessageService>> _mockLogger;
-    private MessageService _messageService;
+    private Mock<ILogger<MessageCommandService>> _mockLogger;
+    private MessageCommandService _messageService;
     
     [SetUp]
     public void SetUp()
@@ -32,9 +32,9 @@ public class MessageServiceTests
         _mockGroupsRepo = new Mock<IGroupsRepository>();
         _mockVerifyFriendship = new Mock<IVerifyFriendship>();
         _mockPrivateChats = new Mock<IPrivateChatsRepository>();
-        _mockLogger = new Mock<ILogger<MessageService>>();
+        _mockLogger = new Mock<ILogger<MessageCommandService>>();
 
-        _messageService = new MessageService(
+        _messageService = new MessageCommandService(
             _mockMessagesRepo.Object,
             _mockUsersRepo.Object,
             _mockGroupsRepo.Object,

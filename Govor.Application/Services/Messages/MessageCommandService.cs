@@ -8,24 +8,24 @@ using Govor.Core.Repositories.PrivateChats;
 using Govor.Core.Repositories.Users;
 using Microsoft.Extensions.Logging;
 
-namespace Govor.Application.Services;
+namespace Govor.Application.Services.Messages;
 
-public class MessageService : IMessageService
+public class MessageCommandService : IMessageCommandService
 {
     private readonly IMessagesRepository _messagesRepository;
     private readonly IUsersRepository _usersRepository; // For validating user recipients
     private readonly IGroupsRepository _groupsRepository; // For validating group recipients and fetching members
     private readonly IPrivateChatsRepository _privateChats;
     private readonly IVerifyFriendship _verifyFriendship; // For private messages
-    private readonly ILogger<MessageService> _logger;
+    private readonly ILogger<MessageCommandService> _logger;
 
-    public MessageService(
+    public MessageCommandService(
         IMessagesRepository messagesRepository,
         IUsersRepository usersRepository,
         IGroupsRepository groupsRepository,
         IVerifyFriendship verifyFriendship,
         IPrivateChatsRepository privateChats,
-        ILogger<MessageService> logger)
+        ILogger<MessageCommandService> logger)
     {
         _messagesRepository = messagesRepository;
         _usersRepository = usersRepository;

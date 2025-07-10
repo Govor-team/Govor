@@ -6,10 +6,11 @@ using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Services;
+using Govor.Application.Services.Authentication;
 using Govor.Core.Repositories.Admins;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services.Authentication;
+namespace Govor.Application.Tests.Services.Authentication;
 
 [TestFixture]
 public class AuthServiceTests

@@ -6,7 +6,7 @@ using Govor.Core.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Govor.Application.Services;
+namespace Govor.Application.Services.Authentication;
 
 public class JwtService : IJwtService
 {

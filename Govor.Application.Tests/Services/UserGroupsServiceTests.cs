@@ -6,7 +6,7 @@ using Govor.Core.Repositories.Groups;
 using Govor.Data.Repositories.Exceptions;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.Application.Tests.Services;
 
 [TestFixture]
 public class UserGroupsServiceTests

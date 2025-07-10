@@ -4,7 +4,7 @@ using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Messages;
 using Govor.Data.Repositories.Exceptions;
 
-namespace Govor.Application.Services;
+namespace Govor.Application.Services.Messages;
 
 public class MessagesLoader : IMessagesLoader
 {

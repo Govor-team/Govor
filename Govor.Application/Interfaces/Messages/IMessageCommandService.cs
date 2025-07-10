@@ -4,7 +4,7 @@ using Govor.Core.Models;
 namespace Govor.Application.Interfaces.Messages;
 
 // Combining IChatService and IGroupService functionalities relevant to messages
-public interface IMessageService
+public interface IMessageCommandService
 {
     Task<SendMessageResult> SendMessageAsync(SendMessage messageParameters);
     Task<EditMessageResult> EditMessageAsync(EditMessage messageParameters);

@@ -1,5 +1,6 @@
 using Govor.API.Services.AdminsStuff.Interfaces;
 using Govor.API.Services.Authentication.Interfaces;
+using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Infrastructure.Validators;
 using Govor.Application.Interfaces;
@@ -9,7 +10,9 @@ using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Services;
+using Govor.Application.Services.Authentication;
 using Govor.Application.Services.Friends;
+using Govor.Application.Services.Messages;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
@@ -57,7 +60,7 @@ public static class ConfigurationProgramExtensions
         services.AddMemoryCache();
         services.AddScoped<IPingHandlerService, PingHandlerService>();
         
-        services.AddScoped<IMessageService, MessageService>();
+        services.AddScoped<IMessageCommandService, MessageCommandService>();
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
         services.AddScoped<IUserGroupsService, UserGroupsService>();
         services.AddScoped<IMessagesLoader, MessagesLoader>();

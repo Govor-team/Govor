@@ -1,8 +1,8 @@
 using AutoFixture;
-using Govor.Application.Services;
+using Govor.Application.Services.Authentication;
 using Govor.Core.Infrastructure.Extensions;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace  Govor.Application.Tests.Services;
 
 [TestFixture]
 public class PasswordHasherTests

@@ -1,11 +1,11 @@
 using AutoFixture;
 using Govor.API.Services.AdminsStuff.Interfaces;
-using Govor.Application.Interfaces.AdminsStuff;
+using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Invaites;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services.AdminStuff;
+namespace Govor.Application.Tests.Infrastructure.AdminsStuff;
 
 [TestFixture]
 public class InvitationGeneratorTests

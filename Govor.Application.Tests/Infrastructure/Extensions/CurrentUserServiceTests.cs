@@ -3,7 +3,7 @@ using Govor.Application.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Http;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.Application.Tests.Infrastructure.Extensions;
 
 [TestFixture]
 public class CurrentUserServiceTests

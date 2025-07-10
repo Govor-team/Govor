@@ -14,13 +14,13 @@ namespace Govor.API.Hubs;
 public class ChatsHub : Hub
 {
     private readonly ILogger<ChatsHub> _logger;
-    private readonly IMessageService _messageService;
+    private readonly IMessageCommandService _messageCommandService;
     private readonly IUserGroupsService _userService;
 
-    public ChatsHub(ILogger<ChatsHub> logger, IMessageService messageService, IUserGroupsService userService)
+    public ChatsHub(ILogger<ChatsHub> logger, IMessageCommandService messageCommandService, IUserGroupsService userService)
     {
         _logger = logger;
-        _messageService = messageService;
+        _messageCommandService = messageCommandService;
         _userService = userService;
     }
 
@@ -105,7 +105,7 @@ public class ChatsHub : Hub
             Media: request.MediaAttachments?.Select(f => new SendMedia(f.MediaId, f.EncryptedKey)) ??
                    Array.Empty<SendMedia>());
 
-        var result = await _messageService.SendMessageAsync(sendMessageParams);
+        var result = await _messageCommandService.SendMessageAsync(sendMessageParams);
 
         if (!result.IsSuccess || result.Message.Id == Guid.Empty)
         {

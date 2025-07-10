@@ -4,7 +4,7 @@ using Govor.Application.Services;
 using Microsoft.AspNetCore.Hosting;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.Application.Tests.Services;
 
 [TestFixture]
 public class LocalStorageServiceTests

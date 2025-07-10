@@ -7,7 +7,7 @@ using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.Application.Tests.Services;
 
 [TestFixture]
 public class VerifyFriendshipTests

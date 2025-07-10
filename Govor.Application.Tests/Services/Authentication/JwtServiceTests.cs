@@ -2,11 +2,12 @@ using System.IdentityModel.Tokens.Jwt;
 using AutoFixture;
 using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Services;
+using Govor.Application.Services.Authentication;
 using Govor.Core.Models;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services.Authentication;
+namespace Govor.Application.Tests.Services.Authentication;
 
 [TestFixture]
 public class JwtServiceTests

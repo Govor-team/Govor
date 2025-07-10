@@ -11,7 +11,7 @@ namespace Govor.API.Tests.IntegrationTests.Hubs;
 public class ChatsHubTests
 {
     private Mock<ILogger<ChatsHub>> _loggerMock;
-    private Mock<IMessageService> _messageServiceMock;
+    private Mock<IMessageCommandService> _messageServiceMock;
     private Mock<IUserGroupsService> _userGroupsServiceMock;
     private Fixture _fixture;
     private ChatsHub _chatsHub;
@@ -23,7 +23,7 @@ public class ChatsHubTests
         _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList().ForEach(b => _fixture.Behaviors.Remove(b));
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
         
-        _messageServiceMock = new Mock<IMessageService>();
+        _messageServiceMock = new Mock<IMessageCommandService>();
         _userGroupsServiceMock = new Mock<IUserGroupsService>();
         _loggerMock = new Mock<ILogger<ChatsHub>>();
 

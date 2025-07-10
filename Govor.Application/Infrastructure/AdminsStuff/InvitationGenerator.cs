@@ -2,7 +2,7 @@ using Govor.API.Services.AdminsStuff.Interfaces;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Invaites;
 
-namespace Govor.Application.Interfaces.AdminsStuff;
+namespace Govor.Application.Infrastructure.AdminsStuff;
 
 public class InvitationGenerator(IInvitesRepository repository) : IInvitationGenerator
 {

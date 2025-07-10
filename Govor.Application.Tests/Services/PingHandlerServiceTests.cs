@@ -4,7 +4,7 @@ using Govor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Govor.API.Tests.UnitTests.Services;
+namespace Govor.Application.Tests.Services;
 
 [TestFixture]
 public class PingHandlerServiceTests

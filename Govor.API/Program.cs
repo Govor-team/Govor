@@ -1,7 +1,7 @@
 using System.Text;
 using Govor.API.Extensions;
 using Govor.API.Hubs;
-using Govor.Application.Services;
+using Govor.Application.Services.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -19,7 +19,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5000", "https://5.129.212.144:5000") // Укажите ваш публичный IP
+        policy.WithOrigins("http://localhost:5000", "https://5.129.212.144:5000")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();

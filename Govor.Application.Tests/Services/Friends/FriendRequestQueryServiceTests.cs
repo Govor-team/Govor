@@ -7,7 +7,7 @@ using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
 using Moq;
 
-namespace Govor.API.Tests.UnitTests.Services.Friends;
+namespace Govor.Application.Tests.Services.Friends;
 
 [TestFixture]
 public class FriendRequestQueryServiceTests

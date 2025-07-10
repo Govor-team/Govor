@@ -8,7 +8,7 @@ using Govor.Application.Interfaces.Authentication;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Repositories.Admins;
 
-namespace Govor.Application.Services;
+namespace Govor.Application.Services.Authentication;
 
 public class AuthService : IAccountService
 {

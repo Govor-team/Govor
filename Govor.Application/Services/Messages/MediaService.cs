@@ -1,7 +1,7 @@
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Medias;
 
-namespace Govor.Application.Services;
+namespace Govor.Application.Services.Messages;
 
 public class MediaService : IMediaService
 {
