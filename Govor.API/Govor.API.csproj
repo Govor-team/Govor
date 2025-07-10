@@ -23,9 +23,5 @@
         <ProjectReference Include="..\Govor.Contracts\Govor.Contracts.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Controllers\Friends\" />
-    </ItemGroup>
-
 </Project>
 

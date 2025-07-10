@@ -29,7 +29,7 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<JwtOption>(configuration.GetSection(nameof(JwtOption)));
 
 // Add services
-builder.Services.AddSignalR();
+builder.Services.AddSignalRConf();// signalR
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>

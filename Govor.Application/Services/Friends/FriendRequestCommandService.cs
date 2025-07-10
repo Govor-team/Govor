@@ -6,16 +6,16 @@ using Govor.Data.Repositories.Exceptions;
 
 namespace Govor.Application.Services.Friends;
 
-public class FriendRequestService : IFriendRequestService
+public class FriendRequestCommandService : IFriendRequestCommandService
 {
     private readonly IFriendshipsRepository _friendshipsRepository;
 
-    public FriendRequestService(IFriendshipsRepository friendshipsRepository)
+    public FriendRequestCommandService(IFriendshipsRepository friendshipsRepository)
     {
         _friendshipsRepository = friendshipsRepository;
     }
-
-    public async Task SendFriendRequestAsync(Guid fromUserId, Guid toUserId)
+    
+    public async Task SendAsync(Guid fromUserId, Guid toUserId)
     {
         if (fromUserId == toUserId)
             throw new InvalidOperationException("Cannot send a request to self user");
@@ -32,7 +32,7 @@ public class FriendRequestService : IFriendRequestService
         });
     }
 
-    public async Task AcceptFriendRequestAsync(Guid requestId, Guid currentUserId)
+    public async Task AcceptAsync(Guid requestId, Guid currentUserId)
     {
         try
         {
@@ -53,7 +53,7 @@ public class FriendRequestService : IFriendRequestService
         }
     }
 
-    public async Task RejectFriendRequestAsync(Guid requestId, Guid currentUserId)
+    public async Task RejectAsync(Guid requestId, Guid currentUserId)
     {
         try
         {
@@ -71,34 +71,6 @@ public class FriendRequestService : IFriendRequestService
         catch (NotFoundByKeyException<Guid> ex)
         {
             throw new InvalidOperationException("Friendship not found! You cant reject request!", ex);
-        }
-    }
-
-    public async Task<List<Friendship>> GetIncomingRequestsAsync(Guid userId)
-    {
-        try
-        {
-            var friendships = await _friendshipsRepository.FindByUserIdAsync(userId);
-            return friendships.Where(f => f.AddresseeId == userId && f.Status == FriendshipStatus.Pending).ToList()
-                   ?? new List<Friendship>();
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new InvalidOperationException("User not exist", ex);
-        }
-    }
-
-    public async Task<List<Friendship>> GetResponsesAsync(Guid userId)
-    {
-        try
-        {
-            var friendships = await _friendshipsRepository.FindByUserIdAsync(userId);
-            return friendships.Where(f => f.RequesterId == userId && f.Status != FriendshipStatus.Accepted).ToList()
-                   ?? new List<Friendship>();
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new InvalidOperationException("User not exist", ex);
         }
     }
 }

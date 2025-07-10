@@ -17,6 +17,7 @@ public class UsernameValidatorTests
     [TestCase("Иван")]
     [TestCase("Алексей")]
     [TestCase("Ёжик")]
+    [TestCase("Иван123")] // содержит цифры
     public void Validate_ValidUsernames_ShouldNotThrow(string username)
     {
         Assert.DoesNotThrow(() => _validator.Validate(username));
@@ -24,7 +25,6 @@ public class UsernameValidatorTests
 
     [TestCase("Ivan")] // не кириллица
     [TestCase("123Иван")] // начинается не с буквы
-    [TestCase("Иван123")] // содержит цифры
     [TestCase("!@#$")] // спецсимволы
     [TestCase("")] // пусто
     [TestCase("И")] // меньше минимума

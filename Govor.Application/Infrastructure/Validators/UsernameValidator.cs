@@ -8,7 +8,7 @@ namespace Govor.Application.Infrastructure.Validators;
 
 public class UsernameValidator : IUsernameValidator
 {
-    private readonly Regex _usernameRegex = new(@"^[А-Яа-яЁё]+$", RegexOptions.Compiled);
+    private readonly Regex _usernameRegex = new(@"^[А-Яа-яЁё]+[А-Яа-яЁё0-9]*$", RegexOptions.Compiled);
     
     public void Validate(string username)
     {

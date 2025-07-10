@@ -41,7 +41,8 @@ public static class ConfigurationProgramExtensions
         
         // Friends services 
         services.AddScoped<IFriendshipService, FriendshipService>();
-        services.AddScoped<IFriendRequestService, FriendRequestService>();
+        services.AddScoped<IFriendRequestCommandService, FriendRequestCommandService>();
+        services.AddScoped<IFriendRequestQueryService, FriendRequestQueryService>();
         services.AddScoped<IFriendsBlockService, FriendsBlockService>();
         
         services.AddScoped<IStorageService>(sp =>
