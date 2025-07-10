@@ -6,7 +6,7 @@ using Govor.Data.Repositories;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Govor.API.Tests.IntegrationTests.EF.Repositories;
+namespace Govor.Data.Tests.Repositories;
 
 [TestFixture]
 public class GroupRepositoryTests
