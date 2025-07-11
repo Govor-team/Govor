@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
-using Govor.Contracts.Requests;
+using System.Threading.Tasks;
+using Govor.ConsoleClient.Commands;
 using Govor.Contracts.Requests.SignalR;
 using Govor.Contracts.Responses.SignalR;
-using Govor.Core.Models;
-
 
 /*====================================
  *Личные сообщения| Егор 
@@ -29,14 +30,26 @@ namespace Govor.ConsoleClient
         static string baseUrl = "https://localhost:7155";
         static string? AuthToken = null;
         static HttpClientService HttpService = new(baseUrl);
-        private static FriendsClient? friendsClient;
+        private static FriendsClient? _friendsClient; // Renamed to avoid conflict with BaseCommand
         static HubConnection? _hubConnection;
         static Dictionary<string, List<string>> ChatHistory = new();
         static string? CurrentChatUser = null;
         static Guid CurrentChatUserId = Guid.Empty;
 
+        private static Dictionary<string, ICommand> _commands = new();
+
         static async Task Main()
         {
+            InitializeCommands();
+            BaseCommand.InitializeServices(
+                _friendsClient, // Initially null, will be set by Login/Register commands
+                HttpService,
+                () => AuthToken,
+                (token) => AuthToken = token,
+                InitializeHubConnection,
+                () => _hubConnection
+            );
+
             LoginWindow();
 
             while (true)
@@ -47,170 +60,121 @@ namespace Govor.ConsoleClient
                 if (string.IsNullOrWhiteSpace(input)) continue;
 
                 if (input.StartsWith("/"))
-                    HandleCommand(input);
+                    await HandleCommandAsync(input);
                 else if (CurrentChatUser != null)
-                    SendMessage(input);
+                    await SendMessageAsync(input);
                 else
-                    Console.WriteLine("[Система] Введите команду, например /friends");
+                    Console.WriteLine("[Система] Введите команду, например /help или /friends");
             }
         }
 
-        static async void HandleCommand(string input)
+        static void InitializeCommands()
         {
-            var args = input.Split(' ', 2);
-            var command = args[0].ToLower();
-            var argument = args.Length > 1 ? args[1] : null;
-
-            switch (command)
+            _commands = new Dictionary<string, ICommand>
             {
-                case "/login":
-                    Console.Write("username: ");
-                    var loginUsername = Console.ReadLine();
-
-                    Console.Write("password: ");
-                    var loginPassword = Console.ReadLine();
-
-                    try
-                    {
-                        AuthToken = await HttpService.LoginAsync(loginUsername, loginPassword);
-                        HttpClient sharedClient = new();
-                        sharedClient.BaseAddress = new Uri(baseUrl);
-                        sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthToken);
-
-                        friendsClient = new FriendsClient(sharedClient);
-                        await InitializeHubConnection();
-                        Console.WriteLine("[Успех] Вход выполнен. Токен сохранен.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[Ошибка] {ex.Message}");
-                    }
-                    break;
-                case "/reg":
-                    Console.Write("username: ");
-                    var regUsername = Console.ReadLine();
-
-                    Console.Write("password: ");
-                    var regPassword = Console.ReadLine();
-
-                    Console.Write("invitation: ");
-                    var inviteCode = Console.ReadLine();
-
-                    try
-                    {
-                        AuthToken = await HttpService.RegisterAsync(regUsername, regPassword, inviteCode);
-                        HttpClient sharedClient = new();
-                        sharedClient.BaseAddress = new Uri(baseUrl);
-                        sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AuthToken);
-
-                        friendsClient = new FriendsClient(sharedClient);
-                        await InitializeHubConnection();
-                        Console.WriteLine("[Успех] Регистрация завершена. Токен сохранен.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[Ошибка] {ex.Message}");
-                    }
-                    break;
-                case "/search":
-                    if (friendsClient == null)
-                    {
-                        Console.WriteLine("[Ошибка] Сначала войдите в систему.");
-                        break;
-                    }
-                    Console.Write("Введите имя друга: ");
-                    var q = Console.ReadLine();
-                    var foundUsers = await friendsClient.SearchAsync(q);
-                    foreach (var user in foundUsers)
-                    {
-                        Console.WriteLine($"{user.Username} [{user.Id}]");
-                    }
-                    break;
+                { "/login", new LoginCommand() },
+                { "/reg", new RegisterCommand() },
+                { "/search", new SearchUserCommand() },
+                { "/friends", new ListFriendsCommand() },
+                { "/friend", new SendFriendRequestCommand() }, // Alias for SendFriendRequest
+                { "/sendrequest", new SendFriendRequestCommand() },
+                { "/accept", new AcceptFriendRequestCommand() },
+                { "/reject", new RejectFriendRequestCommand() },
+                { "/incoming", new ListIncomingRequestsCommand() },
+                { "/outgoing", new ListOutgoingRequestsCommand() },
+                { "/block", new BlockUserCommand() },
+                { "/unblock", new UnblockUserCommand() },
                 
-                case "/exit":
-                    Console.WriteLine("[Система] Выход...");
-                    if (_hubConnection != null)
-                    {
-                        await _hubConnection.StopAsync();
-                        await _hubConnection.DisposeAsync();
-                    }
-                    Environment.Exit(0);
-                    break;
+                { "/adminlistallfs", new AdminListAllFriendshipsCommand() },
+                { "/adminlistuserfs", new AdminListUserFriendshipsCommand() },
+                { "/adminremovefs", new AdminRemoveFriendshipCommand() },
+                // Help command is special as it needs the list of commands
+                // It will be added after other commands are initialized
+            };
+            _commands.Add("/help", new HelpCommand(_commands));
+            _commands.Add("-h", new HelpCommand(_commands)); // Alias for help
 
-                case "/friends":
-                    if (friendsClient == null)
-                    {
-                        Console.WriteLine("[Ошибка] Сначала войдите в систему.");
-                        break;
-                    }
-                    var friends = await friendsClient.GetFriendsAsync();
-                    foreach (var f in friends)
-                    {
-                        Console.WriteLine($"{f.Username} | был онлайн: {f.WasOnline} [{f.Id}]");
-                    }
-                    break;
-                case "/friend":
-                    if (friendsClient == null)
-                    {
-                        Console.WriteLine("[Ошибка] Сначала войдите в систему.");
-                        break;
-                    }
-                    Console.Write("Введите ID пользователя, которому хотите отправить запрос: ");
-                    var targetId = Guid.Parse(Console.ReadLine());
-                    await friendsClient.SendFriendRequestAsync(targetId);
-                    Console.WriteLine("Запрос отправлен");
-                    break;
+            // Add other general commands not refactored yet if any, or create classes for them
+            // For example, /exit, /chat, /back will be handled separately for now or made into commands
+        }
 
-                case "/accept":
-                    if (friendsClient == null)
-                    {
-                        Console.WriteLine("[Ошибка] Сначала войдите в систему.");
-                        break;
-                    }
-                    Console.Write("Введите ID заявки, которую хотите принять принимаете: ");
-                    var acceptId = Guid.Parse(Console.ReadLine());
-                    await friendsClient.AcceptFriendRequestAsync(acceptId);
-                    Console.WriteLine("Принято");
-                    break;
-                case "/incoming":
-                    if (friendsClient == null)
-                    {
-                        Console.WriteLine("[Ошибка] Сначала войдите в систему.");
-                        break;
-                    }
-                    var requests = await friendsClient.GetIncomingRequestsAsync();
-                    foreach (var r in requests)
-                    {
-                        Console.WriteLine($"Запрос от: {r.RequesterId} (добавьте через /accept {r.Id})");
-                    }
-                    break;
-                case "/chat":
-                    if (string.IsNullOrEmpty(argument))
-                    {
-                        Console.WriteLine("[Ошибка] Укажите имя друга и ID через пробел (например /chat Egor GUID)");
-                        break;
-                    }
+        // Public static method to allow commands (like Login/Register) to update the FriendsClient
+        public static void UpdateFriendsClient(FriendsClient newFriendsClient)
+        {
+            _friendsClient = newFriendsClient;
+            // Re-initialize services in BaseCommand with the new FriendsClient
+            BaseCommand.InitializeServices(
+                _friendsClient,
+                HttpService,
+                () => AuthToken,
+                (token) => AuthToken = token,
+                InitializeHubConnection,
+                () => _hubConnection
+            );
+        }
 
-                    var chatArgs = argument.Split(' ', 2);
-                    if (chatArgs.Length < 2 || !Guid.TryParse(chatArgs[1], out var chatUserId))
-                    {
-                        Console.WriteLine("[Ошибка] Неверный формат. Укажите имя друга и ID (например /chat Egor GUID)");
+
+        static async Task HandleCommandAsync(string input)
+        {
+            var parts = input.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+            var commandKey = parts[0].ToLower();
+            var argument = parts.Length > 1 ? parts[1] : null;
+
+            if (_commands.TryGetValue(commandKey, out var commandInstance))
+            {
+                try
+                {
+                    await commandInstance.ExecuteAsync(argument);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Критическая ошибка выполнения команды {commandKey}]: {ex.Message}");
+                    // Log detailed exception: Console.WriteLine(ex.ToString());
+                }
+            }
+            else
+            {
+                // Handle non-refactored commands for now
+                switch (commandKey)
+                {
+                    case "/exit":
+                        Console.WriteLine("[Система] Выход...");
+                        if (_hubConnection != null)
+                        {
+                            await _hubConnection.StopAsync();
+                            await _hubConnection.DisposeAsync();
+                        }
+                        Environment.Exit(0);
                         break;
-                    }
+                    case "/chat":
+                        if (string.IsNullOrEmpty(argument))
+                        {
+                            Console.WriteLine("[Ошибка] Укажите имя друга и ID через пробел (например /chat Egor GUID)");
+                            break;
+                        }
 
-                    CurrentChatUser = chatArgs[0];
-                    CurrentChatUserId = chatUserId;
-                    ShowChat(CurrentChatUser);
-                    break;
+                        var chatArgs = argument.Split(' ', 2);
+                        if (chatArgs.Length < 2 || !Guid.TryParse(chatArgs[1], out var chatUserId))
+                        {
+                            Console.WriteLine("[Ошибка] Неверный формат. Укажите имя друга и ID (например /chat Egor GUID)");
+                            break;
+                        }
 
-                case "/back":
-                    CurrentChatUser = null;
-                    CurrentChatUserId = Guid.Empty;
-                    break;
+                        CurrentChatUser = chatArgs[0];
+                        CurrentChatUserId = chatUserId;
+                        ShowChat(CurrentChatUser);
+                        break;
 
-                default:
-                    Console.WriteLine("[Ошибка] Неизвестная команда");
-                    break;
+                    case "/back":
+                        CurrentChatUser = null;
+                        CurrentChatUserId = Guid.Empty;
+                        Console.Clear(); // Optionally clear console when going back
+                        LoginWindow(); // Or some other general view
+                        break;
+                    default:
+                        Console.WriteLine($"[Ошибка] Неизвестная команда: {commandKey}. Введите /help для списка команд.");
+                        break;
+                }
             }
         }
 
@@ -218,7 +182,14 @@ namespace Govor.ConsoleClient
         {
             if (string.IsNullOrEmpty(AuthToken))
             {
+                // This check might be redundant if commands calling this ensure login first
                 Console.WriteLine("[Ошибка] Токен аутентификации отсутствует. Пожалуйста, войдите в систему.");
+                return;
+            }
+
+            if (_hubConnection != null && _hubConnection.State != HubConnectionState.Disconnected)
+            {
+                Console.WriteLine("[SignalR] Соединение уже установлено или устанавливается.");
                 return;
             }
 
@@ -231,39 +202,75 @@ namespace Govor.ConsoleClient
 
             _hubConnection.On<UserMessageResponse>("ReceiveMessage", (message) =>
             {
-                var senderName = message.SenderId == GetMyUserId() ? "Ты" : CurrentChatUser ?? "Неизвестно"; // Simplified for now
+                var myId = GetMyUserId();
+                var senderName = message.SenderId == myId ? "Ты" : CurrentChatUser ?? message.SenderUsername ?? "Неизвестно";
                 var displayMessage = $"[{message.SentAt:HH:mm}] {senderName} >> {message.EncryptedContent}";
                 
-                string chatKey = message.SenderId == GetMyUserId() ? message.RecipientId.ToString() : message.SenderId.ToString();
+                // Determine chat key based on sender/recipient, ensuring consistency
+                string chatKey = message.SenderId == myId ? message.RecipientId.ToString() : message.SenderId.ToString();
+                string activeChatDisplayUser = CurrentChatUser; // User whose chat window is open
 
-                if (CurrentChatUser != null && (message.SenderId == CurrentChatUserId || message.RecipientId == CurrentChatUserId))
+                // If the message belongs to the currently active chat window
+                if (CurrentChatUser != null && (message.SenderId == CurrentChatUserId || (message.RecipientId == CurrentChatUserId && message.SenderId == myId)))
                 {
-                     if (!ChatHistory.ContainsKey(CurrentChatUser))
+                     if (!ChatHistory.ContainsKey(activeChatDisplayUser))
                      {
-                         ChatHistory[CurrentChatUser] = new List<string>();
+                         ChatHistory[activeChatDisplayUser] = new List<string>();
                      }
-                     ChatHistory[CurrentChatUser].Add(displayMessage);
-                     Console.SetCursorPosition(0, Console.CursorTop); // Move cursor to beginning of line
-                     Console.Write(new string(' ', Console.WindowWidth -1)); // Clear current line
-                     Console.SetCursorPosition(0, Console.CursorTop);
-                     Console.WriteLine($" * {displayMessage}"); // Display new message
-                     Console.Write(">> "); // Re-display prompt
+                     ChatHistory[activeChatDisplayUser].Add(displayMessage);
+
+                     // Smartly update console without disrupting user input too much
+                     int originalCursorTop = Console.CursorTop;
+                     int originalCursorLeft = Console.CursorLeft;
+                     Console.MoveBufferArea(0, originalCursorTop, Console.BufferWidth, 1, 0, originalCursorTop +1); // scroll current line down
+                     Console.SetCursorPosition(0, originalCursorTop);
+                     Console.WriteLine($" * {displayMessage}");
+                     Console.SetCursorPosition(originalCursorLeft, originalCursorTop +1); // +1 because writeline added a line
+                     Console.Write(">> "); // Re-display prompt part
                 }
-                else
+                else // Notification for message not in the current chat
                 {
-                    // Handle notification for messages not in the current chat - TBD
-                    Console.WriteLine($"\n[Новое сообщение от {message.SenderId}]: {message.EncryptedContent}");
-                     Console.Write(CurrentChatUser == null ? "/> " : ">> ");
+                    Console.WriteLine($"\n[Новое сообщение от {message.SenderUsername ?? message.SenderId.ToString()}]: {message.EncryptedContent}");
+                    Console.Write(CurrentChatUser == null ? "/> " : ">> "); // Re-display prompt
                 }
             });
             
             _hubConnection.On<UserMessageResponse>("MessageSent", (message) =>
             {
                 // Optional: Handle confirmation that message was sent successfully by the server
-                // This could be useful for updating UI to show message status (e.g., "sent", "delivered")
-                // For console, just logging or ignoring might be fine.
-                // Console.WriteLine($"[Система] Сообщение {message.MessageId} доставлено на сервер.");
+                // For console, maybe a subtle notification or log if verbose mode is on.
+                // Example: Console.WriteLine($"[Система] Сообщение для {message.RecipientUsername} доставлено на сервер.");
             });
+
+            _hubConnection.On<string>("FriendRequestReceived", (message) => // Assuming message is a simple string notification
+            {
+                Console.WriteLine($"\n[Система] Новый запрос в друзья: {message}");
+                Console.Write(CurrentChatUser == null ? "/> " : ">> ");
+            });
+
+            _hubConnection.On<string>("FriendRequestAccepted", (message) =>
+            {
+                Console.WriteLine($"\n[Система] Ваш запрос в друзья принят: {message}");
+                Console.Write(CurrentChatUser == null ? "/> " : ">> ");
+            });
+
+            _hubConnection.On<string>("FriendRemoved", (message) =>
+            {
+                Console.WriteLine($"\n[Система] Пользователь удалил вас из друзей или вы удалили его: {message}");
+                Console.Write(CurrentChatUser == null ? "/> " : ">> ");
+            });
+
+            _hubConnection.On<string>("UserBlocked", (message) =>
+            {
+                Console.WriteLine($"\n[Система] Пользователь заблокирован: {message}");
+                Console.Write(CurrentChatUser == null ? "/> " : ">> ");
+            });
+            _hubConnection.On<string>("UserUnblocked", (message) =>
+            {
+                Console.WriteLine($"\n[Система] Пользователь разблокирован: {message}");
+                 Console.Write(CurrentChatUser == null ? "/> " : ">> ");
+            });
+
 
             try
             {
@@ -280,8 +287,9 @@ namespace Govor.ConsoleClient
         {
             if (AuthToken == null) return Guid.Empty;
             var handler = new JwtSecurityTokenHandler();
+            if (!handler.CanReadToken(AuthToken)) return Guid.Empty;
             var jwtToken = handler.ReadJwtToken(AuthToken);
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "userId");
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "userId" || claim.Type == System.Security.Claims.ClaimTypes.NameIdentifier);
             return userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId) ? userId : Guid.Empty;
         }
 
@@ -291,22 +299,24 @@ namespace Govor.ConsoleClient
             Console.Clear();
             Console.WriteLine($"/*====================================");
             Console.WriteLine($" * Личные сообщения | {user} ({CurrentChatUserId})");
+            Console.WriteLine($" * (/back для выхода из чата)");
             Console.WriteLine($" *====================================");
 
             if (!ChatHistory.ContainsKey(user))
             {
                 ChatHistory[user] = new List<string>();
-                // Example initial messages - consider fetching history if implementing that
-                // ChatHistory[user].Add($"[Система] Начало чата с {user}");
+                // Potentially load chat history here via an API call if desired
+                // ChatHistory[user].Add($"[Система] Начало чата с {user}. Введите сообщение или /back.");
             }
-
-            foreach (var msg in ChatHistory[user])
-                Console.WriteLine(" * " + msg);
-
+            else
+            {
+                foreach (var msg in ChatHistory[user])
+                    Console.WriteLine(" * " + msg);
+            }
             Console.WriteLine(" *------------------------------------");
         }
 
-        static async void SendMessage(string messageContent)
+        static async Task SendMessageAsync(string messageContent)
         {
             if (string.IsNullOrWhiteSpace(messageContent) || _hubConnection == null || CurrentChatUserId == Guid.Empty) return;
 
@@ -320,24 +330,23 @@ namespace Govor.ConsoleClient
             var messageRequest = new MessageRequest
             {
                 RecipientId = CurrentChatUserId,
-                EncryptedContent = messageContent, // Assuming content is not actually encrypted for console client simplicity for now
+                EncryptedContent = messageContent,
                 RecipientType = RecipientType.User, 
-                // MediaAttachments and ReplyToMessageId can be added if needed
             };
 
             try
             {
                 await _hubConnection.InvokeAsync("Send", messageRequest);
                 
-                // Add to local history immediately for responsiveness. 
-                // Server will send "ReceiveMessage" to self as well if needed, or "MessageSent" for confirmation.
                 var displayMessage = $"[{DateTime.Now:HH:mm}] Ты >> {messageContent}";
                 if (!ChatHistory.ContainsKey(CurrentChatUser!))
                 {
                     ChatHistory[CurrentChatUser!] = new List<string>();
                 }
                 ChatHistory[CurrentChatUser!].Add(displayMessage);
-                // Console.WriteLine($"Ты >> {messageContent}"); // Already handled by input echo + ReceiveMessage from self
+                // No Console.WriteLine here, message will be echoed by "ReceiveMessage" if server sends it to self,
+                // or we rely on user seeing their own typed message.
+                // The ReceiveMessage handler should ideally handle self-messages for consistent display.
             }
             catch (Exception ex)
             {
@@ -352,12 +361,14 @@ namespace Govor.ConsoleClient
             Console.WriteLine($" *====================================");
             Console.WriteLine("  * /reg - создать аккаунт ");
             Console.WriteLine("  * /login - войти");
+            Console.WriteLine("  * /help - список команд");
         }
     }
 }
 
-
-public class LoginResponse
-{
-    public string token { get; set; }
-}
+// LoginResponse class was here, can be removed if not used elsewhere or moved to a Contracts project.
+// Assuming it's implicitly handled by HttpClientService or was specific to the old Program.cs structure.
+// public class LoginResponse
+// {
+//    public string token { get; set; }
+// }
