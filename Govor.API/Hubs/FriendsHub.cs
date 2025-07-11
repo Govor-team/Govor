@@ -11,15 +11,61 @@ public class FriendsHub : Hub
     private readonly ILogger<FriendsHub> _logger;
     private readonly IFriendRequestCommandService _friendRequestService;
     private readonly ICurrentUserService _currentUserService;
-
+    
     public FriendsHub(IFriendRequestCommandService friendRequestService, ICurrentUserService currentUserService, ILogger<FriendsHub> logger)
     {
         _friendRequestService = friendRequestService;
         _currentUserService = currentUserService;
         _logger = logger;
     }
+    
+    public override async Task OnConnectedAsync()
+    {
+        var userId = GetUserId();
+        if (userId == Guid.Empty)
+        {
+            _logger.LogWarning("User connected with invalid UserID claim.");
+            Context.Abort(); // Abort connection if userID is invalid
+            return;
+        }
 
-     public async Task<HubResult<object>> SendRequest(Guid targetUserId)
+        // Add user to their own group (for private messages and notifications)
+        await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
+        _logger.LogInformation("User {UserId} connected with ConnectionId {ConnectionId} and added to their group",
+            userId, Context.ConnectionId);
+        
+
+        await base.OnConnectedAsync();
+    } 
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var userId =
+            GetUserId(suppressException: true); // Suppress exception if userID is not found (e.g. connection aborted early)
+        if (userId != Guid.Empty)
+        {
+            // Remove user from their own group
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, userId.ToString());
+            _logger.LogInformation(
+                "User {UserId} disconnected with ConnectionId {ConnectionId} and removed from their group", userId,
+                Context.ConnectionId);
+        }
+        else if (exception != null)
+        {
+            _logger.LogWarning(exception,
+                "User disconnected with an exception and invalid UserID claim. ConnectionId: {ConnectionId}",
+                Context.ConnectionId);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "User disconnected with no exception and invalid UserID claim. ConnectionId: {ConnectionId}",
+                Context.ConnectionId);
+        }
+
+        await base.OnDisconnectedAsync(exception);
+    }
+     
+    public async Task<HubResult<object>> SendRequest(Guid targetUserId) 
     {
         try
         {
@@ -109,5 +155,22 @@ public class FriendsHub : Hub
             _logger.LogError(ex, ex.Message);
             return HubResult<object>.Error("Unexpected error! Please try later!");
         }
+    }
+    
+    private Guid GetUserId(bool suppressException = false)
+    {
+        var userIdClaim = Context.User?.FindFirst("userId")?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            if (!suppressException)
+            {
+                _logger.LogError("Could not retrieve sender userId. Claim was: {UserIDClaim}", userIdClaim);
+                throw new UnauthorizedAccessException("userID claim is missing or invalid.");
+            }
+
+            return Guid.Empty;
+        }
+
+        return userId;
     }
 }

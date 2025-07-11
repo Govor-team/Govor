@@ -10,12 +10,12 @@ namespace Govor.API.Controllers.Friends;
 [Route("api/friends")]
 public class FriendshipController : Controller
 {
-    private readonly ILogger<FriendsController> _logger;
+    private readonly ILogger<FriendshipController> _logger;
     private readonly IFriendshipService _friendsService;
     //private readonly IUserDtoBuilder _builder;
     private readonly ICurrentUserService _currentUserService;
 
-    public FriendshipController(ILogger<FriendsController> logger,
+    public FriendshipController(ILogger<FriendshipController> logger,
         IFriendshipService friendsService,
         ICurrentUserService currentUserService)
     {
@@ -44,6 +44,26 @@ public class FriendshipController : Controller
         {
             _logger.LogError(ex, ex.Message);
             return StatusCode(500, new { error = "Internal error during user search." });
+        }
+    }
+    
+    [HttpGet] // api/friends 
+    public async Task<IActionResult> GetFriends()
+    {
+        try
+        {
+            var result = await _friendsService.GetFriendsAsync(_currentUserService.GetCurrentUserId());
+            return Ok(BuildUserDtos(result));
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return Ok(Array.Empty<UserDto>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, new { error = "Internal server error." });
         }
     }
     

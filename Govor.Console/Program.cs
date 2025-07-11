@@ -28,7 +28,7 @@ namespace Govor.ConsoleClient
         //static string baseUrl = "https://govor-team-govor-88b3.twc1.net";
         static string baseUrl = "https://localhost:7155";
         static string? AuthToken = null;
-        static HttpClientService HttpService = new(baseUrl); // поменяй URL на свой
+        static HttpClientService HttpService = new(baseUrl);
         private static FriendsClient? friendsClient;
         static HubConnection? _hubConnection;
         static Dictionary<string, List<string>> ChatHistory = new();

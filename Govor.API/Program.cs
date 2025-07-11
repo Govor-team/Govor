@@ -120,7 +120,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.MapHub<ChatsHub>("/api/chats"); 
+app.MapHub<FriendsHub>("/api/friends");
 
 app.MapSwagger().RequireAuthorization();
 

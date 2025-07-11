@@ -8,6 +8,7 @@ COPY Govor.API/*.csproj ./Govor.API/
 COPY Govor.Application/*.csproj ./Govor.Application/
 COPY Govor.Core/*.csproj ./Govor.Core/
 COPY Govor.Data/*.csproj ./Govor.Data/
+COPY Govor.Contracts/*.csproj ./Govor.Contracts/
 RUN dotnet restore
 
 # Копируем все исходники и билдим проект в Release режиме
