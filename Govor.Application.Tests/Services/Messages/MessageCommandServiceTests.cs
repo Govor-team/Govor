@@ -3,6 +3,7 @@ using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Application.Services.Messages;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Messages;
 using Govor.Core.Repositories.PrivateChats;
@@ -296,7 +297,7 @@ public class MessageCommandServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Exception, Is.Not.Null);
-        Assert.That(result.Exception,Is.TypeOf<NotFoundByKeyException<Guid>>());
+        Assert.That(result.Exception,Is.TypeOf<KeyNotFoundException>());
         Assert.That(result.OriginalMessage, Is.Null);
     }
 

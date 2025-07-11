@@ -2,10 +2,12 @@ using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Messages;
 using Govor.Core.Repositories.PrivateChats;
 using Govor.Core.Repositories.Users;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Govor.Application.Services.Messages;
@@ -183,11 +185,14 @@ public class MessageCommandService : IMessageCommandService
                 //        return new DeleteMessageResult(false, new UnauthorizedAccessException("User is not authorized to delete this message."), null);
                 //    }
                 // } else {
-                   _logger.LogWarning("User {DeleterId} attempted to delete message {MessageId} not sent by them (sender was {SenderId})", deleteParams.DeleterId, deleteParams.MessageId, message.SenderId);
-                   return new DeleteMessageResult(false, new UnauthorizedAccessException("User is not authorized to delete this message."), default);
+                _logger.LogWarning(
+                    "User {DeleterId} attempted to delete message {MessageId} not sent by them (sender was {SenderId})",
+                    deleteParams.DeleterId, deleteParams.MessageId, message.SenderId);
+                return new DeleteMessageResult(false,
+                    new UnauthorizedAccessException("User is not authorized to delete this message."), default);
                 // }
             }
-            
+
             var originalMessageForNotification = new Message
             {
                 Id = message.Id,
@@ -195,11 +200,16 @@ public class MessageCommandService : IMessageCommandService
                 RecipientId = message.RecipientId,
                 RecipientType = message.RecipientType,
             };
-            
+
             await _messagesRepository.RemoveAsync(deleteParams.MessageId);
-            
-            _logger.LogInformation("Message {MessageId} deleted successfully by user {DeleterId}", deleteParams.MessageId, deleteParams.DeleterId);
+
+            _logger.LogInformation("Message {MessageId} deleted successfully by user {DeleterId}",
+                deleteParams.MessageId, deleteParams.DeleterId);
             return new DeleteMessageResult(true, default, originalMessageForNotification);
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            return new DeleteMessageResult(false, new KeyNotFoundException("Message not found", ex), default);
         }
         catch (Exception ex)
         {

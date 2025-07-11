@@ -1,6 +1,7 @@
 using AutoFixture;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Data;
 using Govor.Data.Repositories;
 using Govor.Data.Repositories.Exceptions;

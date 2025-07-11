@@ -1,5 +1,6 @@
 using Govor.Contracts.DTOs;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Friendships;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;

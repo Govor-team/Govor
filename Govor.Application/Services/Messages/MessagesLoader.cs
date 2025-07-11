@@ -1,5 +1,5 @@
 using Govor.Application.Interfaces;
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Govor.Core.Repositories.Groups;
 using Govor.Core.Repositories.Messages;
 using Govor.Data.Repositories.Exceptions;

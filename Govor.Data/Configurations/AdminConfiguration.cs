@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

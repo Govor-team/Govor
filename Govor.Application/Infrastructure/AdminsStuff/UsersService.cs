@@ -1,9 +1,9 @@
-using Govor.API.Services.AdminsStuff.Interfaces;
-using Govor.Core.Models;
+using Govor.Application.Interfaces;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
 
-namespace Govor.Application.Interfaces.AdminsStuff;
+namespace Govor.Application.Infrastructure.AdminsStuff;
 
 public class UsersService : IUsersAdministration
 {

@@ -7,6 +7,7 @@ using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Services;
 using Govor.Application.Services.Authentication;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Admins;
 using Moq;
 

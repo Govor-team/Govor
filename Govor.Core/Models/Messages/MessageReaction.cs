@@ -1,4 +1,6 @@
-namespace Govor.Core.Models;
+using Govor.Core.Models.Users;
+
+namespace Govor.Core.Models.Messages;
 
 public class MessageReaction
 {

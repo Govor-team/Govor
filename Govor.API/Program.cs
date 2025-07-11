@@ -121,7 +121,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHub<ChatsHub>("/hubs/friends"); 
+app.MapHub<ChatsHub>("/hubs/chats"); 
 app.MapHub<FriendsHub>("/hubs/friends");
 
 app.MapSwagger().RequireAuthorization();

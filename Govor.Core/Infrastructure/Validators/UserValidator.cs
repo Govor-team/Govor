@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using ArgumentNullException = System.ArgumentNullException;
 
 namespace Govor.Core.Infrastructure.Validators;

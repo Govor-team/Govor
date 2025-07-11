@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
+using Govor.Core.Models.Users;
 using Govor.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,6 +1,6 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 
-namespace Govor.API.Services.AdminsStuff.Interfaces;
+namespace Govor.Application.Interfaces;
 
 public interface IUsersAdministration
 {

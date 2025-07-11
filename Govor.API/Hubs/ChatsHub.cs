@@ -1,10 +1,10 @@
-using Govor.API.Services;
+using Govor.Application.Exceptions.VerifyFriendship;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Contracts.Requests.SignalR;
 using Govor.Contracts.Responses.SignalR;
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -85,142 +85,190 @@ public class ChatsHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    public async Task Send(MessageRequest request)
+    public async Task<HubResult<UserMessageResponse>> Send(MessageRequest request)
     {
         var senderId = GetUserId();
-        
+
         if (string.IsNullOrWhiteSpace(request.EncryptedContent) &&
             (request.MediaAttachments == null || !request.MediaAttachments.Any()))
         {
-            _logger.LogWarning("Empty message (no content and no attachments) received from user {UserId}", senderId);
-            throw new ArgumentException("Message cannot be empty (must have content or attachments).");
+            _logger.LogWarning("Empty message received from user {UserId}", senderId);
+            return HubResult<UserMessageResponse>.BadRequest("Message must contain content or media.");
         }
 
-        _logger.LogInformation("Message send initiated by {SenderId} to {RecipientId} of type {RecipientType}",
+        _logger.LogInformation("Sending message from {SenderId} to {RecipientId} ({RecipientType})",
             senderId, request.RecipientId, request.RecipientType);
 
-        var sendMessageParams = new SendMessage(EncryptContent: request.EncryptedContent,
-            ReplyToMessageId: request.ReplyToMessageId, FromUserId: senderId, RecipientId: request.RecipientId,
-            RecipientType: request.RecipientType, SendAt: DateTime.UtcNow,
+        var sendMessageParams = new SendMessage(
+            EncryptContent: request.EncryptedContent,
+            ReplyToMessageId: request.ReplyToMessageId,
+            FromUserId: senderId,
+            RecipientId: request.RecipientId,
+            RecipientType: request.RecipientType,
+            SendAt: DateTime.UtcNow,
             Media: request.MediaAttachments?.Select(f => new SendMedia(f.MediaId, f.EncryptedKey)) ??
-                   Array.Empty<SendMedia>());
-
-        var result = await _messageCommandService.SendMessageAsync(sendMessageParams);
-
-        if (!result.IsSuccess || result.Message.Id == Guid.Empty)
-        {
-            _logger.LogError(result.Exception,
-                "Failed to send message from {SenderId} to {RecipientId}. Error: {ErrorMessage}", senderId,
-                request.RecipientId, result.Exception?.Message ?? "Unknown error");
-            if (result.Exception != null)
-                throw result.Exception;
-            throw new HubException("Failed to send message due to an internal error.");
-        }
-
-        var messageResponse = new UserMessageResponse // Assuming a response DTO
-        {
-            MessageId = result.Message.Id,
-            SenderId = result.Message.SenderId,
-            RecipientId = result.Message.RecipientId,
-            RecipientType = result.Message.RecipientType,
-            EncryptedContent = result.Message.EncryptedContent,
-            SentAt = result.Message.SentAt,
-            IsEdited = false,
-            MediaAttachments = result.Message.MediaAttachments.Select(m => m.MediaFile).ToList(),
-            ReplyToMessageId = request.ReplyToMessageId
-        };
-
-        // Notify recipient (user or group)
-        if (request.RecipientType == RecipientType.User)
-        {
-            // Send to the recipient's personal group
-            await Clients.Group(request.RecipientId.ToString()).SendAsync("ReceiveMessage", messageResponse);
-        }
-        else if (request.RecipientType == RecipientType.Group)
-        {
-            // Send to all members of the group, including the sender if they are part of the group via a different connection
-            await Clients.Group($"group_{request.RecipientId}").SendAsync("ReceiveMessage", messageResponse);
-        }
-
-        // Notify sender (confirmation) on their connection
-        await Clients.Caller.SendAsync("MessageSent",
-            messageResponse); // Or use "ReceiveMessage" if the sender should also just get it like anyone else
-
-        _logger.LogInformation(
-            "Message {MessageId} sent successfully from {SenderId} to {RecipientId} ({RecipientType})",
-            result.Message.Id, senderId, request.RecipientId, request.RecipientType);
-    }
-    
-    public async Task Remove(RemoveMessageRequest request)
-    {
-        var removerId = GetUserId();
-        _logger.LogInformation("Message removal initiated by {RemoverId} for message {MessageId}", removerId, request.MessageId);
-        
-        var removeParams = new DeleteMessage(
-            DeleterId: removerId,
-            MessageId: request.MessageId
+                   Array.Empty<SendMedia>()
         );
-        
+
         try
         {
-            var result = await _messageCommandService.DeleteMessageAsync(removeParams);
-            if (!result.IsSuccess)
-            {
-                _logger.LogError(result.Exception, "Failed to remove message {MessageId} by {RemoverId}. Error: {ErrorMessage}", request.MessageId, removerId, result.Exception?.Message ?? "Unknown error");
-                if (result.Exception != null) throw result.Exception;
-                throw new HubException("Failed to remove message.");
-            }
-            
-            var originalMessage = result.OriginalMessage; // Assuming service returns this
-             if (originalMessage == null)
-            {
-                _logger.LogError("DeleteMessageAsync succeeded but did not return the original message details for message {MessageId}", request.MessageId);
-                throw new HubException("Failed to process message deletion due to missing message details.");
-            }
+            var result = await _messageCommandService.SendMessageAsync(sendMessageParams);
 
-            var removalNotification = new MessageRemovedResponse
-            {
-                MessageId = request.MessageId,
-                SenderId = originalMessage.SenderId,
-                RecipientId = originalMessage.RecipientId,
-                RecipientType = originalMessage.RecipientType
-            };
+            if (!result.IsSuccess || result.Message.Id == Guid.Empty)
+                return LogAndError<UserMessageResponse>(senderId, request.RecipientId, "Failed to send message", result.Exception);
 
-            // Notify relevant clients
-            if (originalMessage.RecipientType == RecipientType.User)
-            {
-                await Clients.Group(originalMessage.SenderId.ToString()).SendAsync("MessageRemoved", removalNotification);
-                if (originalMessage.SenderId != originalMessage.RecipientId)
-                {
-                    await Clients.Group(originalMessage.RecipientId.ToString()).SendAsync("MessageRemoved", removalNotification);
-                }
-            }
-            else if (originalMessage.RecipientType == RecipientType.Group)
-            {
-                await Clients.Group($"group_{originalMessage.RecipientId}").SendAsync("MessageRemoved", removalNotification);
-            }
-            _logger.LogInformation("Message {MessageId} removed successfully by {RemoverId}", request.MessageId, removerId);
+            var response = BuildUserMessageResponse(result.Message, request.ReplyToMessageId);
+
+            await NotifyClientsAboutMessage(response);
+
+            return HubResult<UserMessageResponse>.Ok(response);
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning(ex, "Unauthorized attempt to remove message {MessageId} by user {RemoverId}", request.MessageId, removerId);
-            throw new HubException("You are not authorized to remove this message.", ex);
+            return LogAndUnauthorized<UserMessageResponse>(ex, "Unauthorized sending attempt", senderId,
+                request.RecipientId);
         }
-        catch (KeyNotFoundException ex) // Or a custom NotFoundException
+        catch (FriendshipException)
         {
-            _logger.LogWarning(ex, "Attempt to remove non-existent message {MessageId} by user {RemoverId}", request.MessageId, removerId);
-            throw new HubException("Message not found.", ex);
+            return HubResult<UserMessageResponse>.Unauthorized(
+                "You cannot send this message because you are not friends.");
+        }
+        catch (ArgumentException)
+        {
+            return HubResult<UserMessageResponse>.BadRequest("Invalid message content.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing message {MessageId} by {RemoverId}", request.MessageId, removerId);
-            throw new HubException("An error occurred while removing the message.", ex);
+            return LogAndError<UserMessageResponse>(senderId, request.RecipientId, "Unhandled exception", ex);
         }
     }
 
-    public async Task Edit(EditMessageRequest request)
+    
+    public async Task<HubResult<MessageRemovedResponse>> Remove(RemoveMessageRequest request)
     {
+        var removerId = GetUserId();
+        _logger.LogInformation("Removing message {MessageId} by user {RemoverId}", request.MessageId, removerId);
+
+        try
+        {
+            var result = await _messageCommandService.DeleteMessageAsync(new DeleteMessage(removerId, request.MessageId));
+
+            if (!result.IsSuccess || result.OriginalMessage == null)
+                return LogAndError<MessageRemovedResponse>(removerId, request.MessageId, "Message deletion failed", result.Exception);
+
+            var notification = new MessageRemovedResponse
+            {
+                MessageId = request.MessageId,
+                SenderId = result.OriginalMessage.SenderId,
+                RecipientId = result.OriginalMessage.RecipientId,
+                RecipientType = result.OriginalMessage.RecipientType
+            };
+
+            await NotifyClientsAboutRemoval(notification);
+
+            _logger.LogInformation("Message {MessageId} removed successfully by {RemoverId}", request.MessageId, removerId);
+            return HubResult<MessageRemovedResponse>.Ok(notification);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return LogAndUnauthorized<MessageRemovedResponse>(ex, "Unauthorized removal", removerId, request.MessageId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return LogAndNotFound<MessageRemovedResponse>(ex, "Message not found", removerId, request.MessageId);
+        }
+        catch (Exception ex)
+        {
+            return LogAndError<MessageRemovedResponse>(removerId, request.MessageId, "Unhandled deletion error", ex);
+        }
     }
+
+
+    public async Task<HubResult<MessageEditResponse>> Edit(EditMessageRequest request)
+    {
+        var editor = GetUserId();
+        _logger.LogInformation("Editing message {MessageId} by user {EditorId}", request.MessageId, editor);
+
+        var editMessageParam = new EditMessage(editor,
+            request.MessageId,
+            request.NewEncryptedContent,
+            DateTime.UtcNow);
+        
+        try
+        {
+            var result = await _messageCommandService.EditMessageAsync(editMessageParam);
+            
+            if(!result.IsSuccess)
+                return LogAndError<MessageEditResponse>(editor, request.MessageId, "Edit message error", result.Exception);
+                
+            return HubResult<MessageEditResponse>.Ok();
+        }
+        catch (Exception ex)
+        {
+            return LogAndError<MessageEditResponse>(editor, request.MessageId, "Unhandled exception error", ex);
+        }
+    }
+
+
+    private UserMessageResponse BuildUserMessageResponse(Message message, Guid? replyToId)
+    {
+        return new UserMessageResponse
+        {
+            MessageId = message.Id,
+            SenderId = message.SenderId,
+            RecipientId = message.RecipientId,
+            RecipientType = message.RecipientType,
+            EncryptedContent = message.EncryptedContent,
+            SentAt = message.SentAt,
+            IsEdited = false,
+            MediaAttachments = message.MediaAttachments.Select(m => m.MediaFile).ToList(),
+            ReplyToMessageId = replyToId
+        };
+    }
+
+    private async Task NotifyClientsAboutMessage(UserMessageResponse response)
+    {
+        string group = response.RecipientType == RecipientType.User
+            ? response.RecipientId.ToString()
+            : $"group_{response.RecipientId}";
+
+        await Clients.Group(group).SendAsync("ReceiveMessage", response);
+        await Clients.Caller.SendAsync("MessageSent", response);
+    }
+
+    private async Task NotifyClientsAboutRemoval(MessageRemovedResponse response)
+    {
+        if (response.RecipientType == RecipientType.User)
+        {
+            await Clients.Group(response.SenderId.ToString()).SendAsync("MessageRemoved", response);
+            if (response.SenderId != response.RecipientId)
+                await Clients.Group(response.RecipientId.ToString()).SendAsync("MessageRemoved", response);
+        }
+        else
+        {
+            await Clients.Group($"group_{response.RecipientId}").SendAsync("MessageRemoved", response);
+        }
+    }
+
+    // Logging helpers
+    private HubResult<T> LogAndError<T>(Guid userId, Guid targetId, string message, Exception ex)
+    {
+        _logger.LogError(ex, "{Message} from {UserId} to {TargetId}", message, userId, targetId);
+        return HubResult<T>.Error(ex?.Message ?? "Internal server error");
+    }
+
+    private HubResult<T> LogAndUnauthorized<T>(Exception ex, string msg, Guid userId, Guid targetId)
+    {
+        _logger.LogWarning(ex, "{Msg}: {UserId} -> {TargetId}", msg, userId, targetId);
+        return HubResult<T>.Unauthorized("You are not authorized to perform this action.");
+    }
+
+    private HubResult<T> LogAndNotFound<T>(Exception ex, string msg, Guid userId, Guid targetId)
+    {
+        _logger.LogWarning(ex, "{Msg}: {UserId} -> {TargetId}", msg, userId, targetId);
+        return HubResult<T>.NotFound("Message not found.");
+    }
+
 
     private Guid GetUserId(bool suppressException = false)
     {

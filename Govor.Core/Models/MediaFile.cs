@@ -1,3 +1,5 @@
+using Govor.Core.Models.Messages;
+
 namespace Govor.Core.Models;
 
 public class MediaFile

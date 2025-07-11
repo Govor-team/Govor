@@ -1,6 +1,6 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 
-namespace Govor.API.Services.Authentication.Interfaces;
+namespace Govor.Application.Interfaces.Authentication;
 
 public interface IJwtService
 {

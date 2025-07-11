@@ -1,3 +1,5 @@
+using Govor.Core.Models.Users;
+
 namespace Govor.Core.Models;
 
 public class GroupInvitation

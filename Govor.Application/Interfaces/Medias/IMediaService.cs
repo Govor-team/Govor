@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 
 namespace Govor.Application.Interfaces.Medias;
 

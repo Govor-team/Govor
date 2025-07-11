@@ -2,7 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Govor.API.Services.Authentication.Interfaces;
-using Govor.Core.Models;
+using Govor.Application.Interfaces.Authentication;
+using Govor.Core.Models.Users;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 

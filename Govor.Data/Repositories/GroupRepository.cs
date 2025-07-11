@@ -1,7 +1,7 @@
-using System.Text.RegularExpressions;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Groups;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;

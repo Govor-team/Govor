@@ -1,5 +1,5 @@
-using Govor.Contracts.Requests.SignalR;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 
 namespace Govor.Contracts.Responses.SignalR;
 

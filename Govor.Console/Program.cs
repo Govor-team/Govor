@@ -10,6 +10,7 @@ using Govor.ConsoleClient.Commands;
 using Govor.Contracts.Requests.SignalR;
 using Govor.Contracts.Responses.SignalR;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 
 /*====================================
  *Личные сообщения| Егор 
@@ -200,7 +201,7 @@ namespace Govor.ConsoleClient
                     options.AccessTokenProvider = () => Task.FromResult(AuthToken);
                 })
                 .Build();
-
+            
             _hubConnection.On<UserMessageResponse>("ReceiveMessage", (message) =>
             {
                 var myId = GetMyUserId();

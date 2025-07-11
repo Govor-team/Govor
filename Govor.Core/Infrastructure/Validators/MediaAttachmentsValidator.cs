@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Exception = System.Exception;
 
 namespace Govor.Core.Infrastructure.Validators;

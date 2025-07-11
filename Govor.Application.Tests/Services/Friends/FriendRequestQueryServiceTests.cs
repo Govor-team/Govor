@@ -2,6 +2,7 @@ using AutoFixture;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Services.Friends;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Friendships;
 using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;

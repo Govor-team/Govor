@@ -1,5 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 
 namespace Govor.Contracts.Requests;
 

@@ -2,7 +2,7 @@ using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.Friends;

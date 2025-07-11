@@ -1,5 +1,6 @@
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 
 namespace Govor.Application.Interfaces;
 

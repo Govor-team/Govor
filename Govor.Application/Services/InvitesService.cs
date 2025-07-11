@@ -1,6 +1,7 @@
 using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Exceptions.InvitesService;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Invaites;
 using Govor.Data.Repositories.Exceptions;
 
