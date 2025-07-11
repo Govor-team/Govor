@@ -27,8 +27,4 @@
         <ProjectReference Include="..\Govor.API\Govor.API.csproj" />
         <ProjectReference Include="..\Govor.Data\Govor.Data.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="IntegrationTests\EF\Repositories\" />
-    </ItemGroup>
 </Project>

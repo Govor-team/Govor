@@ -32,14 +32,7 @@ namespace Govor.ConsoleClient.Commands
                 // Let's assume query parameter for now as it's simpler for HttpPost.
 
                 var response = await HttpClientService.PostAsync($"api/admin/Friendships?Id={friendshipId}", null);
-
-                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-                {
-                    Console.WriteLine("[Ошибка] Доступ запрещен. Эта команда только для администраторов.");
-                    return;
-                }
-                response.EnsureSuccessStatusCode();
-
+                
                 Console.WriteLine($"Дружеская связь {friendshipId} успешно удалена.");
             }
             catch (HttpRequestException httpEx) when (httpEx.StatusCode == System.Net.HttpStatusCode.Forbidden)

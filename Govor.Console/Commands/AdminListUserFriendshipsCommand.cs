@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Govor.Contracts.DTOs; // Required for FriendshipDto
 
@@ -30,14 +31,8 @@ namespace Govor.ConsoleClient.Commands
             try
             {
                 var response = await HttpClientService.GetAsync($"api/admin/Friendships/{userId}");
-                if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-                {
-                    Console.WriteLine("[Ошибка] Доступ запрещен. Эта команда только для администраторов.");
-                    return;
-                }
-                response.EnsureSuccessStatusCode();
 
-                var friendships = await response.Content.ReadFromJsonAsync<List<FriendshipDto>>();
+                var friendships = JsonSerializer.Deserialize<List<FriendshipDto>>(response);
 
                 if (friendships != null && friendships.Any())
                 {

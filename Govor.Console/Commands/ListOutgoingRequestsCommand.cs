@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Govor.Contracts.DTOs; // Required for FriendshipDto
 
@@ -17,10 +18,12 @@ namespace Govor.ConsoleClient.Commands
             {
                 // This functionality maps to GET api/friends/responses in FriendsRequestQueryController
                 // FriendsClient doesn't have a dedicated method, so we use HttpClientService or direct HttpClient
-                var response = await HttpClientService.GetAsync("api/friends/responses");
-                response.EnsureSuccessStatusCode();
+                var json = await HttpClientService.GetAsync("api/friends/responses");
 
-                var requests = await response.Content.ReadFromJsonAsync<System.Collections.Generic.List<FriendshipDto>>();
+                var requests = JsonSerializer.Deserialize<List<FriendshipDto>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
                 if (requests != null && requests.Any())
                 {

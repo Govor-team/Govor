@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Govor.ConsoleClient.Commands
 {
@@ -24,7 +25,7 @@ namespace Govor.ConsoleClient.Commands
             try
             {
                 // API uses Hub for this: SendFriendRequest(Guid targetUserId)
-                await HubConnection.InvokeAsync("SendFriendRequest", targetUserId);
+                await HubConnection.InvokeAsync("SendRequest", targetUserId);
                 Console.WriteLine("Запрос в друзья отправлен.");
             }
             catch (Exception ex)

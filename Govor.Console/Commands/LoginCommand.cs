@@ -30,8 +30,9 @@ namespace Govor.ConsoleClient.Commands
                 sharedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
                 var friendsClient = new FriendsClient(sharedClient);
 
-                // Re-initialize services in BaseCommand with the new FriendsClient
-                InitializeServices(friendsClient, HttpClientService, GetAuthToken, SetAuthToken, InitializeHubConnectionAsync, HubConnection);
+                
+                
+                Program.UpdateFriendsClient(friendsClient); // <-- единственный нужный вызов
 
                 await InitializeHubConnectionAsync();
                 Console.WriteLine("[Успех] Вход выполнен. Токен сохранен.");

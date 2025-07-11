@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading.Tasks;
 
@@ -6,13 +7,13 @@ namespace Govor.ConsoleClient.Commands
     public abstract class BaseCommand : ICommand
     {
         protected static FriendsClient? FriendsClient { get; private set; }
-        protected static HttpClientService HttpClientService { get; private set; }
-        protected static Func<string?> GetAuthToken { get; private set; }
-        protected static Action<string> SetAuthToken { get; private set; }
-        protected static Func<Task> InitializeHubConnectionAsync { get; private set; }
-        protected static Microsoft.AspNetCore.SignalR.Client.HubConnection? HubConnection => _hubConnection?.Invoke();
-        private static Func<Microsoft.AspNetCore.SignalR.Client.HubConnection?> _hubConnection;
-
+        protected static HttpClientService HttpClientService { get; private set; } = null!;
+        protected static Func<string?> GetAuthToken { get; private set; } = null!;
+        protected static Action<string> SetAuthToken { get; private set; } = null!;
+        protected static Func<Task> InitializeHubConnectionAsync { get; private set; } = null!;
+        protected static HubConnection HubConnection => _getHubConnection?.Invoke();
+        
+        private static Func<HubConnection?> _getHubConnection = null!;
 
         public static void InitializeServices(
             FriendsClient? friendsClient,
@@ -20,43 +21,42 @@ namespace Govor.ConsoleClient.Commands
             Func<string?> getAuthToken,
             Action<string> setAuthToken,
             Func<Task> initializeHubConnectionAsync,
-            Func<Microsoft.AspNetCore.SignalR.Client.HubConnection?> hubConnection)
+            Func<HubConnection?> getHubConnection)
         {
             FriendsClient = friendsClient;
             HttpClientService = httpClientService;
             GetAuthToken = getAuthToken;
             SetAuthToken = setAuthToken;
             InitializeHubConnectionAsync = initializeHubConnectionAsync;
-            _hubConnection = hubConnection;
+            _getHubConnection = getHubConnection;
         }
 
         public abstract Task ExecuteAsync(string? argument);
         public abstract string GetHelp();
 
-        protected boolEnsureLoggedIn()
+        protected bool EnsureLoggedIn()
         {
             if (GetAuthToken() == null)
             {
-                System.Console.WriteLine("[Ошибка] Сначала войдите в систему. Используйте /login или /reg.");
+                Console.WriteLine("[Ошибка] Сначала войдите в систему. Используйте /login или /reg.");
                 return false;
             }
-            if (FriendsClient == null && !(this is LoginCommand || this is RegisterCommand)) // FriendsClient might not be needed for auth commands
+
+            if (FriendsClient == null && !(this is LoginCommand || this is RegisterCommand))
             {
-                 // Attempt to re-initialize FriendsClient if token exists but client is null
-                // This can happen if the app was closed and token was persisted, but client was not re-instantiated.
-                // However, the current setup in Program.cs initializes FriendsClient after login/reg.
-                // This check is more of a safeguard.
-                 System.Console.WriteLine("[Ошибка] Клиент для работы с друзьями не инициализирован. Попробуйте войти снова.");
-                 return false;
+                Console.WriteLine("[Ошибка] Клиент для работы с друзьями не инициализирован. Попробуйте войти снова.");
+                return false;
             }
+
             return true;
         }
 
-        protected boolEnsureHubConnection()
+        protected bool EnsureHubConnection()
         {
-            if (HubConnection == null || HubConnection.State != Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Connected)
+            var hub = _getHubConnection?.Invoke();
+            if (hub == null || hub.State != HubConnectionState.Connected)
             {
-                System.Console.WriteLine("[Ошибка] SignalR соединение не установлено. Попробуйте войти снова или проверьте соединение.");
+                Console.WriteLine("[Ошибка] SignalR соединение не установлено. Попробуйте войти снова или проверьте соединение.");
                 return false;
             }
             return true;

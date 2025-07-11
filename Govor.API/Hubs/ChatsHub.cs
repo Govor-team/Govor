@@ -87,15 +87,15 @@ public class ChatsHub : Hub
 
     public async Task Send(MessageRequest request)
     {
+        var senderId = GetUserId();
+        
         if (string.IsNullOrWhiteSpace(request.EncryptedContent) &&
             (request.MediaAttachments == null || !request.MediaAttachments.Any()))
         {
-            _logger.LogWarning("Empty message (no content and no attachments) received from user {UserId}",
-                GetUserId());
+            _logger.LogWarning("Empty message (no content and no attachments) received from user {UserId}", senderId);
             throw new ArgumentException("Message cannot be empty (must have content or attachments).");
         }
 
-        var senderId = GetUserId();
         _logger.LogInformation("Message send initiated by {SenderId} to {RecipientId} of type {RecipientType}",
             senderId, request.RecipientId, request.RecipientType);
 
@@ -150,9 +150,72 @@ public class ChatsHub : Hub
             "Message {MessageId} sent successfully from {SenderId} to {RecipientId} ({RecipientType})",
             result.Message.Id, senderId, request.RecipientId, request.RecipientType);
     }
-
+    
     public async Task Remove(RemoveMessageRequest request)
     {
+        var removerId = GetUserId();
+        _logger.LogInformation("Message removal initiated by {RemoverId} for message {MessageId}", removerId, request.MessageId);
+        
+        var removeParams = new DeleteMessage(
+            DeleterId: removerId,
+            MessageId: request.MessageId
+        );
+        
+        try
+        {
+            var result = await _messageCommandService.DeleteMessageAsync(removeParams);
+            if (!result.IsSuccess)
+            {
+                _logger.LogError(result.Exception, "Failed to remove message {MessageId} by {RemoverId}. Error: {ErrorMessage}", request.MessageId, removerId, result.Exception?.Message ?? "Unknown error");
+                if (result.Exception != null) throw result.Exception;
+                throw new HubException("Failed to remove message.");
+            }
+            
+            var originalMessage = result.OriginalMessage; // Assuming service returns this
+             if (originalMessage == null)
+            {
+                _logger.LogError("DeleteMessageAsync succeeded but did not return the original message details for message {MessageId}", request.MessageId);
+                throw new HubException("Failed to process message deletion due to missing message details.");
+            }
+
+            var removalNotification = new MessageRemovedResponse
+            {
+                MessageId = request.MessageId,
+                SenderId = originalMessage.SenderId,
+                RecipientId = originalMessage.RecipientId,
+                RecipientType = originalMessage.RecipientType
+            };
+
+            // Notify relevant clients
+            if (originalMessage.RecipientType == RecipientType.User)
+            {
+                await Clients.Group(originalMessage.SenderId.ToString()).SendAsync("MessageRemoved", removalNotification);
+                if (originalMessage.SenderId != originalMessage.RecipientId)
+                {
+                    await Clients.Group(originalMessage.RecipientId.ToString()).SendAsync("MessageRemoved", removalNotification);
+                }
+            }
+            else if (originalMessage.RecipientType == RecipientType.Group)
+            {
+                await Clients.Group($"group_{originalMessage.RecipientId}").SendAsync("MessageRemoved", removalNotification);
+            }
+            _logger.LogInformation("Message {MessageId} removed successfully by {RemoverId}", request.MessageId, removerId);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized attempt to remove message {MessageId} by user {RemoverId}", request.MessageId, removerId);
+            throw new HubException("You are not authorized to remove this message.", ex);
+        }
+        catch (KeyNotFoundException ex) // Or a custom NotFoundException
+        {
+            _logger.LogWarning(ex, "Attempt to remove non-existent message {MessageId} by user {RemoverId}", request.MessageId, removerId);
+            throw new HubException("Message not found.", ex);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing message {MessageId} by {RemoverId}", request.MessageId, removerId);
+            throw new HubException("An error occurred while removing the message.", ex);
+        }
     }
 
     public async Task Edit(EditMessageRequest request)

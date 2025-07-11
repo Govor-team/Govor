@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Govor.ConsoleClient.Commands;
 using Govor.Contracts.Requests.SignalR;
 using Govor.Contracts.Responses.SignalR;
+using Govor.Core.Models;
 
 /*====================================
  *Личные сообщения| Егор 
@@ -194,7 +195,7 @@ namespace Govor.ConsoleClient
             }
 
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl($"{baseUrl}/api/chats", options =>
+                .WithUrl($"{baseUrl}/hubs/chats", options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult(AuthToken);
                 })
@@ -203,7 +204,7 @@ namespace Govor.ConsoleClient
             _hubConnection.On<UserMessageResponse>("ReceiveMessage", (message) =>
             {
                 var myId = GetMyUserId();
-                var senderName = message.SenderId == myId ? "Ты" : CurrentChatUser ?? message.SenderUsername ?? "Неизвестно";
+                var senderName = message.SenderId == myId ? "Ты" : CurrentChatUser ?? message.SenderId.ToString() ?? "Неизвестно";
                 var displayMessage = $"[{message.SentAt:HH:mm}] {senderName} >> {message.EncryptedContent}";
                 
                 // Determine chat key based on sender/recipient, ensuring consistency
@@ -230,7 +231,7 @@ namespace Govor.ConsoleClient
                 }
                 else // Notification for message not in the current chat
                 {
-                    Console.WriteLine($"\n[Новое сообщение от {message.SenderUsername ?? message.SenderId.ToString()}]: {message.EncryptedContent}");
+                    Console.WriteLine($"\n[Новое сообщение от {message.SenderId.ToString()}]: {message.EncryptedContent}");
                     Console.Write(CurrentChatUser == null ? "/> " : ">> "); // Re-display prompt
                 }
             });
@@ -331,7 +332,7 @@ namespace Govor.ConsoleClient
             {
                 RecipientId = CurrentChatUserId,
                 EncryptedContent = messageContent,
-                RecipientType = RecipientType.User, 
+                RecipientType = RecipientType.User
             };
 
             try

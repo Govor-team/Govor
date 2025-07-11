@@ -18,6 +18,28 @@ namespace Govor.ConsoleClient
             };
         }
 
+        public string GetBaseUrl() => _client.BaseAddress?.ToString() ?? string.Empty;
+
+        public async Task<string> GetAsync(string uri)
+        {
+            var response = await _client.GetAsync(uri);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public async Task<string> PostAsync(string uri, object? payload = null)
+        {
+            HttpResponseMessage response;
+
+            if (payload is null)
+                response = await _client.PostAsync(uri, null);
+            else
+                response = await _client.PostAsJsonAsync(uri, payload);
+
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
         public async Task<string> RegisterAsync(string username, string password, string inviteCode)
         {
             var request = new RegistrationRequest

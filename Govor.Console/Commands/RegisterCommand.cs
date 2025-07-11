@@ -34,7 +34,7 @@ namespace Govor.ConsoleClient.Commands
                 var friendsClient = new FriendsClient(sharedClient);
 
                 // Re-initialize services in BaseCommand with the new FriendsClient
-                InitializeServices(friendsClient, HttpClientService, GetAuthToken, SetAuthToken, InitializeHubConnectionAsync, HubConnection);
+                Program.UpdateFriendsClient(friendsClient); // <-- единственный нужный вызов
 
                 await InitializeHubConnectionAsync();
                 Console.WriteLine("[Успех] Регистрация завершена. Токен сохранен.");
