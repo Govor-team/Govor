@@ -62,7 +62,7 @@ public class HubResult<T>
     };
 }
 
-public enum HubResultStatus
+public enum HubResultStatus : int 
 {
     Success = 200,
     Created = 201,

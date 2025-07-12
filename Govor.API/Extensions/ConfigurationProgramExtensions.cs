@@ -65,6 +65,9 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
         services.AddScoped<IUserGroupsService, UserGroupsService>();
         services.AddScoped<IMessagesLoader, MessagesLoader>();
+        
+        // Auto Mapper 
+        services.AddAutoMapper(typeof(MappingProfile));
     }
 
     public static void AddRepositories(this IServiceCollection services)

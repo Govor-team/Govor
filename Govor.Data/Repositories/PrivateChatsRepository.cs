@@ -1,6 +1,7 @@
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Govor.Core.Repositories.PrivateChats;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;

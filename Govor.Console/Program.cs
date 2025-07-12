@@ -28,8 +28,8 @@ namespace Govor.ConsoleClient
 {
     class Program
     {
-        //static string baseUrl = "https://govor-team-govor-88b3.twc1.net";
-        static string baseUrl = "https://localhost:7155";
+        static string baseUrl = "https://govor-team-govor-88b3.twc1.net";
+        //static string baseUrl = "https://localhost:7155";
         static string? AuthToken = null;
         static HttpClientService HttpService = new(baseUrl);
         private static FriendsClient? _friendsClient; // Renamed to avoid conflict with BaseCommand
@@ -42,6 +42,12 @@ namespace Govor.ConsoleClient
 
         static async Task Main()
         {
+            FriendsHubClient client = new FriendsHubClient($"{baseUrl}/hubs/friends", "eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI4NDRjNzkyMi1hNjdlLTRlMzctYWI0MC0wNThlZDE5NzM5NjMiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsImV4cCI6MTc1MjMzMjE2NX0.mGSjSCvguEXkdHqHcbZ3eUH0S8c82kz3XP89potEh1k");
+            
+            await client.StartAsync();
+            await client.AcceptRequest(Guid.Parse("3ba77c0c-7522-47be-8e77-ea47bd6c6e69"));
+            
+            return;
             InitializeCommands();
             BaseCommand.InitializeServices(
                 _friendsClient, // Initially null, will be set by Login/Register commands

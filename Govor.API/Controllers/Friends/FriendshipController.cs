@@ -1,3 +1,4 @@
+using AutoMapper;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
@@ -12,14 +13,16 @@ public class FriendshipController : Controller
 {
     private readonly ILogger<FriendshipController> _logger;
     private readonly IFriendshipService _friendsService;
-    //private readonly IUserDtoBuilder _builder;
     private readonly ICurrentUserService _currentUserService;
-
+    private readonly IMapper _mapper;
+    
     public FriendshipController(ILogger<FriendshipController> logger,
         IFriendshipService friendsService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IMapper mapper)
     {
         _logger = logger;
+        _mapper = mapper;
         _friendsService = friendsService;
         _currentUserService = currentUserService;
     }
@@ -33,7 +36,10 @@ public class FriendshipController : Controller
         try
         {
             var result = await _friendsService.SearchUsersAsync(query, _currentUserService.GetCurrentUserId());
-            return Ok(BuildUserDtos(result));
+            
+            var response = _mapper.Map<List<UserDto>>(result);
+            
+            return Ok(response);
         }
         catch (SearchUsersException ex)
         {
@@ -53,7 +59,10 @@ public class FriendshipController : Controller
         try
         {
             var result = await _friendsService.GetFriendsAsync(_currentUserService.GetCurrentUserId());
-            return Ok(BuildUserDtos(result));
+            
+            var response = _mapper.Map<List<UserDto>>(result);
+            
+            return Ok(response);
         }
         catch (InvalidOperationException ex)
         {
@@ -66,14 +75,4 @@ public class FriendshipController : Controller
             return StatusCode(500, new { error = "Internal server error." });
         }
     }
-    
-    private List<UserDto> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserDto
-    {
-        Id = user.Id,
-        Username = user.Username,
-        Description = user.Description,
-        WasOnline = user.WasOnline,
-        IconId = user.IconId
-    }).ToList();
-
 }

@@ -1,3 +1,4 @@
+using AutoMapper;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
@@ -15,12 +16,15 @@ public class FriendsRequestQueryController : Controller
     private readonly ILogger<FriendsRequestQueryController> _logger;
     private readonly IFriendRequestQueryService _friendsService;
     private readonly ICurrentUserService _currentUserService;
-
+    private readonly IMapper _mapper;
+    
     public FriendsRequestQueryController(ILogger<FriendsRequestQueryController> logger,
         IFriendRequestQueryService friendsService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IMapper mapper)
     {
         _logger = logger;
+        _mapper = mapper;
         _friendsService = friendsService;
         _currentUserService = currentUserService;
     }
@@ -31,7 +35,9 @@ public class FriendsRequestQueryController : Controller
         try
         {
             var result = await _friendsService.GetIncomingAsync(_currentUserService.GetCurrentUserId());
-            return Ok(BuildFriendshipDtos(result));
+            var response = _mapper.Map<List<FriendshipDto>>(result);
+            
+            return Ok(response);
         }
         catch (InvalidOperationException ex)
         {

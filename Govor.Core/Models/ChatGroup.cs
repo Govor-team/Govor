@@ -1,3 +1,5 @@
+using Govor.Core.Models.Messages;
+
 namespace Govor.Core.Models;
 
 public class ChatGroup
@@ -11,7 +13,8 @@ public class ChatGroup
     public List<GroupAdmins> Admins { get; set; } = new();
     public List<GroupMembership> Members { get; set; } = new();
     public List<GroupInvitation> InviteCodes { get; set; } = new();
-
+    public List<Message> Messages { get; set; } = new();
+    
     public override bool Equals(object? obj)
     {
         ChatGroup chatGroup = obj as ChatGroup;

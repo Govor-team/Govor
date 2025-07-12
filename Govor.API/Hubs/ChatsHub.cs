@@ -193,15 +193,24 @@ public class ChatsHub : Hub
             request.MessageId,
             request.NewEncryptedContent,
             DateTime.UtcNow);
-        
+
         try
         {
             var result = await _messageCommandService.EditMessageAsync(editMessageParam);
-            
-            if(!result.IsSuccess)
-                return LogAndError<MessageEditResponse>(editor, request.MessageId, "Edit message error", result.Exception);
-                
+
+            if (!result.IsSuccess)
+                return LogAndError<MessageEditResponse>(editor, request.MessageId, "Edit message error",
+                    result.Exception);
+
             return HubResult<MessageEditResponse>.Ok();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return LogAndUnauthorized<MessageEditResponse>(ex, "Unauthorized editing", editor, request.MessageId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return LogAndNotFound<MessageEditResponse>(ex, "Message not found", editor, request.MessageId);
         }
         catch (Exception ex)
         {
