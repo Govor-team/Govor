@@ -6,9 +6,16 @@ public interface IMediaService
 {
     public Task<MediaUploadResult> UploadMediaAsync(Media file);
     public Task DeleteMediaAsync(Guid fileId);
-    public Task<MediaUploadResult> GetMediaAsync(string url);
+    public Task<Media> GetMediaByUrlAsync(string url);
+    public Task<Media> GetMediaByIdAsync(Guid mediaId);
 }
 
-public record Media(byte[] Data, string FileName, MediaType Type, string MineType, string EncryptedKey);
+public record Media(Guid UploaderId,
+    DateTime UploadedOn,
+    byte[] Data,
+    string FileName,
+    MediaType Type,
+    string MineType,
+    string EncryptedKey);
 
 public record MediaUploadResult(Guid? MediaId, string Url);

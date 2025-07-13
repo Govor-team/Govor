@@ -25,7 +25,7 @@ public enum WhoCan
 {
     None = 0,
     OnlyFriends = 1,
-    EveryoneCanSend = 2,
+    Everyone = 2,
 }
 
 public enum DeletingMessagesVia

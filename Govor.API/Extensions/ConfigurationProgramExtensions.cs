@@ -7,6 +7,7 @@ using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Interfaces.Medias;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Services;
 using Govor.Application.Services.Authentication;
@@ -65,6 +66,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
         services.AddScoped<IUserGroupsService, UserGroupsService>();
         services.AddScoped<IMessagesLoader, MessagesLoader>();
+        services.AddScoped<IMediaService, MediaService>();
         
         // Auto Mapper 
         services.AddAutoMapper(typeof(MappingProfile));

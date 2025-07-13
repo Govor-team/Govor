@@ -48,7 +48,10 @@ public class FriendsRequestQueryControllerTests
         var currentId = _fixture.Create<Guid>();
         var friendships = _fixture.CreateMany<Friendship>().ToList();
         var dtos = friendships.Select(f => new FriendshipDto()
-            { AddresseeId = f.AddresseeId, RequesterId = f.RequesterId }).ToList();
+        {
+            AddresseeId =  f.AddresseeId,
+            RequesterId =  f.RequesterId
+        }).ToList();
 
         _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
             .Returns(currentId);
@@ -125,7 +128,10 @@ public class FriendsRequestQueryControllerTests
         var currentId = _fixture.Create<Guid>();
         var friendships = _fixture.CreateMany<Friendship>().ToList();
         var dtos = friendships.Select(f => new FriendshipDto()
-            { AddresseeId = f.AddresseeId, RequesterId = f.RequesterId }).ToList();
+        {
+            AddresseeId =  f.AddresseeId,
+            RequesterId =  f.RequesterId
+        }).ToList();
 
         _currentUserServiceMock.Setup(c => c.GetCurrentUserId())
             .Returns(currentId);

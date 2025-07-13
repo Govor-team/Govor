@@ -198,11 +198,25 @@ public class ChatsHub : Hub
         {
             var result = await _messageCommandService.EditMessageAsync(editMessageParam);
 
-            if (!result.IsSuccess)
+            if (!result.IsSuccess || result.OriginalMessage == null)
                 return LogAndError<MessageEditResponse>(editor, request.MessageId, "Edit message error",
                     result.Exception);
 
-            return HubResult<MessageEditResponse>.Ok();
+            var response = new MessageEditResponse()
+            {
+                MessageId = result.messageId,
+                EditorId = editor,
+                RecipientId = result.OriginalMessage.RecipientId,
+                RecipientType = result.OriginalMessage.RecipientType,
+                NewEncryptedContent = request.NewEncryptedContent,
+                EditedAt = editMessageParam.EditedAt,
+            };
+            
+            await NotifyClientsAboutEdit(response);
+            
+            _logger.LogInformation("Message {MessageId} edited successfully by {editor}", request.MessageId, editor);
+            
+            return HubResult<MessageEditResponse>.Ok(response);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -259,6 +273,20 @@ public class ChatsHub : Hub
         }
     }
 
+    private async Task NotifyClientsAboutEdit(MessageEditResponse response)
+    {
+        if (response.RecipientType == RecipientType.User)
+        {
+            await Clients.Group(response.EditorId.ToString()).SendAsync("MessageEdit", response);
+            if (response.EditorId != response.RecipientId)
+                await Clients.Group(response.RecipientId.ToString()).SendAsync("MessageEdit", response);
+        }
+        else
+        {
+            await Clients.Group($"group_{response.RecipientId}").SendAsync("MessageEdit", response);
+        }
+    }
+    
     // Logging helpers
     private HubResult<T> LogAndError<T>(Guid userId, Guid targetId, string message, Exception ex)
     {

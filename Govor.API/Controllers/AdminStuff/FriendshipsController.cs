@@ -29,7 +29,7 @@ public class FriendshipsController : Controller
         {
             _logger.LogInformation("Get all friendships by administrator");
             var result = await _friendshipsRepository.GetAllAsync();
-            return Ok(BuildFriendshipDtos(result));
+            return Ok(result);
         }
         catch (NotFoundException ex)
         {
@@ -53,7 +53,7 @@ public class FriendshipsController : Controller
         {
             _logger.LogInformation($"Get user's {userId} all friendships by administrator");
             var result = await _friendshipsRepository.FindByUserIdAsync(userId);
-            return Ok(BuildFriendshipDtos(result));
+            return Ok(result);
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
@@ -89,21 +89,4 @@ public class FriendshipsController : Controller
             return StatusCode(500, new { error = "Internal server error." }); 
         } 
     }
-    
-    private List<UserDto> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserDto
-    {
-        Id = user.Id,
-        Username = user.Username,
-        Description = user.Description,
-        WasOnline = user.WasOnline,
-        IconId = user.IconId
-    }).ToList();
-
-    private List<FriendshipDto> BuildFriendshipDtos(IEnumerable<Friendship> friendships) => friendships.Select(f => new FriendshipDto
-    {
-        Id = f.Id,
-        Status = f.Status,
-        AddresseeId = f.AddresseeId,
-        RequesterId = f.RequesterId,
-    }).ToList();
 }

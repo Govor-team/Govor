@@ -56,7 +56,11 @@ public class FriendsRequestQueryController : Controller
     {
         try
         {
-            var result = await _friendsService.GetResponsesAsync(_currentUserService.GetCurrentUserId());
+            var userId = _currentUserService.GetCurrentUserId();
+            
+            _logger.LogInformation("Getting responses by user {userId}", userId);
+            
+            var result = await _friendsService.GetResponsesAsync(userId);
             var response = _mapper.Map<List<FriendshipDto>>(result);
             
             return Ok(response);

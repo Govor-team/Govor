@@ -1,6 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+using AutoMapper;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses.SignalR;
 using Microsoft.AspNetCore.SignalR;
 
@@ -11,12 +14,17 @@ public class FriendsHub : Hub
     private readonly ILogger<FriendsHub> _logger;
     private readonly IFriendRequestCommandService _friendRequestService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IMapper _mapper;
     
-    public FriendsHub(IFriendRequestCommandService friendRequestService, ICurrentUserService currentUserService, ILogger<FriendsHub> logger)
+    public FriendsHub(IFriendRequestCommandService friendRequestService, 
+        ICurrentUserService currentUserService,
+        ILogger<FriendsHub> logger,
+        IMapper mapper)
     {
         _friendRequestService = friendRequestService;
         _currentUserService = currentUserService;
         _logger = logger;
+        _mapper = mapper;
     }
     
     public override async Task OnConnectedAsync()
@@ -70,9 +78,10 @@ public class FriendsHub : Hub
         try
         {
             var userId = _currentUserService.GetCurrentUserId();
-            await _friendRequestService.SendAsync(userId, targetUserId);
-            await Clients.User(targetUserId.ToString())
-                .SendAsync("FriendRequestReceived", userId);
+            var friendship = await _friendRequestService.SendAsync(userId, targetUserId);
+            
+            await Clients.Group(targetUserId.ToString())
+                .SendAsync("FriendRequestReceived", _mapper.Map<FriendshipDto>(friendship));
 
             _logger.LogInformation($"Friend request received for user {targetUserId} from {userId}.");
             return HubResult<object>.Created();
@@ -104,9 +113,9 @@ public class FriendsHub : Hub
         try
         {
             var userId = _currentUserService.GetCurrentUserId();
-            await _friendRequestService.AcceptAsync(friendshipId, userId);
-            await Clients.User(userId.ToString())
-                         .SendAsync("FriendRequestAccepted", friendshipId);
+            var friendship = await _friendRequestService.AcceptAsync(friendshipId, userId);
+            await Clients.Group(userId.ToString())
+                         .SendAsync("FriendRequestAccepted", _mapper.Map<FriendshipDto>(friendship));
             
             _logger.LogInformation($"Friend request accepted for user {userId} from {userId}.");
             return HubResult<object>.Ok();
@@ -133,9 +142,9 @@ public class FriendsHub : Hub
         try
         {
             var userId = _currentUserService.GetCurrentUserId();
-            await _friendRequestService.RejectAsync(friendshipId, userId);
-            await Clients.User(userId.ToString())
-                         .SendAsync("FriendRequestRejected", friendshipId);
+            var friendship = await _friendRequestService.RejectAsync(friendshipId, userId);
+            await Clients.Group(userId.ToString())
+                         .SendAsync("FriendRequestRejected", _mapper.Map<FriendshipDto>(friendship));
             
             _logger.LogInformation($"Friend request rejected for user {userId} from {userId}.");
             return HubResult<object>.Ok();

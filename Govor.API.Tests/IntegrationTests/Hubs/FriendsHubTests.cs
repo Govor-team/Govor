@@ -1,8 +1,12 @@
+using AutoFixture;
+using AutoMapper;
 using Govor.API.Hubs;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses.SignalR;
+using Govor.Core.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -17,26 +21,34 @@ public class FriendsHubTests
     private Mock<IHubCallerClients> _clientsMock = null!;
     private Mock<IClientProxy> _clientProxyMock = null!;
     private Mock<ILogger<FriendsHub>> _loggerMock = null!;
+    private Mock<IMapper> _mapperMock = null!;
     private FriendsHub _hub = null!;
+    private Fixture _fixture;
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _targetUserId = Guid.NewGuid();
 
     [SetUp]
     public void Setup()
     {
+        _fixture = new Fixture();
+        _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList().ForEach(b => _fixture.Behaviors.Remove(b));
+        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+        
         _friendRequestServiceMock = new Mock<IFriendRequestCommandService>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _clientsMock = new Mock<IHubCallerClients>();
         _clientProxyMock = new Mock<IClientProxy>();
         _loggerMock = new Mock<ILogger<FriendsHub>>();
-
+        _mapperMock = new Mock<IMapper>();
+        
         _currentUserServiceMock.Setup(x => x.GetCurrentUserId()).Returns(_userId);
-        _clientsMock.Setup(c => c.User(It.IsAny<string>())).Returns(_clientProxyMock.Object);
-
+        _clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(_clientProxyMock.Object);
+        
         _hub = new FriendsHub(
             _friendRequestServiceMock.Object,
             _currentUserServiceMock.Object,
-            _loggerMock.Object)
+            _loggerMock.Object,
+           _mapperMock.Object)
         {
             Clients = _clientsMock.Object
         };
@@ -46,6 +58,26 @@ public class FriendsHubTests
     [Test]
     public async Task SendRequest_ShouldReturnCreated_WhenSuccess()
     {
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .With(f => f.RequesterId, _userId)
+            .With(f =>f.AddresseeId, _targetUserId)
+            .Create();
+        
+        var dto = new FriendshipDto()
+        {
+            Id = friendship.Id,
+            Status = FriendshipStatus.Accepted,
+            AddresseeId = friendship.AddresseeId,
+            RequesterId = friendship.RequesterId,
+        };
+        
+        _mapperMock.Setup(f => f.Map<FriendshipDto>(friendship))
+            .Returns(dto);
+        
+        _friendRequestServiceMock.Setup(f => f.SendAsync(_userId, _targetUserId))
+            .ReturnsAsync(friendship);
+        
         // Act
         var result = await _hub.SendRequest(_targetUserId);
 
@@ -57,7 +89,7 @@ public class FriendsHubTests
         
         _clientProxyMock.Verify(c => c.SendCoreAsync(
             "FriendRequestReceived",
-            It.Is<object[]>(o => o[0]!.Equals(_userId)),
+            It.Is<object[]>(o => o[0]!.Equals(dto)),
             default), Times.Once);
     }
     
@@ -129,19 +161,35 @@ public class FriendsHubTests
     public async Task AcceptRequest_ShouldReturnOk_WhenSuccess()
     {
         // Arrange 
-        var friendshipId = Guid.NewGuid();
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+        var dto = new FriendshipDto()
+        {
+            Id = friendship.Id,
+            Status = FriendshipStatus.Accepted,
+            AddresseeId = friendship.AddresseeId,
+            RequesterId = friendship.RequesterId
+        };
+        
+        _mapperMock.Setup(f => f.Map<FriendshipDto>(friendship))
+            .Returns(dto);
+        
+        _friendRequestServiceMock.Setup(f => f.AcceptAsync(friendship.Id, _userId))
+            .ReturnsAsync(friendship);
         
         // Act 
-        var result = await _hub.AcceptRequest(friendshipId);
+        var result = await _hub.AcceptRequest(friendship.Id);
 
         // Assert 
         Assert.That(result.Status, Is.EqualTo(HubResultStatus.Success));
-        _friendRequestServiceMock.Verify(s => s.AcceptAsync(friendshipId, _userId), Times.Once);
+        _friendRequestServiceMock.Verify(s => s.AcceptAsync(friendship.Id, _userId), Times.Once);
         
         _clientProxyMock.Verify(c => c.SendCoreAsync(
             "FriendRequestAccepted",
-            It.Is<object[]>(o => o[0]!.Equals(friendshipId)),
+            It.Is<object[]>(o => o.Length == 1 && o[0] == dto),
             default), Times.Once);
+
     }
     
     [Test]
@@ -201,18 +249,33 @@ public class FriendsHubTests
     public async Task RejectRequest_ShouldReturnOk_WhenSuccess()
     {
         // Arrange 
-        var friendshipId = Guid.NewGuid();
-
+        var friendship = _fixture.Build<Friendship>()
+            .With(f => f.Status, FriendshipStatus.Pending)
+            .Create();
+        var dto = new FriendshipDto()
+        {
+            Id = friendship.Id,
+            Status = FriendshipStatus.Accepted,
+            AddresseeId = friendship.AddresseeId,
+            RequesterId = friendship.RequesterId
+        };
+        
+        _mapperMock.Setup(f => f.Map<FriendshipDto>(friendship))
+            .Returns(dto);
+        
+        _friendRequestServiceMock.Setup(f => f.RejectAsync(friendship.Id, _userId))
+            .ReturnsAsync(friendship);
+        
         // Act 
-        var result = await _hub.RejectRequest(friendshipId);
+        var result = await _hub.RejectRequest(friendship.Id);
 
         // Assert 
         Assert.That(result.Status, Is.EqualTo(HubResultStatus.Success));
-        _friendRequestServiceMock.Verify(s => s.RejectAsync(friendshipId, _userId), Times.Once);
+        _friendRequestServiceMock.Verify(s => s.RejectAsync(friendship.Id, _userId), Times.Once);
         
         _clientProxyMock.Verify(c => c.SendCoreAsync(
             "FriendRequestRejected",
-            It.Is<object[]>(o => o[0]!.Equals(friendshipId)),
+            It.Is<object[]>(o => o[0]!.Equals(dto)),
             default), Times.Once);
     }
     

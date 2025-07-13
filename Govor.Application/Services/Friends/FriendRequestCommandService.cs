@@ -15,7 +15,7 @@ public class FriendRequestCommandService : IFriendRequestCommandService
         _friendshipsRepository = friendshipsRepository;
     }
     
-    public async Task SendAsync(Guid fromUserId, Guid toUserId)
+    public async Task<Friendship> SendAsync(Guid fromUserId, Guid toUserId)
     {
         if (fromUserId == toUserId)
             throw new InvalidOperationException("Cannot send a request to self user");
@@ -23,16 +23,20 @@ public class FriendRequestCommandService : IFriendRequestCommandService
         if (_friendshipsRepository.Exist(fromUserId, toUserId))
             throw new RequestAlreadySentException(fromUserId, toUserId);
 
-        await _friendshipsRepository.AddAsync(new Friendship
+        var friendship = new Friendship
         {
             Id = Guid.NewGuid(),
             RequesterId = fromUserId,
             AddresseeId = toUserId,
             Status = FriendshipStatus.Pending
-        });
+        };
+        
+        await _friendshipsRepository.AddAsync(friendship);
+        
+        return friendship;
     }
 
-    public async Task AcceptAsync(Guid requestId, Guid currentUserId)
+    public async Task<Friendship> AcceptAsync(Guid requestId, Guid currentUserId)
     {
         try
         {
@@ -46,6 +50,8 @@ public class FriendRequestCommandService : IFriendRequestCommandService
 
             friendship.Status = FriendshipStatus.Accepted;
             await _friendshipsRepository.UpdateAsync(friendship);
+            
+            return friendship;
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
@@ -53,7 +59,7 @@ public class FriendRequestCommandService : IFriendRequestCommandService
         }
     }
 
-    public async Task RejectAsync(Guid requestId, Guid currentUserId)
+    public async Task<Friendship> RejectAsync(Guid requestId, Guid currentUserId)
     {
         try
         {
@@ -67,6 +73,7 @@ public class FriendRequestCommandService : IFriendRequestCommandService
 
             friendship.Status = FriendshipStatus.Rejected;
             await _friendshipsRepository.UpdateAsync(friendship);
+            return friendship;
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
