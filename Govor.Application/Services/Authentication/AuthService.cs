@@ -30,7 +30,7 @@ public class AuthService : IAccountService
         _usernameValidator = usernameValidator;
     }
     
-    public async Task<string> RegistrationAsync(string name, string password, Invitation invitation)
+    public async Task<User> RegistrationAsync(string name, string password, Invitation invitation)
     {
         _usernameValidator.Validate(name);
         
@@ -55,11 +55,11 @@ public class AuthService : IAccountService
         
         await SetRole(user, invitation);
         
-        return await _jwtService.GenerateJwtTokenAsync(user);
+        return user;
     }
 
 
-    public async Task<string> LoginAsync(string name, string password)
+    public async Task<User> LoginAsync(string name, string password)
     {
         if (await _usersRepository.ExistsUsernameAsync(name) == false)
             throw new UserNotRegisteredException(name);
@@ -69,9 +69,34 @@ public class AuthService : IAccountService
         if (_passwordHasher.Verify(password, user.PasswordHash) == false)
             throw new LoginUserException();
         
-        return await _jwtService.GenerateJwtTokenAsync(user);
+        return user;
     }
+    
+    /*
+    public async Task<string> RefreshTokenAsync(string refreshToken)
+    {
+        try
+        {
+            var principal = _jwtService.GetPrincipalFromExpiredToken(refreshToken);
+        
+            var userId = Guid.Parse(principal?.FindFirst("userId")?.Value ?? string.Empty);
 
+            var storedTokens = await _userSessionsRepository.GetUserTokensAsync(userId);
+        
+            if (!storedTokens.Contains(refreshToken))
+                throw new UnauthorizedAccessException("Invalid refresh token");
+
+            var user = await _usersRepository.FindByIdAsync(userId);
+            var newAccessToken = await _jwtService.GenerateAccessTokenAsync(user);
+            return newAccessToken;
+        }
+        catch (SecurityTokenException ex)
+        {
+            throw new InvalidOperationException("Invalid refresh token", ex);
+        }
+    }
+    */
+    
     private async Task SetRole(User user, Invitation invitation)
     {
         if(invitation.IsAdmin)

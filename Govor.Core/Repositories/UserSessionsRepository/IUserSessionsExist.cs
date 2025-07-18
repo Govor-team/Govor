@@ -1,0 +1,10 @@
+using Govor.Core.Models;
+
+namespace Govor.Core.Repositories.UserSessionsRepository;
+
+public interface IUserSessionsExist
+{
+    public bool Exist(Guid sessionId);
+    public bool Exist(string refresh);
+    public bool Exist(UserSession userSession);
+}

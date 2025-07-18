@@ -32,7 +32,7 @@ public class ChatLoadController : Controller
     public async Task<IActionResult> GetChatMessages( 
         [FromQuery] Guid chatId,
         [FromQuery] Guid? startMessageId,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize)
     {
         try
         {

@@ -29,31 +29,50 @@ public class MediaController : Controller
     }
 
     [HttpPost("upload")]
-    [RequestSizeLimit(100_000_000)] // ~100MB
+    [RequestSizeLimit(20_000_000)] // ~20MB
     public async Task<IActionResult> Upload([FromForm] MediaUploadRequest request)
     {
         try
         {
+            if (request.FromFile.Length > 20_000_000)
+                return BadRequest("File is too large");
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             // Чтение байт из IFormFile
             using var memoryStream = new MemoryStream();
-            await request.Data.CopyToAsync(memoryStream);
+
+            await request.FromFile.CopyToAsync(memoryStream);
+
             byte[] fileBytes = memoryStream.ToArray();
 
             var media = new Media(
                 _currentUserService.GetCurrentUserId(),
                 DateTime.UtcNow,
+                Path.GetFileName(request.FromFile.FileName),
                 fileBytes,
-                request.FileName,
                 request.Type,
                 request.MimeType,
                 request.EncryptedKey
             );
 
             var result = await _mediaService.UploadMediaAsync(media);
+
+            _logger.LogInformation(
+                $"Uploaded file: {Path.GetFileName(request.FromFile.FileName)} from user {_currentUserService.GetCurrentUserId()}");
+
             return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return Unauthorized(ex.Message);
         }
         catch (Exception ex)
         {
@@ -71,7 +90,12 @@ public class MediaController : Controller
                 return BadRequest(ModelState);
 
             var media = await _mediaService.GetMediaByIdAsync(id);
-            return File(media.Data, media.MineType, media.FileName);
+            return File(media.Data, media.MineType, Path.GetFileName(media.FileName));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(ex.Message);
         }
         catch (Exception ex)
         {

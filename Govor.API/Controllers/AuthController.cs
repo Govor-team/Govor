@@ -1,7 +1,7 @@
-using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Exceptions.InvitesService;
 using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Interfaces.UserSession;
 using Govor.Contracts.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,33 +13,38 @@ namespace Govor.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : Controller
 {
+    private IUserSessionOpener _userSession;
     private IInvitesService _invitesService;
     private IAccountService _accountService;
     private ILogger<AuthController> _logger;
     
-    public AuthController(IAccountService accountService, IInvitesService invitesService, ILogger<AuthController> logger)
+    public AuthController(IAccountService accountService, IInvitesService invitesService,IUserSessionOpener userSessionOpener, ILogger<AuthController> logger)
     {
+        _userSession = userSessionOpener;
         _accountService = accountService;
         _invitesService = invitesService;
         _logger = logger;
     }
     
+    [RequireHttps] 
     [HttpPost("register")]// api/auth/register
-    //[RequireHttps] 
     public async Task<IActionResult> Register([FromBody] RegistrationRequest registrationRequest)
     {
         try
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             var invite = await _invitesService.ValidateAsync(registrationRequest.InviteLink);
 
-            var token = await _accountService.RegistrationAsync(registrationRequest.Name, registrationRequest.Password,
+            var user = await _accountService.RegistrationAsync(registrationRequest.Name, registrationRequest.Password,
                 invite);
-            _logger.LogInformation($"Register request for {registrationRequest.Name} processed successfully");
+            
+            _logger.LogInformation($"Register request for {user.Username} with id {user.Id} processed successfully");
+
+            var token = await  _userSession.OpenSessionAsync(user, registrationRequest.DeviceInfo);
+            
+            _logger.LogInformation($"Session for user {user.Username} with id {user.Id} has been opened");
             return Ok(new { token });
         }
         catch (UserAlreadyExistException ex)
@@ -64,35 +69,73 @@ public class AuthController : Controller
         }
     }
     
+    [RequireHttps] 
     [HttpPost("login")]// api/auth/login
-    //[RequireHttps] 
-    public async Task<IActionResult> Login([FromBody] LoginRequest userRequest)
+    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
         try
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            var token = await _accountService.LoginAsync(userRequest.Name, userRequest.Password);
-            _logger.LogInformation($"Login request for {userRequest.Name} processed successfully");
+            var user = await _accountService.LoginAsync(loginRequest.Name, loginRequest.Password);
+            _logger.LogInformation($"Login request for {user.Username} with id {user.Id} processed successfully");
+            
+            var token = await  _userSession.OpenSessionAsync(user, loginRequest.DeviceInfo);
+            
+            _logger.LogInformation($"Session for user {user.Username} with id {user.Id} has been opened");
+            
             return Ok(new { token });
         }
         catch (UserNotRegisteredException ex)
         {
-            _logger.LogWarning(ex, "Login failed for user {Name}", userRequest.Name);
+            _logger.LogWarning(ex, "Login failed for user {Name}", loginRequest.Name);
             return BadRequest("Login failed: user does not exist.");
         }
         catch (LoginUserException ex)
         {
-            _logger.LogWarning(ex, "Login failed for user {Name}", userRequest.Name);
+            _logger.LogWarning(ex, "Login failed for user {Name}", loginRequest.Name);
             return BadRequest("Login failed: username or password is incorrect.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during login for user {Name}", userRequest.Name);
+            _logger.LogError(ex, "Unexpected error during login for user {Name}", loginRequest.Name);
             return StatusCode(500, "An unexpected error occurred. Please try again later.");
         }
     }
+    
+/*    
+    [RequireHttps] 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            
+            if (string.IsNullOrEmpty(refreshToken))
+                throw new InvalidOperationException("Refresh token cant be empty.");
+            
+            var newAccessToken = await _accountService.RefreshTokenAsync(refreshToken);
+            return Ok(new { accessToken = newAccessToken });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid refresh token");
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Refresh token failed");
+            return Unauthorized("Invalid refresh token");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, "An unexpected error occurred.");
+        }
+    }
+*/
+
 }

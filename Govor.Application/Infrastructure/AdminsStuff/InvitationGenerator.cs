@@ -1,4 +1,4 @@
-using Govor.API.Services.AdminsStuff.Interfaces;
+using Govor.Application.Interfaces;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Invaites;
 
@@ -19,7 +19,7 @@ public class InvitationGenerator(IInvitesRepository repository) : IInvitationGen
             IsAdmin = isAdmin
         };
 
-       await repository.AddAsync(newInvitation);
+        await repository.AddAsync(newInvitation);
         
         return newInvitation.Code;
     }

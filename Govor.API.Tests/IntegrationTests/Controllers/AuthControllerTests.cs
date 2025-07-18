@@ -1,11 +1,12 @@
 using AutoFixture;
 using Govor.API.Controllers;
-using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Exceptions.InvitesService;
 using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Interfaces.UserSession;
 using Govor.Contracts.Requests;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -19,6 +20,7 @@ public class AuthControllerTests
     private Mock<IAccountService> _accountServiceMock;
     private Mock<IInvitesService> _invitesServiceMock;
     private Mock<ILogger<AuthController>> _loggerMock;
+    private Mock<IUserSessionOpener> _userSessionOpenerMock;
     private AuthController _controller;
     
     [SetUp]
@@ -31,10 +33,12 @@ public class AuthControllerTests
         _accountServiceMock = new Mock<IAccountService>();
         _invitesServiceMock = new Mock<IInvitesService>();
         _loggerMock = new Mock<ILogger<AuthController>>();
-
+        _userSessionOpenerMock = new Mock<IUserSessionOpener>();
+        
         _controller = new AuthController(
             _accountServiceMock.Object,
             _invitesServiceMock.Object,
+            _userSessionOpenerMock.Object,
             _loggerMock.Object
         );
     }
@@ -47,9 +51,18 @@ public class AuthControllerTests
         var request = _fixture.Create<RegistrationRequest>();
         var invitation = _fixture.Create<Invitation>();
         var token = _fixture.Create<string>();
-
+        
+        var user = _fixture.Build<User>()
+            .With(x => x.Username).Create();
+        
         _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ReturnsAsync(invitation);
-        _accountServiceMock.Setup(s => s.RegistrationAsync(request.Name, request.Password, invitation)).ReturnsAsync(token);
+
+       
+        _accountServiceMock.Setup(l => l.RegistrationAsync(request.Name, request.Password, invitation))
+            .ReturnsAsync(user);
+        
+        _userSessionOpenerMock.Setup(f => f.OpenSessionAsync(user, request.DeviceInfo))
+            .ReturnsAsync(token);
 
         // Act
         var result = await _controller.Register(request);
@@ -137,7 +150,14 @@ public class AuthControllerTests
         // Arrange 
         var loginRequest = _fixture.Create<LoginRequest>();
         var token = _fixture.Create<string>();
-        _accountServiceMock.Setup(l => l.LoginAsync(loginRequest.Name, loginRequest.Password)).ReturnsAsync(token);
+        
+        var user = _fixture.Build<User>()
+            .With(x => x.Username).Create();
+       
+        _accountServiceMock.Setup(l => l.LoginAsync(loginRequest.Name, loginRequest.Password)).ReturnsAsync(user);
+        
+        _userSessionOpenerMock.Setup(f => f.OpenSessionAsync(user, loginRequest.DeviceInfo))
+            .ReturnsAsync(token);
         
         // Act 
         var result = await _controller.Login(loginRequest);

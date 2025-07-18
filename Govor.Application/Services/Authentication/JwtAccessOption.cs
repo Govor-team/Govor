@@ -1,6 +1,6 @@
 namespace Govor.Application.Services.Authentication;
-public class JwtOption
+public class JwtAccessOption
 {
     public string SecretKeу {get; set;}
-    public int Hours { get; set; }
+    public int Minutes { get; set; }
 }

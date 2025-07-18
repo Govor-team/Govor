@@ -67,7 +67,7 @@ public class MediaService : IMediaService
             var mediaFile = await _dbContext.MediaFiles
                                 .AsNoTracking()
                                 .FirstOrDefaultAsync(x => x.Id == mediaId)
-                            ?? throw new KeyNotFoundException("No media found");
+                            ?? throw new KeyNotFoundException($"No media found by given id {mediaId}");
 
             // Загрузить бинарные данные из хранилища
             Stream dataStream = await _storageService.LoadAsync(mediaFile.Url);
@@ -83,8 +83,8 @@ public class MediaService : IMediaService
             return new Media(
                 mediaFile.UploaderId,
                 mediaFile.DateCreated,
+                mediaFile.MediaType.ToString(),
                 contentBytes,
-                string.Empty,
                 mediaFile.MediaType,
                 mediaFile.MineType,
                 string.Empty
@@ -96,5 +96,4 @@ public class MediaService : IMediaService
             throw;
         }
     }
-
 }

@@ -15,4 +15,5 @@ public record RegistrationRequest
     public string Password { get; init; }
     [MinLength(InvitationValidator.MIN_INVITATION_LENGTH)]
     public string InviteLink { get; init; }
+    public string DeviceInfo { get; init; }
 }

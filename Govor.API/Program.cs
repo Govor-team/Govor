@@ -26,7 +26,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.Configure<JwtOption>(configuration.GetSection(nameof(JwtOption)));
+builder.Services.Configure<JwtAccessOption>(configuration.GetSection(nameof(JwtAccessOption)));
 
 // Add services
 builder.Services.AddSignalRConf();// signalR

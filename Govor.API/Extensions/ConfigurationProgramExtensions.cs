@@ -1,5 +1,3 @@
-using Govor.API.Services.AdminsStuff.Interfaces;
-using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Infrastructure.Validators;
@@ -9,10 +7,12 @@ using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Medias;
 using Govor.Application.Interfaces.Messages;
+using Govor.Application.Interfaces.UserSession;
 using Govor.Application.Services;
 using Govor.Application.Services.Authentication;
 using Govor.Application.Services.Friends;
 using Govor.Application.Services.Messages;
+using Govor.Application.Services.UserSessions;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
@@ -26,6 +26,7 @@ using Govor.Core.Repositories.MediasAttachments;
 using Govor.Core.Repositories.Messages;
 using Govor.Core.Repositories.PrivateChats;
 using Govor.Core.Repositories.Users;
+using Govor.Core.Repositories.UserSessionsRepository;
 using Govor.Data;
 using Govor.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,9 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IUserGroupsService, UserGroupsService>();
         services.AddScoped<IMessagesLoader, MessagesLoader>();
         services.AddScoped<IMediaService, MediaService>();
+       
+        // UserSession
+        services.AddScoped<IUserSessionOpener, UserSessionOpener>();
         
         // Auto Mapper 
         services.AddAutoMapper(typeof(MappingProfile));
@@ -82,7 +86,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IFriendshipsRepository, FriendshipsRepository>();
         services.AddScoped<IPrivateChatsRepository, PrivateChatsRepository>();
         services.AddScoped<IGroupsRepository, GroupRepository>();
-        
+        services.AddScoped<IUserSessionsRepository, UserSessionsRepository>();
         // other
     }
 

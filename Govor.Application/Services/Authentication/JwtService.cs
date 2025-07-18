@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Core.Models.Users;
 using Microsoft.Extensions.Options;
@@ -11,16 +10,18 @@ namespace Govor.Application.Services.Authentication;
 
 public class JwtService : IJwtService
 {
-    private JwtOption _jwtOption;
+    private JwtAccessOption _jwtAccessOption;
+    private JwtRefreshOption _refreshOptions;
     private IInvitesService _invitesService;
     
-    public JwtService(IOptions<JwtOption> options, IInvitesService invitesService)
+    public JwtService(IOptions<JwtAccessOption> options, IOptions<JwtRefreshOption> refreshOptions, IInvitesService invitesService)
     {
-        _jwtOption = options.Value;
+        _refreshOptions = refreshOptions.Value;
+        _jwtAccessOption = options.Value;
         _invitesService = invitesService;
     }
     
-    public async Task<string> GenerateJwtTokenAsync(User user)
+    public async Task<string> GenerateAccessTokenAsync(User user)
     {
         var claims = new[]
         {
@@ -29,13 +30,55 @@ public class JwtService : IJwtService
         };
         
         var singing = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOption.SecretKeу)),
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKeу)),
             SecurityAlgorithms.HmacSha256Signature);
 
-        var token = new JwtSecurityToken(signingCredentials: singing,
-            expires: DateTime.UtcNow.AddHours(_jwtOption.Hours),
+        var token = new JwtSecurityToken(
+            expires: DateTime.UtcNow.AddMinutes(_jwtAccessOption.Minutes),
+            signingCredentials: singing,
             claims: claims);
         
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+    
+    public async Task<string> GenerateRefreshTokenAsync(User user)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKeу));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim("userId", user.Id.ToString()),
+            new Claim("tokenType", "refresh")
+        };
+
+        var token = new JwtSecurityToken(
+            expires: DateTime.UtcNow.AddDays(_refreshOptions.RefreshTokenLifetimeDays),
+            signingCredentials: creds,
+            claims: claims
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    
+    public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+    {
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKeу)),
+            ValidateLifetime = false // << important 
+        };
+        
+        var handler = new JwtSecurityTokenHandler();
+        var principal = handler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+
+        if (securityToken is not JwtSecurityToken jwtToken || jwtToken.Header.Alg != SecurityAlgorithms.HmacSha256)
+            throw new SecurityTokenException("Invalid token");
+
+        return principal;
+    }
+
 }

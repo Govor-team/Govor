@@ -1,5 +1,5 @@
-using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Exceptions.InvitesService;
+using Govor.Application.Interfaces.Authentication;
 using Govor.Core.Models;
 using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Invaites;

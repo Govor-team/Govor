@@ -2,10 +2,8 @@ using AutoFixture;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Users;
-using Govor.API.Services.Authentication.Interfaces;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Interfaces.Authentication;
-using Govor.Application.Services;
 using Govor.Application.Services.Authentication;
 using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Admins;
@@ -52,6 +50,7 @@ public class AuthServiceTests
             );
     }
     
+    // Tests for Register action 
     [Test]
     public void Given_ExistUser_When_Register_Should_Throw_UserAlreadyExistsException()
     {

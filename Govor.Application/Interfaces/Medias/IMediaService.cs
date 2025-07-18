@@ -12,8 +12,8 @@ public interface IMediaService
 
 public record Media(Guid UploaderId,
     DateTime UploadedOn,
-    byte[] Data,
     string FileName,
+    byte[] Data,
     MediaType Type,
     string MineType,
     string EncryptedKey);

@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Govor.Core.Models;
 using Govor.Core.Models.Messages;
 using Govor.Core.Models.Users;
@@ -10,6 +9,7 @@ namespace Govor.Data;
 public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContext(options)
 {
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<UserSession> UserSessions { get; set; }
     public virtual DbSet<Friendship> Friendships { get; set; }
     public virtual DbSet<PrivateChat> PrivateChats { get; set; }
     public virtual DbSet<Admin> Admins { get; set; }
@@ -29,6 +29,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
         modelBuilder.ApplyConfiguration(new FriendshipConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new InvitationConfiguration());

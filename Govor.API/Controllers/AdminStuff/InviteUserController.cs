@@ -1,4 +1,4 @@
-using Govor.API.Services.AdminsStuff.Interfaces;
+using Govor.Application.Interfaces;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Requests;
 using Govor.Core.Repositories.Invaites;

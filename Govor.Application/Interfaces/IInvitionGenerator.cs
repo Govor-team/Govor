@@ -1,4 +1,4 @@
-namespace Govor.API.Services.AdminsStuff.Interfaces;
+namespace Govor.Application.Interfaces;
 
 public interface IInvitationGenerator
 {
