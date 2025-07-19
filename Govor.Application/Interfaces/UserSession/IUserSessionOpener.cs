@@ -5,6 +5,6 @@ namespace Govor.Application.Interfaces.UserSession;
 
 public interface IUserSessionOpener
 {
-    Task<string> OpenSessionAsync(User user, string deviceInfo);
+    Task<RefreshResult> OpenSessionAsync(User user, string deviceInfo);
 }
 

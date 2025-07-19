@@ -203,6 +203,41 @@ public class UserSessionsRepositoryTests
     }
     
     [Test]
+    public async Task Given_ValidRefreshToken_When_GetByRefreshTokenAsync_ShouldReturnSession()
+    {
+        // Arrange
+        var random = new Random();
+        var sessions = _fixture.Build<UserSession>()
+            .With(f => f.IsRevoked, true)
+            .CreateMany(random.Next(2, 10)).ToList();
+        
+        var token = sessions.First().RefreshToken;
+        
+        await using var context = new GovorDbContext(_options);
+        var repository = new UserSessionsRepository(context);
+
+        context.UserSessions.AddRange(sessions);
+        await context.SaveChangesAsync();
+        
+        // Act 
+        var result = await repository.GetByRefreshTokenAsync(token);
+        
+        // Assert 
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.EqualTo(sessions.First()));
+    }
+
+    [Test]
+    public void Given_InvalidRefreshToken_When_GetByRefreshTokenAsync_Should_Throw_NotFoundByKeyException()
+    {
+        // Arrange 
+        using var context = new GovorDbContext(_options);
+        var repository = new UserSessionsRepository(context);
+        // Act & Assert 
+        Assert.ThrowsAsync<NotFoundByKeyException<string>>(async () => await repository.GetByRefreshTokenAsync(_fixture.Create<string>()));
+    }
+    
+    [Test]
     public async Task Given_ValidUserSessions_When_AddAsync_Then_UserSessionsAdded()
     {
         // Arrange

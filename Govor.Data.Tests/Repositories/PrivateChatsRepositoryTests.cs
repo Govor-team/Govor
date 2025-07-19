@@ -200,5 +200,4 @@ public class PrivateChatsRepositoryTests
         Assert.That(result1, Is.False);
         Assert.That(result2, Is.False);
     }
-    
 }

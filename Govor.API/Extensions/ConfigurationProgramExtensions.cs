@@ -71,7 +71,7 @@ public static class ConfigurationProgramExtensions
        
         // UserSession
         services.AddScoped<IUserSessionOpener, UserSessionOpener>();
-        
+        services.AddScoped<IUserSessionRefresher, UserSessionRefresher>();
         // Auto Mapper 
         services.AddAutoMapper(typeof(MappingProfile));
     }

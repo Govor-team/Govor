@@ -41,7 +41,7 @@ public class FriendsRequestQueryController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogError(ex, ex.Message);
+            _logger.LogWarning(ex, ex.Message);
             return Ok(new List<FriendshipDto>());
         }
         catch (Exception ex)
@@ -67,7 +67,7 @@ public class FriendsRequestQueryController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogError(ex, ex.Message);
+            _logger.LogWarning(ex, ex.Message);
             return Ok(new List<FriendshipDto>());
         }
         catch (Exception ex)

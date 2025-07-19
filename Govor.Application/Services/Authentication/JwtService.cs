@@ -30,7 +30,7 @@ public class JwtService : IJwtService
         };
         
         var singing = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKeу)),
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKey)),
             SecurityAlgorithms.HmacSha256Signature);
 
         var token = new JwtSecurityToken(
@@ -43,7 +43,7 @@ public class JwtService : IJwtService
     
     public async Task<string> GenerateRefreshTokenAsync(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKeу));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -68,7 +68,7 @@ public class JwtService : IJwtService
             ValidateAudience = false,
             ValidateIssuer = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKeу)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtAccessOption.SecretKey)),
             ValidateLifetime = false // << important 
         };
         

@@ -41,7 +41,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtOption:SecretKeу"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtAccessOption:SecretKey"]!))
         };
         options.Events = new JwtBearerEvents
         {
@@ -66,6 +66,8 @@ builder.Services.AddControllers();
 builder.Services.AddServices();
 builder.Services.AddRepositories();
 builder.Services.AddValidators();
+
+builder.Services.AddOptionsConfiguration(configuration);
 
 builder.Services.AddGovorDbContext(configuration); // GovorDbContext init
 

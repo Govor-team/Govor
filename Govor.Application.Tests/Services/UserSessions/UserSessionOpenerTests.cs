@@ -1,5 +1,3 @@
-using Govor.Application.Interfaces.Authentication;
-using Govor.Application.Services.Authentication;
 using Govor.Application.Services.UserSessions;
 using Govor.Core.Models;
 using Govor.Core.Models.Users;
@@ -7,8 +5,8 @@ using Govor.Core.Repositories.UserSessionsRepository;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-
-namespace Govor.Application.Tests.Services.UserSessions;
+using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Services.Authentication;
 
 [TestFixture]
 public class UserSessionOpenerTests
@@ -21,6 +19,7 @@ public class UserSessionOpenerTests
     private User _user;
     private const string DeviceInfo = "Chrome on Windows";
     private const string GeneratedToken = "new-refresh-token";
+    private const string NewAccessToken = "new-access-token";
 
     [SetUp]
     public void Setup()
@@ -30,13 +29,7 @@ public class UserSessionOpenerTests
         _loggerMock = new Mock<ILogger<UserSessionOpener>>();
         _options = Options.Create(new JwtRefreshOption { RefreshTokenLifetimeDays = 30 });
 
-        _service = new UserSessionOpener(
-            _repositoryMock.Object,
-            _jwtServiceMock.Object,
-            _options,
-            _loggerMock.Object
-        );
-
+        // Инициализируем пользователя ДО моков, чтобы не было null в Setup
         _user = new User
         {
             Id = Guid.NewGuid(),
@@ -48,16 +41,22 @@ public class UserSessionOpenerTests
             InviteId = Guid.NewGuid()
         };
 
-        _jwtServiceMock
-            .Setup(j => j.GenerateRefreshTokenAsync(_user))
-            .ReturnsAsync(GeneratedToken);
+        _jwtServiceMock.Setup(j => j.GenerateRefreshTokenAsync(_user)).ReturnsAsync(GeneratedToken);
+        _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user)).ReturnsAsync(NewAccessToken);
+
+        _service = new UserSessionOpener(
+            _repositoryMock.Object,
+            _jwtServiceMock.Object,
+            _options,
+            _loggerMock.Object
+        );
     }
 
     [Test]
     public async Task OpenSessionAsync_ShouldReturnExistingToken_IfSessionValid()
     {
         // Arrange 
-        var session = new Core.Models.UserSession
+        var session = new UserSession
         {
             UserId = _user.Id,
             DeviceInfo = DeviceInfo,
@@ -67,23 +66,24 @@ public class UserSessionOpenerTests
             IsRevoked = false
         };
 
-        _repositoryMock
-            .Setup(r => r.GetByUserIdAsync(_user.Id))
-            .ReturnsAsync(new List<UserSession> { session });
-    
+        _repositoryMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync(new List<UserSession> { session });
+
         // Act 
         var result = await _service.OpenSessionAsync(_user, DeviceInfo);
 
-        // Asser 
-        Assert.That(result, Is.EqualTo("valid-token"));
-        _repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UserSession>()), Times.Never);
+        // Assert 
+        Assert.That(result.refreshToken, Is.EqualTo(GeneratedToken));
+        Assert.That(result.accessToken, Is.EqualTo(NewAccessToken));
+        _repositoryMock.Verify(r => r.UpdateAsync(It.Is<UserSession>(s =>
+            s.RefreshToken == GeneratedToken &&
+            s.IsRevoked == false)), Times.Once);
     }
 
     [Test]
     public async Task OpenSessionAsync_ShouldUpdateSession_IfExpiredOrRevoked()
     {
         // Arrange 
-        var session = new Core.Models.UserSession
+        var session = new UserSession
         {
             UserId = _user.Id,
             DeviceInfo = DeviceInfo,
@@ -93,35 +93,52 @@ public class UserSessionOpenerTests
             IsRevoked = false
         };
 
-        _repositoryMock
-            .Setup(r => r.GetByUserIdAsync(_user.Id))
-            .ReturnsAsync(new List<UserSession> { session });
-    
+        _repositoryMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync(new List<UserSession> { session });
+
         // Act 
         var result = await _service.OpenSessionAsync(_user, DeviceInfo);
 
         // Assert 
-        Assert.That(result, Is.EqualTo(GeneratedToken));
-        _repositoryMock.Verify(r => r.UpdateAsync(It.Is<UserSession>(s => s.RefreshToken == GeneratedToken)), Times.Once);
+        Assert.That(result.refreshToken, Is.EqualTo(GeneratedToken));
+        Assert.That(result.accessToken, Is.EqualTo(NewAccessToken));
+        _repositoryMock.Verify(r => r.UpdateAsync(It.Is<UserSession>(s =>
+            s.RefreshToken == GeneratedToken &&
+            s.IsRevoked == false)), Times.Once);
     }
 
     [Test]
     public async Task OpenSessionAsync_ShouldCreateNewSession_IfNoneExists()
     {
         // Arrange 
-        _repositoryMock
-            .Setup(r => r.GetByUserIdAsync(_user.Id))
-            .ReturnsAsync(new List<UserSession>());
+        _repositoryMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync(new List<UserSession>());
 
         // Act 
         var result = await _service.OpenSessionAsync(_user, DeviceInfo);
-        
+
         // Assert 
-        Assert.That(result, Is.EqualTo(GeneratedToken));
+        Assert.That(result.refreshToken, Is.EqualTo(GeneratedToken));
+        Assert.That(result.accessToken, Is.EqualTo(NewAccessToken));
         _repositoryMock.Verify(r => r.AddAsync(It.Is<UserSession>(s =>
             s.UserId == _user.Id &&
             s.DeviceInfo == DeviceInfo &&
             s.RefreshToken == GeneratedToken
         )), Times.Once);
+    }
+
+    [Test]
+    public async Task OpenSessionAsync_ShouldCreateNewSession_WhenNotFoundByKeyExceptionThrown()
+    {
+        // Arrange
+        _repositoryMock
+            .Setup(r => r.GetByUserIdAsync(_user.Id))
+            .ThrowsAsync(new Govor.Data.Repositories.Exceptions.NotFoundByKeyException<Guid>(_user.Id, "userId"));
+
+        // Act
+        var result = await _service.OpenSessionAsync(_user, DeviceInfo);
+
+        // Assert 
+        Assert.That(result.refreshToken, Is.EqualTo(GeneratedToken));
+        Assert.That(result.accessToken, Is.EqualTo(NewAccessToken));
+        _repositoryMock.Verify(r => r.AddAsync(It.IsAny<UserSession>()), Times.Once);
     }
 }

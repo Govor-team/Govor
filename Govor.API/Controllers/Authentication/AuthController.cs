@@ -6,7 +6,7 @@ using Govor.Contracts.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Govor.API.Controllers;
+namespace Govor.API.Controllers.Authentication;
 
 [ApiController]
 [AllowAnonymous]
@@ -18,7 +18,11 @@ public class AuthController : Controller
     private IAccountService _accountService;
     private ILogger<AuthController> _logger;
     
-    public AuthController(IAccountService accountService, IInvitesService invitesService,IUserSessionOpener userSessionOpener, ILogger<AuthController> logger)
+    public AuthController(
+        IAccountService accountService,
+        IInvitesService invitesService,
+        IUserSessionOpener userSessionOpener,
+        ILogger<AuthController> logger)
     {
         _userSession = userSessionOpener;
         _accountService = accountService;
@@ -45,7 +49,8 @@ public class AuthController : Controller
             var token = await  _userSession.OpenSessionAsync(user, registrationRequest.DeviceInfo);
             
             _logger.LogInformation($"Session for user {user.Username} with id {user.Id} has been opened");
-            return Ok(new { token });
+            
+            return Ok(token);
         }
         catch (UserAlreadyExistException ex)
         {
@@ -85,7 +90,7 @@ public class AuthController : Controller
             
             _logger.LogInformation($"Session for user {user.Username} with id {user.Id} has been opened");
             
-            return Ok(new { token });
+            return Ok(token);
         }
         catch (UserNotRegisteredException ex)
         {
@@ -103,39 +108,4 @@ public class AuthController : Controller
             return StatusCode(500, "An unexpected error occurred. Please try again later.");
         }
     }
-    
-/*    
-    [RequireHttps] 
-    [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] string refreshToken)
-    {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            
-            if (string.IsNullOrEmpty(refreshToken))
-                throw new InvalidOperationException("Refresh token cant be empty.");
-            
-            var newAccessToken = await _accountService.RefreshTokenAsync(refreshToken);
-            return Ok(new { accessToken = newAccessToken });
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, "Invalid refresh token");
-            return BadRequest(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex, "Refresh token failed");
-            return Unauthorized("Invalid refresh token");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return StatusCode(500, "An unexpected error occurred.");
-        }
-    }
-*/
-
 }

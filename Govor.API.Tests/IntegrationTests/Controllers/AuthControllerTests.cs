@@ -1,5 +1,5 @@
 using AutoFixture;
-using Govor.API.Controllers;
+using Govor.API.Controllers.Authentication;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Exceptions.InvitesService;
 using Govor.Application.Interfaces.Authentication;
@@ -50,7 +50,7 @@ public class AuthControllerTests
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
         var invitation = _fixture.Create<Invitation>();
-        var token = _fixture.Create<string>();
+        var token = _fixture.Create<RefreshResult>();
         
         var user = _fixture.Build<User>()
             .With(x => x.Username).Create();
@@ -70,8 +70,11 @@ public class AuthControllerTests
         // Assert
         Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = result as OkObjectResult;
-        dynamic value = okResult.Value;
-        Assert.That((string)value.GetType().GetProperty("token").GetValue(value, null), Is.EqualTo(token));
+
+        var response = okResult?.Value as RefreshResult;
+        Assert.That(response, Is.Not.Null);
+        Assert.That(response.accessToken, Is.EqualTo(token.accessToken));
+        Assert.That(response.refreshToken, Is.EqualTo(token.refreshToken));
     }
     
     [Test]
@@ -149,7 +152,7 @@ public class AuthControllerTests
     {
         // Arrange 
         var loginRequest = _fixture.Create<LoginRequest>();
-        var token = _fixture.Create<string>();
+        var token = _fixture.Create<RefreshResult>();
         
         var user = _fixture.Build<User>()
             .With(x => x.Username).Create();
@@ -164,8 +167,11 @@ public class AuthControllerTests
         // Assert 
         Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = result as OkObjectResult;
-        dynamic value = okResult.Value;
-        Assert.That((string)value.GetType().GetProperty("token").GetValue(value, null), Is.EqualTo(token));
+
+        var response = okResult?.Value as RefreshResult;
+        Assert.That(response, Is.Not.Null);
+        Assert.That(response.accessToken, Is.EqualTo(token.accessToken));
+        Assert.That(response.refreshToken, Is.EqualTo(token.refreshToken));
     }
     
     [Test]

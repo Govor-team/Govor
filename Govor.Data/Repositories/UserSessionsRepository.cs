@@ -62,6 +62,14 @@ public class UserSessionsRepository : IUserSessionsRepository
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<bool>(isRevoked, "Sessions is revoked does not exist"));
     }
 
+    public async Task<UserSession> GetByRefreshTokenAsync(string refreshToken)
+    {
+        return await _context.UserSessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(session => session.RefreshToken == refreshToken)
+                ?? throw new NotFoundByKeyException<string>(refreshToken, "Session with given refresh token does not exist");
+    }
+
     public async Task AddAsync(UserSession userSession)
     {
         try

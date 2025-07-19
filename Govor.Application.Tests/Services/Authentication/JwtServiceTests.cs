@@ -32,7 +32,7 @@ public class JwtServiceTests
 
         _testJwtAccessOptions = new JwtAccessOption
         {
-            SecretKeу = "THIS_IS_A_TEST_SECRET_KEY_THAT_IS_LONG_ENOUGH_1234", // Ensure key size is sufficient for HMACSHA256
+            SecretKey = "THIS_IS_A_TEST_SECRET_KEY_THAT_IS_LONG_ENOUGH_1234", // Ensure key size is sufficient for HMACSHA256
             Minutes = 5
         };
 
@@ -98,7 +98,7 @@ public class JwtServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var handler = new JwtSecurityTokenHandler();
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_testJwtAccessOptions.SecretKeу));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_testJwtAccessOptions.SecretKey));
 
         var now = DateTime.UtcNow;
 
