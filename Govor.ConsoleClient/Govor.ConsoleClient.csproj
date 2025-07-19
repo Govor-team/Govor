@@ -19,5 +19,12 @@
         <ProjectReference Include="..\Govor.Core\Govor.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Api\" />
+      <Folder Include="Commands\Auth\" />
+      <Folder Include="Models\" />
+      <Folder Include="Utils\" />
+    </ItemGroup>
+
 </Project>
 

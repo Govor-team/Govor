@@ -8,7 +8,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Core", "Govor.Core\Go
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Data", "Govor.Data\Govor.Data.csproj", "{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Console", "Govor.Console\Govor.Console.csproj", "{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.ConsoleClient", "Govor.ConsoleClient\Govor.ConsoleClient.csproj", "{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4ED5259A-6FB4-4D89-8E6B-4778DC68F7D4}"
 EndProject
