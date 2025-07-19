@@ -1,13 +1,14 @@
 using Govor.ConsoleClient.Services;
+using Govor.ConsoleClient.Services.Interfaces;
 
 namespace Govor.ConsoleClient;
 
 public class App
 {
-    private readonly InputPipeline _inputPipeline;
+    private readonly IInputPipeline _inputPipeline;
     private readonly ILogger _logger;
     
-    public App(InputPipeline inputPipeline, ILogger logger)
+    public App(IInputPipeline inputPipeline, ILogger logger)
     {
         _logger = logger;
         _inputPipeline = inputPipeline;

@@ -1,6 +1,8 @@
 using System.Reflection;
 using Govor.ConsoleClient.Commands;
 using Govor.ConsoleClient.Services;
+using Govor.ConsoleClient.Services.Extensions;
+using Govor.ConsoleClient.Services.Interfaces;
 using Govor.ConsoleClient.Services.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,12 +18,9 @@ public static class DependencyInjection
         services.AddCommands();
         
         // Сервисы
-        services.AddSingleton<CommandDispatcher>();
-        services.AddSingleton<InputPipeline>();
-        services.AddSingleton<ConsoleLogger>();
-        services.AddSingleton<ILogger>(sp => sp.GetRequiredService<ConsoleLogger>());
+        services.AddApplicationServices();
+        
         services.AddSingleton<CommandContext>();
-        services.AddSingleton<MiddlewarePipeline>();
         
         // Middleware
         services.AddSingleton<ICommandMiddleware, ExceptionHandlingMiddleware>();

@@ -1,3 +1,5 @@
+using Govor.ConsoleClient.Services.Interfaces;
+
 namespace Govor.ConsoleClient.Services.Middleware;
 
 public class ExceptionHandlingMiddleware : ICommandMiddleware
@@ -17,7 +19,7 @@ public class ExceptionHandlingMiddleware : ICommandMiddleware
         }
         catch (Exception ex)
         {
-            _logger.Error($"Произошла ошибка при выполнении команды '{context.Route}': {ex.Message}");
+            _logger.Error($"Произошла ошибка при выполнении команды '{context?.Route}': {ex.Message}");
         }
     }
 }

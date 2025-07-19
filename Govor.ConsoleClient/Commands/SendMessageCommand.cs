@@ -39,6 +39,6 @@ public class SendMessageCommand : IInteractiveCommand
 
     public string ShortHelp()
     {
-        throw new NotImplementedException();
+        return "Отпарвка тестовых сообщений не существующему юзеру";
     }
 }

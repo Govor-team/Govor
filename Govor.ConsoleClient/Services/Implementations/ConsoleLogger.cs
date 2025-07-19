@@ -1,4 +1,6 @@
-namespace Govor.ConsoleClient.Services;
+using Govor.ConsoleClient.Services.Interfaces;
+
+namespace Govor.ConsoleClient.Services.Implementations;
 
 public class ConsoleLogger : ILogger
 {

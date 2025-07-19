@@ -1,10 +1,11 @@
+using Govor.ConsoleClient.Services.Interfaces;
 using Govor.ConsoleClient.Services.Middleware;
 
-namespace Govor.ConsoleClient.Services;
+namespace Govor.ConsoleClient.Services.Implementations;
 
 public delegate Task CommandMiddleware(CommandContext context, Func<Task> next);
 
-public class MiddlewarePipeline
+public class MiddlewarePipeline : IMiddlewarePipeline
 {
     private readonly IList<ICommandMiddleware> _middlewares;
 

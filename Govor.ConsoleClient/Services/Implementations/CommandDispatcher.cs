@@ -1,15 +1,16 @@
 using System.Reflection;
 using Govor.ConsoleClient.Commands;
+using Govor.ConsoleClient.Services.Interfaces;
 
-namespace Govor.ConsoleClient.Services;
+namespace Govor.ConsoleClient.Services.Implementations;
 
-public class CommandDispatcher
+public class CommandDispatcher : ICommandDispatcher
 {
     private readonly Dictionary<string, ICommand> _commands = new();
     private readonly ILogger _logger;
-    private readonly MiddlewarePipeline _pipeline;
+    private readonly IMiddlewarePipeline _pipeline;
 
-    public CommandDispatcher(IEnumerable<ICommand> commands, ILogger logger, MiddlewarePipeline pipeline)
+    public CommandDispatcher(IEnumerable<ICommand> commands, ILogger logger, IMiddlewarePipeline pipeline)
     {
         _logger = logger;
         _pipeline = pipeline;
@@ -38,4 +39,6 @@ public class CommandDispatcher
             return null;
         }
     }
+    
+    public IEnumerable<ICommand> GetAllCommands() => _commands.Values;
 }

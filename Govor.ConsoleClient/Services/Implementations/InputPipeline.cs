@@ -1,14 +1,15 @@
 using Govor.ConsoleClient.Commands;
+using Govor.ConsoleClient.Services.Interfaces;
 
-namespace Govor.ConsoleClient.Services;
+namespace Govor.ConsoleClient.Services.Implementations;
 
-public class InputPipeline
+public class InputPipeline : IInputPipeline
 {
-    private readonly CommandDispatcher _dispatcher;
+    private readonly ICommandDispatcher _dispatcher;
     private readonly ILogger _logger;
     private IInteractiveCommand? _activeCommand;
     
-    public InputPipeline(CommandDispatcher dispatcher, ILogger logger)
+    public InputPipeline(ICommandDispatcher dispatcher, ILogger logger)
     {
         _dispatcher = dispatcher;
         _logger = logger;
@@ -20,12 +21,12 @@ public class InputPipeline
 
         if (input.StartsWith("/"))
         {
-            _activeCommand = null; // Сброс активной команды
+            _activeCommand = null; 
 
             var commandInput = input[1..];
             var result = await _dispatcher.DispatchAsync(commandInput);
 
-            // Если команда поддерживает интерактивность, сохраняем как активную
+            // If the command supports interactivity, save it as active
             if (result is IInteractiveCommand interactiveCommand && !interactiveCommand.IsCompleted)
             {
                 _activeCommand = interactiveCommand;
@@ -42,7 +43,7 @@ public class InputPipeline
             }
             else
             {
-                _logger.Info($"[Ввод пользователя]: {input}");
+                _logger.Info($"Введите /help, чтобы узнать доступные команды!");
             }
         }
     }
