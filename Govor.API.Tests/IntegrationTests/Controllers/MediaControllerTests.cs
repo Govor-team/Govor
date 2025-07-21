@@ -18,6 +18,7 @@ public class MediaControllerTests
     private Mock<ICurrentUserService> _currentUserMock;
     private Mock<ILogger<MediaController>> _loggerMock;
     private Mock<IMediaService> _mockMedia;
+    private Mock<IAccesserToDownloadMedia> _mockAccesser;
     private MediaController _controller;
     private Guid _userId = Guid.NewGuid();
     
@@ -30,11 +31,16 @@ public class MediaControllerTests
         
         _currentUserMock = new Mock<ICurrentUserService>();
         _loggerMock = new Mock<ILogger<MediaController>>();
+        _mockAccesser = new Mock<IAccesserToDownloadMedia>();
         _mockMedia = new Mock<IMediaService>();
         
         _currentUserMock.Setup(f => f.GetCurrentUserId()).Returns(_userId);
         
-        _controller = new MediaController(_loggerMock.Object, _mockMedia.Object, _currentUserMock.Object);
+        _controller = new MediaController(
+            _loggerMock.Object,
+            _mockMedia.Object,
+            _mockAccesser.Object,
+            _currentUserMock.Object);
     }
     
     // Test for Upload action 

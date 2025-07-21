@@ -1,9 +1,6 @@
-using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Medias;
 using Govor.Contracts.Requests;
-using Govor.Core.Models;
-using Govor.Core.Repositories.MediasAttachments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,14 +13,17 @@ public class MediaController : Controller
 {
     private readonly ILogger<MediaController> _logger;
     private readonly IMediaService _mediaService;
+    private readonly IAccesserToDownloadMedia _accesser;
     private readonly ICurrentUserService _currentUserService;
 
     public MediaController(
         ILogger<MediaController> logger,
         IMediaService mediaService,
+        IAccesserToDownloadMedia accesser,
         ICurrentUserService currentUserService)
     {
         _logger = logger;
+        _accesser = accesser;
         _mediaService = mediaService;
         _currentUserService = currentUserService;
     }
@@ -32,20 +32,21 @@ public class MediaController : Controller
     [RequestSizeLimit(20_000_000)] // ~20MB
     public async Task<IActionResult> Upload([FromForm] MediaUploadRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        if (request?.FromFile is null || request.FromFile.Length == 0)
+            return BadRequest("No file uploaded");
+
+        if (request.FromFile.Length > 20_000_000)
+            return BadRequest("File is too large");
+
+        if (string.IsNullOrWhiteSpace(request.MimeType))
+            return BadRequest("Missing MIME type");
+
         try
         {
-            if (request.FromFile.Length > 20_000_000)
-                return BadRequest("File is too large");
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Чтение байт из IFormFile
-            using var memoryStream = new MemoryStream();
-
-            await request.FromFile.CopyToAsync(memoryStream);
-
-            byte[] fileBytes = memoryStream.ToArray();
+            byte[] fileBytes = await ReadFileAsync(request.FromFile);
 
             var media = new Media(
                 _currentUserService.GetCurrentUserId(),
@@ -59,20 +60,20 @@ public class MediaController : Controller
 
             var result = await _mediaService.UploadMediaAsync(media);
 
-            _logger.LogInformation(
-                $"Uploaded file: {Path.GetFileName(request.FromFile.FileName)} from user {_currentUserService.GetCurrentUserId()}");
+            _logger.LogInformation("Uploaded file {FileName} from user {UserId}",
+                media.FileName, media.UploaderId);
 
             return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
         }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
             return Unauthorized(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
@@ -81,21 +82,32 @@ public class MediaController : Controller
         }
     }
 
+    private async Task<byte[]> ReadFileAsync(IFormFile file)
+    {
+        await using var ms = new MemoryStream();
+        await file.CopyToAsync(ms);
+        return ms.ToArray();
+    }
+
+
     [HttpGet("download/{id}")]
     public async Task<IActionResult> Download(Guid id)
     {
         try
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var userId = _currentUserService.GetCurrentUserId();
+
+            if (!await _accesser.HasAccessAsync(id, userId))
+                return Forbid();
 
             var media = await _mediaService.GetMediaByIdAsync(id);
+
             return File(media.Data, media.MineType, Path.GetFileName(media.FileName));
         }
         catch (KeyNotFoundException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return NotFound(ex.Message);
+            return NotFound("Media not found");
         }
         catch (Exception ex)
         {

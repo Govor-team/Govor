@@ -11,6 +11,7 @@ using Govor.Application.Interfaces.UserSession;
 using Govor.Application.Services;
 using Govor.Application.Services.Authentication;
 using Govor.Application.Services.Friends;
+using Govor.Application.Services.Medias;
 using Govor.Application.Services.Messages;
 using Govor.Application.Services.UserSessions;
 using Govor.Core.Infrastructure.Extensions;
@@ -68,6 +69,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IUserGroupsService, UserGroupsService>();
         services.AddScoped<IMessagesLoader, MessagesLoader>();
         services.AddScoped<IMediaService, MediaService>();
+        services.AddScoped<IAccesserToDownloadMedia, AccesserToDownloadMediaService>();
        
         // UserSession
         services.AddScoped<IUserSessionOpener, UserSessionOpener>();

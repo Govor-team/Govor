@@ -1,7 +1,7 @@
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Infrastructure.Validators;
 
-namespace Govor.API.Tests.UnitTests.Services.Validators;
+namespace Govor.Application.Tests.Infrastructure.Validators;
 
 [TestFixture]
 public class UsernameValidatorTests

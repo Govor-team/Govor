@@ -12,7 +12,7 @@ public class GroupMembershipConfiguration : IEntityTypeConfiguration<GroupMember
 
         builder.Property(e => e.UserId).IsRequired();
         builder.Property(e => e.GroupId).IsRequired();
-        builder.Property(e => e.InvitationId).IsRequired();
+        builder.Property(e => e.InvitationId).IsRequired(false);
 
         // Optional: можно добавить навигацию к GroupInvitation
         builder.HasOne<GroupInvitation>()

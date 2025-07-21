@@ -5,7 +5,7 @@ using Govor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Govor.Application.Services.Messages;
+namespace Govor.Application.Services.Medias;
 
 public class MediaService : IMediaService
 {

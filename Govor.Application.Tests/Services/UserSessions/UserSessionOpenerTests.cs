@@ -8,6 +8,8 @@ using Moq;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Services.Authentication;
 
+namespace Govor.Application.Tests.Services.UserSessions;
+
 [TestFixture]
 public class UserSessionOpenerTests
 {
