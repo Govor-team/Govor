@@ -3,22 +3,15 @@ namespace Govor.Core.Models.Users;
 public class PrivacyUserSettings
 {
     public Guid UserId { get; set; }
-    public bool IsGlobalAccount  { get; set; }   
-    
-    public WhoCan CanSend { get; set; }
-    public List<Guid>? WhitelistSent { get; set; }
-    public List<Guid>? BlacklistSent { get; set; }
-    
-    public WhoCan CanSeeTimeWas  { get; set; }
-    public List<Guid>? WhitelistTimeWas { get; set; }
-    public List<Guid>? BlacklistTimeWas { get; set; }
-    
-    public WhoCan CanSeeImage  { get; set; }
-    public List<Guid>? WhitelistSeeImage { get; set; }
-    public List<Guid>? BlacklistSeeImage{ get; set; }
-    
-    public DeletingMessagesVia Via { get; set; } // if min value = none 
+
+    public bool IsGlobalAccount { get; set; }
+
+    public DeletingMessagesVia DeletingVia { get; set; }
     public int DeletingIn { get; set; }
+
+    public bool IsInvisibleMode { get; set; }
+
+    public List<PrivacyRuleEntity> Rules { get; set; } = new();
 }
 
 public enum WhoCan
@@ -36,4 +29,18 @@ public enum DeletingMessagesVia
     Months = 3,
     Years = 4
 }
+
+public enum PrivacyTargetArea
+{
+    CanSend = 0,
+    CanSeeTimeWas = 1,
+    CanSeeImage = 2
+}
+
+public enum PrivacyRuleType
+{
+    Allow = 0,
+    Deny = 1
+}
+
 
