@@ -218,9 +218,9 @@ public class MediaControllerTests
         var result = await _controller.Upload(uploadRequest);
 
         // Assert
-        Assert.That(result, Is.InstanceOf<UnauthorizedObjectResult>());
-        var unauthorizedResult = result as UnauthorizedObjectResult;
-        Assert.That(unauthorizedResult?.Value, Is.EqualTo("Access denied"));
+        Assert.That(result, Is.InstanceOf<ForbidResult>());
+        var forbidResult = result as ForbidResult;
+        Assert.That(forbidResult.AuthenticationSchemes.First(), Is.EqualTo("Access denied"));
     }
 
     [Test]
