@@ -61,16 +61,6 @@ public class MediaControllerTests
             .With(r => r.EncryptedKey, "secret")
             .Create();
 
-        var media = new Media(
-            _userId,
-            DateTime.UtcNow,
-            Path.GetFileName(uploadRequest.FromFile.FileName),
-            fileBytes,
-            uploadRequest.Type,
-            uploadRequest.MimeType,
-            uploadRequest.EncryptedKey
-        );
-
         var uploadResult = _fixture.Create<MediaUploadResult>();
 
         _mockMedia.Setup(f => f.UploadMediaAsync(It.IsAny<Media>()))
