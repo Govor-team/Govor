@@ -15,7 +15,7 @@ public record Media(Guid UploaderId,
     string FileName,
     byte[] Data,
     MediaType Type,
-    string MineType,
+    string MimeType,
     string EncryptedKey);
 
 public record MediaUploadResult(Guid? MediaId, string Url);

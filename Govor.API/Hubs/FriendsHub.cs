@@ -33,11 +33,10 @@ public class FriendsHub : Hub
         if (userId == Guid.Empty)
         {
             _logger.LogWarning("User connected with invalid UserID claim.");
-            Context.Abort(); // Abort connection if userID is invalid
+            Context.Abort();
             return;
         }
-
-        // Add user to their own group (for private messages and notifications)
+        
         await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
         _logger.LogInformation("User {UserId} connected with ConnectionId {ConnectionId} and added to their group",
             userId, Context.ConnectionId);
@@ -48,7 +47,7 @@ public class FriendsHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var userId =
-            GetUserId(suppressException: true); // Suppress exception if userID is not found (e.g. connection aborted early)
+            GetUserId(suppressException: true);
         if (userId != Guid.Empty)
         {
             // Remove user from their own group

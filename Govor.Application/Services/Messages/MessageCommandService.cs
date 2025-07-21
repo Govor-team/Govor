@@ -15,10 +15,10 @@ namespace Govor.Application.Services.Messages;
 public class MessageCommandService : IMessageCommandService
 {
     private readonly IMessagesRepository _messagesRepository;
-    private readonly IUsersRepository _usersRepository; // For validating user recipients
-    private readonly IGroupsRepository _groupsRepository; // For validating group recipients and fetching members
+    private readonly IUsersRepository _usersRepository; 
+    private readonly IGroupsRepository _groupsRepository; 
     private readonly IPrivateChatsRepository _privateChats;
-    private readonly IVerifyFriendship _verifyFriendship; // For private messages
+    private readonly IVerifyFriendship _verifyFriendship; 
     private readonly ILogger<MessageCommandService> _logger;
 
     public MessageCommandService(

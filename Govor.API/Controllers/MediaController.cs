@@ -102,7 +102,7 @@ public class MediaController : Controller
 
             var media = await _mediaService.GetMediaByIdAsync(id);
 
-            return File(media.Data, media.MineType, Path.GetFileName(media.FileName));
+            return File(media.Data, media.MimeType, Path.GetFileName(media.FileName));
         }
         catch (KeyNotFoundException ex)
         {

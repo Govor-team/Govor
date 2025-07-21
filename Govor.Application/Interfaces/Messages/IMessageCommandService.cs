@@ -15,7 +15,7 @@ public interface IMessageCommandService
     // Task<Result> MarkMessageAsReadAsync(Guid userId, Guid messageId);
 }
 
-// Define specific result types for clarity, including original message for notifications if needed
+
 
 public record SendMessageResult(bool IsSuccess, Exception? Exception, Message Message) 
     : Result(IsSuccess, Exception, Message?.Id ?? Guid.Empty);
@@ -23,7 +23,7 @@ public record SendMessageResult(bool IsSuccess, Exception? Exception, Message Me
 public record EditMessageResult(bool IsSuccess, Exception? Exception, Message? OriginalMessage) 
     : Result(IsSuccess, Exception, OriginalMessage?.Id ?? Guid.Empty)
 {
-    // OriginalMessage can be useful for the Hub to know details like RecipientType, RecipientId for notifications
+
 }
 
 public record DeleteMessageResult(bool IsSuccess, Exception? Exception, Message? OriginalMessage) 

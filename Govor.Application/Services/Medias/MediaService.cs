@@ -34,7 +34,7 @@ public class MediaService : IMediaService
                 UploaderId = file.UploaderId,
                 DateCreated = file.UploadedOn,
                 MediaType = file.Type,
-                MineType = file.MineType,
+                MineType = file.MimeType,
                 Url = url
             });
             
