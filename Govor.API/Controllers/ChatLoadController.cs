@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Govor.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin, User")]
 [Route("api/chats")]
 public class ChatLoadController : Controller
 {
@@ -49,7 +49,7 @@ public class ChatLoadController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex.Message);
-            return Unauthorized(ex.Message);
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {
@@ -84,7 +84,7 @@ public class ChatLoadController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex.Message);
-            return Unauthorized(ex.Message);
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {

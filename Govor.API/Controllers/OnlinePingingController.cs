@@ -43,11 +43,6 @@ public class OnlinePingingController : Controller
             _logger.LogError(e, e.Message);
             return BadRequest("User can't be found in our database.");
         }
-        catch (UnauthorizedAccessException e)
-        {
-            _logger.LogError(e, e.Message);
-            return Forbid(e.Message);
-        }
         catch (Exception e)
         {
             _logger.LogError(e, e.Message);

@@ -68,7 +68,7 @@ public class MediaController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return Unauthorized(ex.Message);
+            return Forbid(ex.Message);
         }
         catch (InvalidOperationException ex)
         {
