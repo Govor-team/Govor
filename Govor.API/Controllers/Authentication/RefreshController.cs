@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.Authentication;
 
+[ApiController]
+[AllowAnonymous]
 [Route("api/auth/token")]
 public class RefreshController : Controller
 {
@@ -19,8 +21,7 @@ public class RefreshController : Controller
     }
     
     [RequireHttps] 
-    [AllowAnonymous]
-    [HttpPost("refresh")]
+    [HttpPost("refresh")] // api/auth/token/refresh
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest refreshRequest)
     {
         try
@@ -41,12 +42,12 @@ public class RefreshController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning(ex, "Invalid refresh token");
+            _logger.LogWarning(ex, "Invalid refresh token.");
             return BadRequest(ex.Message);
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogWarning(ex, "Refresh token failed");
+            _logger.LogWarning(ex, "Refresh token failed.");
             return Unauthorized("Invalid refresh token");
         }
         catch (Exception ex)

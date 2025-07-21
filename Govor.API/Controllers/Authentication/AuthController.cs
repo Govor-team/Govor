@@ -46,11 +46,11 @@ public class AuthController : Controller
             
             _logger.LogInformation($"Register request for {user.Username} with id {user.Id} processed successfully");
 
-            var token = await  _userSession.OpenSessionAsync(user, registrationRequest.DeviceInfo);
+            var tokens = await  _userSession.OpenSessionAsync(user, registrationRequest.DeviceInfo);
             
             _logger.LogInformation($"Session for user {user.Username} with id {user.Id} has been opened");
             
-            return Ok(token);
+            return Ok(tokens);
         }
         catch (UserAlreadyExistException ex)
         {
@@ -86,11 +86,11 @@ public class AuthController : Controller
             var user = await _accountService.LoginAsync(loginRequest.Name, loginRequest.Password);
             _logger.LogInformation($"Login request for {user.Username} with id {user.Id} processed successfully");
             
-            var token = await  _userSession.OpenSessionAsync(user, loginRequest.DeviceInfo);
+            var tokens = await  _userSession.OpenSessionAsync(user, loginRequest.DeviceInfo);
             
             _logger.LogInformation($"Session for user {user.Username} with id {user.Id} has been opened");
             
-            return Ok(token);
+            return Ok(tokens);
         }
         catch (UserNotRegisteredException ex)
         {
