@@ -1,9 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses.SignalR;
 using Microsoft.AspNetCore.SignalR;
