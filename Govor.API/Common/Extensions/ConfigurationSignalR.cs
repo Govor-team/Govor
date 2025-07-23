@@ -1,7 +1,7 @@
 using Govor.API.Filters;
 using Microsoft.AspNetCore.SignalR;
 
-namespace Govor.API.Extensions;
+namespace Govor.API.Common.Extensions;
 
 public static class ConfigurationSignalR
 {

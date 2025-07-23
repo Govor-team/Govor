@@ -1,5 +1,6 @@
 using AutoFixture;
 using AutoMapper;
+using Govor.API.Common.SignalR.Helpers;
 using Govor.API.Hubs;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
@@ -17,7 +18,7 @@ namespace Govor.API.Tests.IntegrationTests.Hubs;
 public class FriendsHubTests
 {
     private Mock<IFriendRequestCommandService> _friendRequestServiceMock = null!;
-    private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+    private Mock<IHubUserAccessor> _currentUserServiceMock = null!;
     private Mock<IHubCallerClients> _clientsMock = null!;
     private Mock<IClientProxy> _clientProxyMock = null!;
     private Mock<ILogger<FriendsHub>> _loggerMock = null!;
@@ -35,19 +36,23 @@ public class FriendsHubTests
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
         
         _friendRequestServiceMock = new Mock<IFriendRequestCommandService>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
+        _currentUserServiceMock = new Mock<IHubUserAccessor>();
         _clientsMock = new Mock<IHubCallerClients>();
         _clientProxyMock = new Mock<IClientProxy>();
         _loggerMock = new Mock<ILogger<FriendsHub>>();
         _mapperMock = new Mock<IMapper>();
         
-        _currentUserServiceMock.Setup(x => x.GetCurrentUserId()).Returns(_userId);
+        _currentUserServiceMock.Setup(x => x.GetUserId(
+                It.IsAny<HubCallerContext>(),
+            It.IsAny<bool>()))
+            .Returns(_userId);
+        
         _clientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(_clientProxyMock.Object);
         
         _hub = new FriendsHub(
+            _loggerMock.Object,
             _friendRequestServiceMock.Object,
             _currentUserServiceMock.Object,
-            _loggerMock.Object,
            _mapperMock.Object)
         {
             Clients = _clientsMock.Object
@@ -129,7 +134,7 @@ public class FriendsHubTests
     public async Task SendRequest_ShouldReturnUnauthorized_WhenCurrentUserIsNotAuthenticated()
     {
         // Arrange 
-        _currentUserServiceMock.Setup(x => x.GetCurrentUserId())
+        _currentUserServiceMock.Setup(x => x.GetUserId(It.IsAny<HubCallerContext>(), It.IsAny<bool>()))
             .Throws(new UnauthorizedAccessException("userId claim is missing or invalid"));
 
         // Act 

@@ -1,6 +1,6 @@
 using Govor.Application.Services.Authentication;
 
-namespace Govor.API.Extensions;
+namespace Govor.API.Common.Extensions;
 
 public static class AddOptionExtensions
 {

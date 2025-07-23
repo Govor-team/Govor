@@ -1,11 +1,12 @@
 using AutoMapper;
+using Govor.API.Extensions.Mapping;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses;
 using Govor.Core.Models;
 using Govor.Core.Models.Messages;
 using Govor.Core.Models.Users;
 
-namespace Govor.API.Extensions;
+namespace Govor.API.Common.Mapping;
 
 public class MappingProfile : Profile
 {
@@ -16,7 +17,9 @@ public class MappingProfile : Profile
         CreateMap<MessageReaction, MessageReactionResponse>();
         CreateMap<MessageView, MessageViewResponse>();
 
-        CreateMap<User, UserDto>();
+        CreateMap<User, UserDto>()
+            .AfterMap<UserToUserDtoMappingAction>();
+        
         CreateMap<Friendship, FriendshipDto>();
     }
 }

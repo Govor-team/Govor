@@ -1,6 +1,6 @@
 using Serilog;
 
-namespace Govor.API.Extensions;
+namespace Govor.API.Common.Extensions;
 
 public static class ConfiguratorLoggerExtensions
 {

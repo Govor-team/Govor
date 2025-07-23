@@ -1,5 +1,5 @@
 using System.Text;
-using Govor.API.Extensions;
+using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
 using Govor.Application.Services.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

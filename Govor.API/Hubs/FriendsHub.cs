@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using AutoMapper;
+using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
@@ -13,23 +14,24 @@ public class FriendsHub : Hub
 {
     private readonly ILogger<FriendsHub> _logger;
     private readonly IFriendRequestCommandService _friendRequestService;
-    private readonly ICurrentUserService _currentUserService;
+    private readonly IHubUserAccessor _userAccessor;
     private readonly IMapper _mapper;
-    
-    public FriendsHub(IFriendRequestCommandService friendRequestService, 
-        ICurrentUserService currentUserService,
+
+    public FriendsHub(
         ILogger<FriendsHub> logger,
+        IFriendRequestCommandService friendRequestService,
+        IHubUserAccessor userAccessor,
         IMapper mapper)
     {
-        _friendRequestService = friendRequestService;
-        _currentUserService = currentUserService;
         _logger = logger;
+        _friendRequestService = friendRequestService;
+        _userAccessor = userAccessor;
         _mapper = mapper;
     }
-    
+
     public override async Task OnConnectedAsync()
     {
-        var userId = GetUserId();
+        var userId = _userAccessor.GetUserId(Context);
         if (userId == Guid.Empty)
         {
             _logger.LogWarning("User connected with invalid UserID claim.");
@@ -46,8 +48,7 @@ public class FriendsHub : Hub
     } 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId =
-            GetUserId(suppressException: true);
+        var userId = _userAccessor.GetUserId(Context, true);
         if (userId != Guid.Empty)
         {
             // Remove user from their own group
@@ -76,7 +77,7 @@ public class FriendsHub : Hub
     {
         try
         {
-            var userId = _currentUserService.GetCurrentUserId();
+            var userId = _userAccessor.GetUserId(Context);
             var friendship = await _friendRequestService.SendAsync(userId, targetUserId);
             
             await Clients.Group(targetUserId.ToString())
@@ -111,7 +112,7 @@ public class FriendsHub : Hub
     {
         try
         {
-            var userId = _currentUserService.GetCurrentUserId();
+            var userId = _userAccessor.GetUserId(Context);
             var friendship = await _friendRequestService.AcceptAsync(friendshipId, userId);
             await Clients.Group(userId.ToString())
                          .SendAsync("FriendRequestAccepted", _mapper.Map<FriendshipDto>(friendship));
@@ -140,7 +141,7 @@ public class FriendsHub : Hub
     {
         try
         {
-            var userId = _currentUserService.GetCurrentUserId();
+            var userId = _userAccessor.GetUserId(Context);
             var friendship = await _friendRequestService.RejectAsync(friendshipId, userId);
             await Clients.Group(userId.ToString())
                          .SendAsync("FriendRequestRejected", _mapper.Map<FriendshipDto>(friendship));
@@ -163,22 +164,5 @@ public class FriendsHub : Hub
             _logger.LogError(ex, ex.Message);
             return HubResult<object>.Error("Unexpected error! Please try later!");
         }
-    }
-    
-    private Guid GetUserId(bool suppressException = false)
-    {
-        var userIdClaim = Context.User?.FindFirst("userId")?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-        {
-            if (!suppressException)
-            {
-                _logger.LogError("Could not retrieve sender userId. Claim was: {UserIDClaim}", userIdClaim);
-                throw new UnauthorizedAccessException("userID claim is missing or invalid.");
-            }
-
-            return Guid.Empty;
-        }
-
-        return userId;
     }
 }

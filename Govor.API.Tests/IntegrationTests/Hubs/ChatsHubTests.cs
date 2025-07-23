@@ -1,4 +1,5 @@
 using AutoFixture;
+using Govor.API.Common.SignalR.Helpers;
 using Govor.API.Hubs;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages;
@@ -13,6 +14,7 @@ public class ChatsHubTests
     private Mock<ILogger<ChatsHub>> _loggerMock;
     private Mock<IMessageCommandService> _messageServiceMock;
     private Mock<IUserGroupsService> _userGroupsServiceMock;
+    private Mock<IHubUserAccessor> _hubUserAccessorMock;
     private Fixture _fixture;
     private ChatsHub _chatsHub;
 
@@ -26,11 +28,13 @@ public class ChatsHubTests
         _messageServiceMock = new Mock<IMessageCommandService>();
         _userGroupsServiceMock = new Mock<IUserGroupsService>();
         _loggerMock = new Mock<ILogger<ChatsHub>>();
+        _hubUserAccessorMock = new Mock<IHubUserAccessor>();
 
         _chatsHub = new ChatsHub(
             _loggerMock.Object,
             _messageServiceMock.Object,
-            _userGroupsServiceMock.Object
+            _userGroupsServiceMock.Object,
+            _hubUserAccessorMock.Object
         );
     }
     

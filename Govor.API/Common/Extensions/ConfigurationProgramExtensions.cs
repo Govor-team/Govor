@@ -1,3 +1,5 @@
+using Govor.API.Common.Mapping;
+using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Infrastructure.Validators;
@@ -34,7 +36,7 @@ using Govor.Data;
 using Govor.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Govor.API.Extensions;
+namespace Govor.API.Common.Extensions;
 
 public static class ConfigurationProgramExtensions
 {
@@ -83,6 +85,8 @@ public static class ConfigurationProgramExtensions
         
         // Auto Mapper 
         services.AddAutoMapper(typeof(MappingProfile));
+
+        services.AddScoped<IHubUserAccessor, HubUserAccessor>();
     }
 
     public static void AddRepositories(this IServiceCollection services)

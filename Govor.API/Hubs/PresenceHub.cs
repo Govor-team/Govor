@@ -1,5 +1,4 @@
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Interfaces.UserOnlineStatus;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -14,17 +13,23 @@ public class PresenceHub : Hub
     private readonly ILogger<PresenceHub> _logger;
     private readonly IUserNotificationScopeService _notificationScopeService;
     private readonly IOnlineUserStore _onlineUserStore;
-    
-    public PresenceHub(ILogger<PresenceHub> logger, IUserNotificationScopeService notificationScopeService, IOnlineUserStore onlineUserStore)
+    private readonly IHubUserAccessor _userAccessor;
+
+    public PresenceHub(
+        ILogger<PresenceHub> logger,
+        IUserNotificationScopeService notificationScopeService,
+        IOnlineUserStore onlineUserStore,
+        IHubUserAccessor userAccessor)
     {
         _logger = logger;
         _notificationScopeService = notificationScopeService;
         _onlineUserStore = onlineUserStore;
+        _userAccessor = userAccessor;
     }
 
     public override async Task OnConnectedAsync()
     {
-        var userId = GetUserId();
+        var userId = _userAccessor.GetUserId(Context);
         if (userId == Guid.Empty)
         {
             _logger.LogWarning("User connected with invalid UserID claim.");
@@ -48,7 +53,7 @@ public class PresenceHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = GetUserId();
+        var userId = _userAccessor.GetUserId(Context, true);
         if (userId == Guid.Empty) return;
 
         _onlineUserStore.SetOfflineUser(userId);
@@ -62,22 +67,5 @@ public class PresenceHub : Hub
         }
         
         await base.OnDisconnectedAsync(exception);
-    }
-    
-    private Guid GetUserId(bool suppressException = false)
-    {
-        var userIdClaim = Context.User?.FindFirst("userId")?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-        {
-            if (!suppressException)
-            {
-                _logger.LogError("Could not retrieve sender userId. Claim was: {UserIDClaim}", userIdClaim);
-                throw new UnauthorizedAccessException("userId claim is missing or invalid.");
-            }
-
-            return Guid.Empty;
-        }
-
-        return userId;
     }
 }

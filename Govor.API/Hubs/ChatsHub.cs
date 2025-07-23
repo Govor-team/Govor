@@ -1,3 +1,4 @@
+using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Exceptions.VerifyFriendship;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages;
@@ -16,17 +17,19 @@ public class ChatsHub : Hub
     private readonly ILogger<ChatsHub> _logger;
     private readonly IMessageCommandService _messageCommandService;
     private readonly IUserGroupsService _userService;
+    private readonly IHubUserAccessor _userAccessor;
 
-    public ChatsHub(ILogger<ChatsHub> logger, IMessageCommandService messageCommandService, IUserGroupsService userService)
+    public ChatsHub(ILogger<ChatsHub> logger, IMessageCommandService messageCommandService, IUserGroupsService userService, IHubUserAccessor userAccessor)
     {
         _logger = logger;
         _messageCommandService = messageCommandService;
         _userService = userService;
+        _userAccessor = userAccessor;
     }
 
     public override async Task OnConnectedAsync()
     {
-        var userId = GetUserId();
+        var userId = _userAccessor.GetUserId(Context);
         if (userId == Guid.Empty)
         {
             _logger.LogWarning("User connected with invalid UserID claim.");
@@ -50,8 +53,7 @@ public class ChatsHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId =
-            GetUserId(suppressException: true);
+        var userId = _userAccessor.GetUserId(Context, true);
         if (userId != Guid.Empty)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, userId.ToString());
@@ -85,7 +87,7 @@ public class ChatsHub : Hub
 
     public async Task<HubResult<UserMessageResponse>> Send(MessageRequest request)
     {
-        var senderId = GetUserId();
+        var senderId= _userAccessor.GetUserId(Context);
 
         if (string.IsNullOrWhiteSpace(request.EncryptedContent) &&
             (request.MediaAttachments == null || !request.MediaAttachments.Any()))
@@ -144,7 +146,7 @@ public class ChatsHub : Hub
     
     public async Task<HubResult<MessageRemovedResponse>> Remove(RemoveMessageRequest request)
     {
-        var removerId = GetUserId();
+        var removerId = _userAccessor.GetUserId(Context);
         _logger.LogInformation("Removing message {MessageId} by user {RemoverId}", request.MessageId, removerId);
 
         try
@@ -184,7 +186,7 @@ public class ChatsHub : Hub
 
     public async Task<HubResult<MessageEditResponse>> Edit(EditMessageRequest request)
     {
-        var editor = GetUserId();
+        var editor = _userAccessor.GetUserId(Context);
         _logger.LogInformation("Editing message {MessageId} by user {EditorId}", request.MessageId, editor);
 
         var editMessageParam = new EditMessage(editor,
@@ -302,23 +304,5 @@ public class ChatsHub : Hub
     {
         _logger.LogWarning(ex, "{Msg}: {UserId} -> {TargetId}", msg, userId, targetId);
         return HubResult<T>.NotFound("Message not found.");
-    }
-
-
-    private Guid GetUserId(bool suppressException = false)
-    {
-        var userIdClaim = Context.User?.FindFirst("userId")?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-        {
-            if (!suppressException)
-            {
-                _logger.LogError("Could not retrieve sender userId. Claim was: {UserIDClaim}", userIdClaim);
-                throw new UnauthorizedAccessException("userID claim is missing or invalid.");
-            }
-
-            return Guid.Empty;
-        }
-
-        return userId;
     }
 }
