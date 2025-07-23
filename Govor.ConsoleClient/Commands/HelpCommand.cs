@@ -39,16 +39,14 @@ public class HelpCommand : ICommand
         else
         {
             _logger.Info("Чтобы получить подробную информацию, напишите /help {command}");
-        }
-
-        foreach (var command in commands)
-        {
-            var name = command.GetType().GetCustomAttribute<CommandRouteAttribute>()?.Path.Replace("/", "").ToLower()
-                       ?? command.GetType().Name.Replace("Command", "").ToLower();
+            foreach (var command in commands)
+            {
+                var name = command.GetType().GetCustomAttribute<CommandRouteAttribute>()?.Path.Replace("/", "").ToLower()
+                           ?? command.GetType().Name.Replace("Command", "").ToLower();
             
-            _logger.Log($"{name} - {command.ShortHelp()}");
+                _logger.Log($"{name} - {command.ShortHelp()}");
+            }
         }
-
         return Task.CompletedTask;
     }
 

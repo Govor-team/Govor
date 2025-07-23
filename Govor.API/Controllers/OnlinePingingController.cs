@@ -13,6 +13,7 @@ public class OnlinePingingController : Controller
 {
     private readonly ILogger<OnlinePingingController> _logger;
     private readonly IPingHandlerService _ping;
+    private readonly IUserPresenceService _presenceService;
     private readonly ICurrentUserService _currentUserService;
 
     public OnlinePingingController(ILogger<OnlinePingingController> logger, 
@@ -51,13 +52,21 @@ public class OnlinePingingController : Controller
         catch (Exception e)
         {
             _logger.LogError(e, e.Message);
-            return StatusCode(500, new { error = "Failed to send friend request." });
+            return StatusCode(500, "Failed to ping.");
         }
     }
 
-    [HttpGet("is-online")]
-    public async Task<IActionResult> IsOnline(Guid userId)
+    [HttpGet("status/{userId}")]
+    public IActionResult GetStatus(Guid userId)
     {
-        return BadRequest();
+        try
+        {
+            return Ok(_presenceService.WhenUserWasOnline(userId));
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return StatusCode(500, "Internal server error.");
+        }
     }
 }

@@ -34,7 +34,7 @@ public class SendMessageCommand : IInteractiveCommand
 
     public string LongHelp()
     {
-        throw new NotImplementedException();
+        return "Отпарвка тестовых сообщений не существующему юзеру 2";
     }
 
     public string ShortHelp()

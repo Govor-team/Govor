@@ -1,8 +1,6 @@
 using Govor.Application.Interfaces;
-using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models.Messages;
 using Govor.Core.Repositories.Groups;
-using Govor.Core.Repositories.Messages;
 using Govor.Core.Repositories.PrivateChats;
 using Govor.Data;
 using Govor.Data.Repositories.Exceptions;
@@ -26,57 +24,121 @@ public class MessagesLoader : IMessagesLoader
         _dbContext = dbContext;
     }
     
-    public async Task<List<Message>> LoadLastMessagesInUserChat(Guid userId, Guid currentUser, Guid? startMessageId, int pageSize = 20)
+    public async Task<List<Message>> LoadMessagesInUserChat(
+        Guid userId,
+        Guid currentUser,
+        Guid? startMessageId,
+        int before = 20,
+        int after = 2)
     {
-        if(userId == Guid.Empty)
+        if (userId == Guid.Empty)
             throw new ArgumentException("User id cannot be empty");
-        
-        if(!_privateChatsRepository.Exist(userId, currentUser))
+
+        if (!_privateChatsRepository.Exist(userId, currentUser))
             throw new InvalidOperationException("Private chat not found");
-        
-        try
+
+        var chat = await _privateChatsRepository.GetByMembersAsync(userId, currentUser);
+
+        var query = _dbContext.Messages
+            .AsNoTracking()
+            .Include(m => m.MediaAttachments)
+            .ThenInclude(m => m.MediaFile)
+            .Where(m => m.RecipientType == RecipientType.User &&
+                        m.RecipientId == chat.Id);
+
+        if (startMessageId is null)
         {
-            var chat  = await _privateChatsRepository.GetByMembersAsync(userId, currentUser);
-            
-            return await _dbContext.Messages
-                .AsNoTracking()
-                .Include(m => m.MediaAttachments)
-                .ThenInclude(m => m.MediaFile)
-                .AsSplitQuery()
-                .Where(m => m.RecipientType == RecipientType.User &&
-                           m.RecipientId == chat.Id)
-                .Take(pageSize)
-                .ToListOrThrowIfEmpty(new NotFoundException("Messages not found"));
+            return await query
+                .OrderByDescending(m => m.SentAt)
+                .Take(before)
+                .ToListAsync();
         }
-        catch (NotFoundException ex)
-        {
-            return new List<Message>();
-        }
+
+        var startMessage = await _dbContext.Messages.FindAsync(startMessageId.Value);
+        if (startMessage == null)
+            throw new NotFoundException("Start message not found");
+
+        var beforeMessages = await query
+            .Where(m => m.SentAt < startMessage.SentAt)
+            .OrderByDescending(m => m.SentAt)
+            .Take(before)
+            .ToListAsync();
+
+        var afterMessages = await query
+            .Where(m => m.SentAt > startMessage.SentAt)
+            .OrderBy(m => m.SentAt)
+            .Take(after)
+            .ToListAsync();
+
+        // older -> start -> newer
+        var result = beforeMessages
+            .OrderBy(m => m.SentAt)
+            .Concat(new[] { startMessage })
+            .Concat(afterMessages)
+            .ToList();
+
+        return result;
     }
 
-    public async Task<List<Message>> LoadLastMessagesInChatGroup(Guid chatId, Guid currentUser, Guid? startMessageId, int pageSize = 20)
+
+    public async Task<List<Message>> LoadMessagesInChatGroup(
+        Guid chatId,
+        Guid currentUser,
+        Guid? startMessageId,
+        int before = 20,
+        int after = 2)
     {
-        if(chatId == Guid.Empty)
+        if (chatId == Guid.Empty)
             throw new ArgumentException("Chat id cannot be empty");
-        
-        if(!await _groupsRepository.IsUserMemberOfGroupAsync(currentUser, chatId))
-            throw new UnauthorizedAccessException("You are not in a group.");
-        
-        try
+
+        var isMember = await _groupsRepository.IsUserMemberOfGroupAsync(currentUser, chatId);
+        if (!isMember)
+            throw new UnauthorizedAccessException("You are not a member of this group.");
+
+        var baseQuery = _dbContext.Messages
+            .AsNoTracking()
+            .Include(m => m.MediaAttachments)
+            .ThenInclude(m => m.MediaFile)
+            .AsSplitQuery()
+            .Where(m => m.RecipientType == RecipientType.Group && m.RecipientId == chatId);
+
+        if (startMessageId is null)
         {
-            return await _dbContext.Messages
-                .AsNoTracking()
-                .Include(m => m.MediaAttachments)
-                .ThenInclude(m => m.MediaFile)
-                .AsSplitQuery()
-                .Where(m => m.RecipientType == RecipientType.Group &&
-                            m.RecipientId == chatId)
-                .Take(pageSize)
-                .ToListOrThrowIfEmpty(new NotFoundException("Messages not found"));
+            return await baseQuery
+                .OrderByDescending(m => m.SentAt)
+                .Take(before)
+                .OrderBy(m => m.SentAt)
+                .ToListAsync();
         }
-        catch (NotFoundException ex)
-        {
-            return new List<Message>();
-        }
+
+        var startMessage = await _dbContext.Messages
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == startMessageId.Value && 
+                                      m.RecipientType == RecipientType.Group && 
+                                      m.RecipientId == chatId);
+
+        if (startMessage == null)
+            throw new NotFoundException("Start message not found in this group.");
+
+        var beforeMessages = await baseQuery
+            .Where(m => m.SentAt < startMessage.SentAt)
+            .OrderByDescending(m => m.SentAt)
+            .Take(before)
+            .ToListAsync();
+
+        var afterMessages = await baseQuery
+            .Where(m => m.SentAt > startMessage.SentAt)
+            .OrderBy(m => m.SentAt)
+            .Take(after)
+            .ToListAsync();
+
+        var result = beforeMessages
+            .OrderBy(m => m.SentAt)
+            .Concat(new[] { startMessage })
+            .Concat(afterMessages)
+            .ToList();
+
+        return result;
     }
+
 }

@@ -56,7 +56,7 @@ public class MessagesLoaderTests
         await _dbContext.SaveChangesAsync();
 
         // Act
-        var result = await _loader.LoadLastMessagesInUserChat(_currentUserId, _otherUserId, null);
+        var result = await _loader.LoadMessagesInUserChat(_currentUserId, _otherUserId, null);
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -70,7 +70,7 @@ public class MessagesLoaderTests
         _privateChatsRepoMock.Setup(r => r.GetByMembersAsync(_currentUserId, _otherUserId))
             .ReturnsAsync(new PrivateChat { Id = Guid.NewGuid() });
         // Act
-        var result = await _loader.LoadLastMessagesInUserChat(_currentUserId, _otherUserId, null);
+        var result = await _loader.LoadMessagesInUserChat(_currentUserId, _otherUserId, null);
 
         // Assert 
         Assert.That(result, Is.Empty);
@@ -81,7 +81,7 @@ public class MessagesLoaderTests
     {
         // Act & Assert 
         var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
-            await _loader.LoadLastMessagesInUserChat(Guid.Empty, _currentUserId, null));
+            await _loader.LoadMessagesInUserChat(Guid.Empty, _currentUserId, null));
 
         Assert.That(ex.Message, Does.Contain("User id cannot be empty"));
     }
@@ -94,7 +94,7 @@ public class MessagesLoaderTests
 
         // Act & Assert 
         var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await _loader.LoadLastMessagesInUserChat(_currentUserId, _otherUserId, null));
+            await _loader.LoadMessagesInUserChat(_currentUserId, _otherUserId, null));
 
         Assert.That(ex.Message, Is.EqualTo("Private chat not found"));
     }
@@ -116,7 +116,7 @@ public class MessagesLoaderTests
         await _dbContext.SaveChangesAsync();
         
         // Act
-        var result = await _loader.LoadLastMessagesInChatGroup(_groupChatId, _currentUserId, null);
+        var result = await _loader.LoadMessagesInChatGroup(_groupChatId, _currentUserId, null);
 
         // Assert 
         Assert.That(result, Has.Count.EqualTo(1));
@@ -127,9 +127,9 @@ public class MessagesLoaderTests
     {
         // Act & Assert  
         var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
-            await _loader.LoadLastMessagesInChatGroup(Guid.Empty, _currentUserId, null));
+            await _loader.LoadMessagesInChatGroup(Guid.Empty, _currentUserId, null));
         
-        Assert.That(ex.Message, Does.Contain("Chat id cannot be empty"));
+        Assert.That(ex.Message, Is.EqualTo("Chat id cannot be empty"));
     }
 
     [Test]
@@ -141,9 +141,9 @@ public class MessagesLoaderTests
         
         // Act & Assert 
         var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
-            await _loader.LoadLastMessagesInChatGroup(_groupChatId, _currentUserId, null));
+            await _loader.LoadMessagesInChatGroup(_groupChatId, _currentUserId, null));
 
-        Assert.That(ex.Message, Is.EqualTo("You are not in a group."));
+        Assert.That(ex.Message, Is.EqualTo("You are not a member of this group."));
     }
 
     [Test]
@@ -154,7 +154,7 @@ public class MessagesLoaderTests
             .ReturnsAsync(true);
         
         // Act 
-        var result = await _loader.LoadLastMessagesInChatGroup(_groupChatId, _currentUserId, null);
+        var result = await _loader.LoadMessagesInChatGroup(_groupChatId, _currentUserId, null);
 
         // Assert 
         Assert.That(result, Is.Empty);

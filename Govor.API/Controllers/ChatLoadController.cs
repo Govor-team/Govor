@@ -1,7 +1,9 @@
 using AutoMapper;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Contracts.Requests;
 using Govor.Contracts.Responses;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +18,7 @@ public class ChatLoadController : Controller
     private readonly ILogger<ChatLoadController> _logger;
     private readonly IMessagesLoader _messagesLoader;
     private readonly IMapper _mapper;
+    
     public ChatLoadController(
         ILogger<ChatLoadController> logger,
         IMessagesLoader messagesLoader,
@@ -29,18 +32,21 @@ public class ChatLoadController : Controller
     }
     
     [HttpGet("group-messages")]
-    public async Task<IActionResult> GetChatMessages( 
-        [FromQuery] Guid chatId,
-        [FromQuery] Guid? startMessageId,
-        [FromQuery] int pageSize)
+    public async Task<IActionResult> GetGroupMessages( 
+         Guid chatId,
+         [FromQuery] MessageQuery query)
     {
         try
         {
-            var result = await _messagesLoader.LoadLastMessagesInChatGroup(
+            if (query.Before < 0 || query.After < 0 || query.After + query.Before > 100)
+                return BadRequest("Values must be non-negative and total must not exceed 100.");
+
+            var result = await _messagesLoader.LoadMessagesInChatGroup(
                 chatId,
                 _currentUser.GetCurrentUserId(),
-                startMessageId,
-                pageSize);
+                query.StartMessageId,
+                query.Before,
+                query.After);
 
             var response = _mapper.Map<List<MessageResponse>>(result);
 
@@ -51,6 +57,16 @@ public class ChatLoadController : Controller
             _logger.LogWarning(ex.Message);
             return Forbid(ex.Message);
         }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
@@ -60,17 +76,20 @@ public class ChatLoadController : Controller
     
     [HttpGet("user-messages")]
     public async Task<IActionResult> GetUserMessages(
-        [FromQuery] Guid userId,
-        [FromQuery] Guid? startMessageId,
-        [FromQuery] int pageSize = 20)
+        Guid userId,
+        [FromQuery] MessageQuery query)
     {
         try
         {
-            var result = await _messagesLoader.LoadLastMessagesInUserChat(
+            if (query.Before < 0 || query.After < 0 || query.After + query.Before > 100)
+                return BadRequest("Values must be non-negative and total must not exceed 100.");
+            
+            var result = await _messagesLoader.LoadMessagesInUserChat(
                 userId,
                 _currentUser.GetCurrentUserId(),
-                startMessageId,
-                pageSize);
+                query.StartMessageId,
+                query.Before,
+                query.After);
 
             var response = _mapper.Map<List<MessageResponse>>(result);
 
@@ -85,6 +104,16 @@ public class ChatLoadController : Controller
         {
             _logger.LogWarning(ex.Message);
             return Forbid(ex.Message);
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
