@@ -6,6 +6,7 @@ using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Contracts.Requests;
 using Govor.Contracts.Responses;
 using Govor.Core.Models.Messages;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -103,5 +104,157 @@ public class ChatLoadControllerTests
         
         Assert.That(values.Select(v => v.RecipientType), 
             Is.EquivalentTo(messagesResponse.Select(m => m.RecipientType)));
+    }
+    
+    [Test]
+    public async Task GetGroupMessages_InvalidQuery_ReturnsBadRequest()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = -1, After = 10 };
+
+        // Act
+        var result = await _controller.GetGroupMessages(_chatId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    [Test]
+    public async Task GetGroupMessages_UnauthorizedAccess_ReturnsForbid()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = 10, After = 10 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInChatGroup(It.IsAny<Guid>(), It.IsAny<Guid>(), null, It.IsAny<int>(), It.IsAny<int>()))
+                           .ThrowsAsync(new UnauthorizedAccessException());
+
+        // Act
+        var result = await _controller.GetGroupMessages(_chatId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<ForbidResult>());
+    }
+
+    [Test]
+    public async Task GetGroupMessages_NotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = 10, After = 10 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInChatGroup(It.IsAny<Guid>(), It.IsAny<Guid>(), null, It.IsAny<int>(), It.IsAny<int>()))
+                           .ThrowsAsync(new NotFoundException("Chat not found"));
+
+        // Act
+        var result = await _controller.GetGroupMessages(_chatId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+    
+    [Test]
+    public async Task GetGroupMessages_ArgumentException_ReturnsBadRequest()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = 10, After = 10 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInChatGroup(It.IsAny<Guid>(), It.IsAny<Guid>(), null, It.IsAny<int>(), It.IsAny<int>()))
+                           .ThrowsAsync(new ArgumentException("Invalid argument"));
+
+        // Act
+        var result = await _controller.GetGroupMessages(_chatId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    // GetUserMessages tests
+    [Test]
+    public async Task GetUserMessages_ValidRequest_ReturnsOkResult()
+    {
+        // Arrange
+        var messages = _fixture.CreateMany<Message>(5).ToList();
+        var query = new MessageQuery { Before = 5, After = 5 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInUserChat(_userId, _currentId, null, 5, 5))
+                           .ReturnsAsync(messages);
+        var messageResponses = _fixture.CreateMany<MessageResponse>(5).ToList();
+        _mapperMock.Setup(m => m.Map<List<MessageResponse>>(messages)).Returns(messageResponses);
+
+        // Act
+        var result = await _controller.GetUserMessages(_userId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = result as OkObjectResult;
+        Assert.That(okResult.Value, Is.EqualTo(messageResponses));
+    }
+
+    [Test]
+    public async Task GetUserMessages_InvalidQuery_ReturnsBadRequest()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = -1, After = 10 };
+
+        // Act
+        var result = await _controller.GetUserMessages(_userId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    [Test]
+    public async Task GetUserMessages_InvalidOperation_ReturnsBadRequest()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = 10, After = 10 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInUserChat(It.IsAny<Guid>(), It.IsAny<Guid>(), null, It.IsAny<int>(), It.IsAny<int>()))
+                           .ThrowsAsync(new InvalidOperationException());
+
+        // Act
+        var result = await _controller.GetUserMessages(_userId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+
+    [Test]
+    public async Task GetUserMessages_UnauthorizedAccess_ReturnsForbid()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = 10, After = 10 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInUserChat(It.IsAny<Guid>(), It.IsAny<Guid>(), null, It.IsAny<int>(), It.IsAny<int>()))
+                           .ThrowsAsync(new UnauthorizedAccessException());
+
+        // Act
+        var result = await _controller.GetUserMessages(_userId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<ForbidResult>());
+    }
+
+    [Test]
+    public async Task GetUserMessages_NotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = 10, After = 10 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInUserChat(It.IsAny<Guid>(), It.IsAny<Guid>(), null, It.IsAny<int>(), It.IsAny<int>()))
+                           .ThrowsAsync(new NotFoundException("User not found"));
+
+        // Act
+        var result = await _controller.GetUserMessages(_userId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+    }
+    
+    [Test]
+    public async Task GetUserMessages_ArgumentException_ReturnsBadRequest()
+    {
+        // Arrange
+        var query = new MessageQuery { Before = 10, After = 10 };
+        _messagesLoaderMock.Setup(m => m.LoadMessagesInUserChat(It.IsAny<Guid>(), It.IsAny<Guid>(), null, It.IsAny<int>(), It.IsAny<int>()))
+                           .ThrowsAsync(new ArgumentException("Invalid argument"));
+
+        // Act
+        var result = await _controller.GetUserMessages(_userId, query);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
 }
