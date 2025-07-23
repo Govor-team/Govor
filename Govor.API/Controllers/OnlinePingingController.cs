@@ -1,6 +1,6 @@
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
-using Govor.Core.Repositories.Users;
+using Govor.Application.Interfaces.UserOnlineStatus;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,7 +13,8 @@ public class OnlinePingingController : Controller
 {
     private readonly ILogger<OnlinePingingController> _logger;
     private readonly IPingHandlerService _ping;
-    private readonly IUserPresenceService _presenceService;
+    private readonly IUserPresenceReader _presenceReader;
+    private readonly IOnlineUserStore _userOnlineStore;
     private readonly ICurrentUserService _currentUserService;
 
     public OnlinePingingController(ILogger<OnlinePingingController> logger, 
@@ -57,11 +58,17 @@ public class OnlinePingingController : Controller
     }
 
     [HttpGet("status/{userId}")]
-    public IActionResult GetStatus(Guid userId)
+    public async Task<IActionResult> GetStatus(Guid userId)
     {
         try
         {
-            return Ok(_presenceService.WhenUserWasOnline(userId));
+            var isOnline =  _userOnlineStore.IsOnline(userId);
+            var lastSeen = await _presenceReader.GetLastSeenAsync(userId);
+
+            return Ok(new {
+                isOnline,
+                lastSeen
+            });
         }
         catch (Exception e)
         {

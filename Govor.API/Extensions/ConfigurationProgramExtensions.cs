@@ -7,12 +7,14 @@ using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Medias;
 using Govor.Application.Interfaces.Messages;
+using Govor.Application.Interfaces.UserOnlineStatus;
 using Govor.Application.Interfaces.UserSession;
 using Govor.Application.Services;
 using Govor.Application.Services.Authentication;
 using Govor.Application.Services.Friends;
 using Govor.Application.Services.Medias;
 using Govor.Application.Services.Messages;
+using Govor.Application.Services.UserOnlineStatus;
 using Govor.Application.Services.UserSessions;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
@@ -74,6 +76,11 @@ public static class ConfigurationProgramExtensions
         // UserSession
         services.AddScoped<IUserSessionOpener, UserSessionOpener>();
         services.AddScoped<IUserSessionRefresher, UserSessionRefresher>();
+
+        services.AddScoped<IUserNotificationScopeService, UserNotificationScopeService>();
+        services.AddScoped<IUserPresenceReader, UserPresenceReader>();
+        services.AddSingleton<IOnlineUserStore, OnlineUserStore>();
+        
         // Auto Mapper 
         services.AddAutoMapper(typeof(MappingProfile));
     }

@@ -34,7 +34,8 @@ public enum PrivacyTargetArea
 {
     CanSend = 0,
     CanSeeTimeWas = 1,
-    CanSeeImage = 2
+    CanSeeImage = 2,
+    CanSendImage = 3,
 }
 
 public enum PrivacyRuleType
