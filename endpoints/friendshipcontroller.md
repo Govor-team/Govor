@@ -1,7 +1,7 @@
 ---
 description: >-
-  Description: Controller for managing friendship-related operations, including
-  searching for users and retrieving the list of friends for the current user.
+  Controller for managing friendship-related operations, including searching for
+  users and retrieving the list of friends for the current user.
 ---
 
 # FriendshipController

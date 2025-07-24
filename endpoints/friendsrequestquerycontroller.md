@@ -1,7 +1,7 @@
 ---
 description: >-
-  Description: Controller for querying friend request-related data, including
-  incoming friend requests and responses to sent friend requests.
+  Controller for querying friend request-related data, including incoming friend
+  requests and responses to sent friend requests.
 ---
 
 # FriendsRequestQueryController
