@@ -57,13 +57,13 @@ public class FriendsHub : Hub
         else if (exception != null)
         {
             _logger.LogWarning(exception,
-                "User disconnected with an exception and invalid UserID claim. ConnectionId: {ConnectionId}",
+                "User disconnected with an exception and invalid UserId claim. ConnectionId: {ConnectionId}",
                 Context.ConnectionId);
         }
         else
         {
             _logger.LogInformation(
-                "User disconnected with no exception and invalid UserID claim. ConnectionId: {ConnectionId}",
+                "User disconnected with no exception and invalid UserId claim. ConnectionId: {ConnectionId}",
                 Context.ConnectionId);
         }
 

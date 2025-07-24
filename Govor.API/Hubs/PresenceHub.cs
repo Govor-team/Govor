@@ -69,7 +69,7 @@ public class PresenceHub : Hub
         else
         {
             _logger.LogInformation(
-                "User disconnected with no exception and invalid UserID claim. ConnectionId: {ConnectionId}",
+                "User disconnected with no exception and invalid UserId claim. ConnectionId: {ConnectionId}",
                 Context.ConnectionId);
             return;
         }

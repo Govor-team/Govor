@@ -2,6 +2,7 @@ using AutoFixture;
 using Govor.API.Common.SignalR.Helpers;
 using Govor.API.Hubs;
 using Govor.Application.Interfaces.UserOnlineStatus;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Users;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -103,4 +104,86 @@ public class PresenceHubTests
         }
     }
     
+    [Test]
+    public async Task OnConnectedAsync_UserIdInvalidOrNotExists_AbortsConnection()
+    {
+        // Arrange
+        _mockHubUserAccessor.Setup(h => h.GetUserId(It.IsAny<HubCallerContext>(), false))
+            .Returns(Guid.Empty);
+
+        // Act
+        await _hub.OnConnectedAsync();
+
+        // Assert
+        _mockOnlineUserStore.Verify(store => store.SetOnlineUser(It.IsAny<Guid>()), Times.Never);
+        _mockContext.Verify(c => c.Abort(), Times.Once);
+    }
+    
+    [Test]
+    public async Task OnConnectedAsync_UserNotExists_AbortsConnection()
+    {
+        // Arrange
+        _mockUserRepository.Setup(f => f.ExistsByIdAsync(_userId))
+            .ReturnsAsync(false);
+        
+        // Act
+        await _hub.OnConnectedAsync();
+
+        // Assert
+        _mockOnlineUserStore.Verify(store => store.SetOnlineUser(It.IsAny<Guid>()), Times.Never);
+        _mockContext.Verify(c => c.Abort(), Times.Once);
+    }
+    
+    // Tests for OnDisconnectedAsync action
+    [Test]
+    public async Task OnDisconnectedAsync_SetsUserOffline_UpdatesWasOnline_NotifiesFriends()
+    {
+        // Arrange 
+        var user = new User { Id = _userId, WasOnline = DateTime.MinValue };
+
+        var friendsIds = _fixture.CreateMany<Guid>().ToList();
+        _mockUserRepository.Setup(r => r.FindByIdAsync(_userId))
+            .ReturnsAsync(user);
+
+        _mockUserNotification.Setup(n => n.GetNotifiedUsers(_userId))
+            .ReturnsAsync(friendsIds);
+        
+        // Act 
+        await _hub.OnDisconnectedAsync(null!);
+       
+        // Assert 
+        _mockOnlineUserStore.Verify(store => store.SetOfflineUser(_userId), Times.Once);
+        _mockUserRepository.Verify(r => r.UpdateAsync(It.Is<User>(u => u.Id == _userId && u.WasOnline > DateTime.MinValue)), Times.Once);
+        _clientsMock.Verify(c => c.Group(It.IsAny<string>()), Times.AtLeastOnce);
+        
+        foreach (var friendId in friendsIds)
+        {
+            _clientProxyMock.Verify(proxy =>
+                    proxy.SendCoreAsync("UserOffline",
+                        It.Is<object[]>(args => args.Length == 1 && (Guid)args[0] == _userId),
+                        It.IsAny<CancellationToken>()),
+                Times.Exactly(friendsIds.Count)); 
+        }
+    }
+    
+    [Test]
+    public async Task OnDisconnectedAsync_UserIdEmpty_LogsAndSkips()
+    {
+        // Arrange
+        _mockHubUserAccessor.Setup(h => h.GetUserId(It.IsAny<HubCallerContext>(), true))
+            .Returns(Guid.Empty);
+        
+        // Act
+        await _hub.OnDisconnectedAsync(null!);
+
+        // Assert
+        _mockOnlineUserStore.Verify(s => s.SetOfflineUser(It.IsAny<Guid>()), Times.Never);
+        _mockUserRepository.Verify(r => r.UpdateAsync(It.IsAny<User>()), Times.Never);
+        
+        _clientProxyMock.Verify(proxy =>
+                proxy.SendCoreAsync("UserOffline",
+                    It.Is<object[]>(args => args.Length == 1 && (Guid)args[0] == _userId),
+                    It.IsAny<CancellationToken>()),
+            Times.Never); 
+    }
 }
