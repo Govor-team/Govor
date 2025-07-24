@@ -1,5 +1,6 @@
 using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Interfaces.UserOnlineStatus;
+using Govor.Core.Repositories.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR;
@@ -11,18 +12,21 @@ namespace Govor.API.Hubs;
 public class PresenceHub : Hub 
 {
     private readonly ILogger<PresenceHub> _logger;
-    private readonly IUserNotificationScopeService _notificationScopeService;
+    private readonly IUserNotificationScopeService _scopeService;
     private readonly IOnlineUserStore _onlineUserStore;
     private readonly IHubUserAccessor _userAccessor;
-
+    private readonly IUsersRepository _users;
+    
     public PresenceHub(
         ILogger<PresenceHub> logger,
-        IUserNotificationScopeService notificationScopeService,
+        IUserNotificationScopeService scopeService,
         IOnlineUserStore onlineUserStore,
-        IHubUserAccessor userAccessor)
+        IHubUserAccessor userAccessor,
+        IUsersRepository users)
     {
         _logger = logger;
-        _notificationScopeService = notificationScopeService;
+        _users = users;
+        _scopeService = scopeService;
         _onlineUserStore = onlineUserStore;
         _userAccessor = userAccessor;
     }
@@ -30,9 +34,9 @@ public class PresenceHub : Hub
     public override async Task OnConnectedAsync()
     {
         var userId = _userAccessor.GetUserId(Context);
-        if (userId == Guid.Empty)
+        if (userId == Guid.Empty || await _users.ExistsByIdAsync(userId) == false)
         {
-            _logger.LogWarning("User connected with invalid UserID claim.");
+            _logger.LogWarning("User connected with invalid UserId claim.");
             Context.Abort();
             return;
         }
@@ -40,7 +44,7 @@ public class PresenceHub : Hub
         _onlineUserStore.SetOnlineUser(userId);
         await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
 
-        var friends = await _notificationScopeService.GetNotifiedUsers(userId);
+        var friends = await _scopeService.GetNotifiedUsers(userId);
 
         foreach (var recipient in friends)
         {
@@ -51,14 +55,33 @@ public class PresenceHub : Hub
         await base.OnConnectedAsync();
     }
 
-    public override async Task OnDisconnectedAsync(Exception? exception)
+    public override async Task OnDisconnectedAsync(Exception exception)
     {
         var userId = _userAccessor.GetUserId(Context, true);
-        if (userId == Guid.Empty) return;
-
+        
+        if (userId != Guid.Empty)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, userId.ToString());
+            _logger.LogInformation(
+                "User {UserId} disconnected with ConnectionId {ConnectionId} and removed from their group", userId,
+                Context.ConnectionId);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "User disconnected with no exception and invalid UserID claim. ConnectionId: {ConnectionId}",
+                Context.ConnectionId);
+            return;
+        }
+        
         _onlineUserStore.SetOfflineUser(userId);
-
-        var friends = await _notificationScopeService.GetNotifiedUsers(userId);
+        
+        // Updating was online 
+        var user = await  _users.FindByIdAsync(userId);
+        user.WasOnline = DateTime.UtcNow;
+        await _users.UpdateAsync(user);
+        
+        var friends = await _scopeService.GetNotifiedUsers(userId);
 
         foreach (var recipient in friends)
         {

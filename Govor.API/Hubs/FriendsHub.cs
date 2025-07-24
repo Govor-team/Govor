@@ -49,7 +49,6 @@ public class FriendsHub : Hub
         var userId = _userAccessor.GetUserId(Context, true);
         if (userId != Guid.Empty)
         {
-            // Remove user from their own group
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, userId.ToString());
             _logger.LogInformation(
                 "User {UserId} disconnected with ConnectionId {ConnectionId} and removed from their group", userId,
