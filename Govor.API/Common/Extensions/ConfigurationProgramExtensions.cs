@@ -89,6 +89,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IHubUserAccessor, HubUserAccessor>();
 
         services.AddScoped<IUserSessionReader, UserSessionReader>();
+        services.AddScoped<IUserSessionRevoker, UserSessionRevoker>();
     }
 
     public static void AddRepositories(this IServiceCollection services)

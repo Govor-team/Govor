@@ -23,11 +23,12 @@ public class UserSessionReader : IUserSessionReader
         {
             _logger.LogInformation($"Getting all sessions for user {userId}");
             var sessions = await _repository.GetByUserIdAsync(userId);
-            return sessions;
+            
+            return sessions.Where(f => !f.IsRevoked).ToList() ?? [];
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            _logger.LogWarning("The user has no active sessions.");
+            _logger.LogWarning("The user has no sessions.");
             return [];
         }
     }
