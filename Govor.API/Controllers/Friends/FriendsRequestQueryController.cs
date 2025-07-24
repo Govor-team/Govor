@@ -36,13 +36,18 @@ public class FriendsRequestQueryController : Controller
         {
             var result = await _friendsService.GetIncomingAsync(_currentUserService.GetCurrentUserId());
             var response = _mapper.Map<List<FriendshipDto>>(result);
-            
+
             return Ok(response);
         }
         catch (InvalidOperationException ex)
         {
             _logger.LogWarning(ex, ex.Message);
             return Ok(new List<FriendshipDto>());
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {
@@ -69,6 +74,11 @@ public class FriendsRequestQueryController : Controller
         {
             _logger.LogWarning(ex, ex.Message);
             return Ok(new List<FriendshipDto>());
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {

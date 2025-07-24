@@ -41,10 +41,10 @@ public class FriendshipController : Controller
             
             return Ok(response);
         }
-        catch (SearchUsersException ex)
+        catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return NotFound(new { error = ex.Message });
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {
@@ -68,6 +68,11 @@ public class FriendshipController : Controller
         {
             _logger.LogError(ex, ex.Message);
             return Ok(Array.Empty<UserDto>());
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {

@@ -82,21 +82,7 @@ public class FriendshipControllerTests
         var badRequestResult = result as BadRequestObjectResult;
         Assert.That(badRequestResult.Value, Is.EqualTo("Query cannot be empty"));
     }
-
-
-    [Test]
-    public async Task Search_NotFound_IfThrowsSearchUsersException()
-    {
-        // Arrange
-        _friendsServiceMock.Setup(f => f.SearchUsersAsync(It.IsAny<string>(), It.IsAny<Guid>()))
-            .ThrowsAsync(new SearchUsersException(_fixture.Create<string>()));
-
-        // Act
-        var result = await _controller.Search(_fixture.Create<string>());
-        // Assert
-        Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
-    }
-
+    
     [Test]
     public async Task Search_StatusCode500_IfThrowsSomeException()
     {

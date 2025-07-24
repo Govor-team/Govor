@@ -33,8 +33,7 @@ public class FriendshipService : IFriendshipService
         }
         catch (NotFoundByKeyException<(string, Guid)> ex)
         {
-            throw new SearchUsersException(
-                $"Users with given query: \"{query}\" for user with id {currentId} was not found", ex);
+            return [];
         }
         catch (NotFoundByKeyException<Guid> ex)
         {

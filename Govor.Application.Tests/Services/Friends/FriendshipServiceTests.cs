@@ -61,15 +61,18 @@ public class FriendshipServiceTests
     }
     
     [Test]
-    public void SearchUsersAsync_Throws_SearchUsersException_IfThrowsNotFoundByKeyException_String_Guid()
+    public async Task SearchUsersAsync_Returns_EmptyList_IfThrowsNotFoundByKeyException_String_Guid()
     {
         // Arrange 
         _usersRepositoryMock
             .Setup(u => u.SearchPotentialFriendsAsync(It.IsAny<Guid>(), It.IsAny<string>()))
             .ThrowsAsync(new NotFoundByKeyException<(string,Guid)>(("test",Guid.NewGuid()),"test"));
         
-        // Axt & Assert 
-        Assert.ThrowsAsync<SearchUsersException>(async () => await _service.SearchUsersAsync("test", Guid.NewGuid()));
+        // Act
+        var users = await _service.SearchUsersAsync("test", Guid.NewGuid());
+        
+        // & Assert 
+        Assert.That(users, Is.Empty);
     }
     
     [Test]
