@@ -21,5 +21,7 @@ public class MappingProfile : Profile
             .AfterMap<UserToUserDtoMappingAction>();
         
         CreateMap<Friendship, FriendshipDto>();
+
+        CreateMap<UserSession, SessionDto>();
     }
 }

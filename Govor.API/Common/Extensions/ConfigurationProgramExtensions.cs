@@ -87,6 +87,8 @@ public static class ConfigurationProgramExtensions
         services.AddAutoMapper(typeof(MappingProfile));
 
         services.AddScoped<IHubUserAccessor, HubUserAccessor>();
+
+        services.AddScoped<IUserSessionReader, UserSessionReader>();
     }
 
     public static void AddRepositories(this IServiceCollection services)
