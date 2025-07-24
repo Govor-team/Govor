@@ -7,4 +7,5 @@ public class GroupMembership
     public Guid UserId { get; set; }
     public Guid? InvitationId { get; set; }
     public bool IsBanned { get; set; }
+    public DateTime MemberSince { get; set; }
 }

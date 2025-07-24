@@ -34,7 +34,10 @@ public class UserSessionReaderTests
     public async Task GetAllUserSessionsAsync_ShouldReturnAllUserSessions()
     {
         // Arrange 
-        var sessios = _fixture.CreateMany<UserSession>().ToList();
+        var sessios = _fixture.Build<UserSession>()
+            .With(f => f.IsRevoked, false)
+            .CreateMany().ToList();
+        
         var userId = Guid.NewGuid();
         
         _mockUserSessionsRepository.Setup(f => f.GetByUserIdAsync(userId))
