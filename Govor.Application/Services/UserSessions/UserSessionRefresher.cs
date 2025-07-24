@@ -1,7 +1,7 @@
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Interfaces.UserSession;
 using Govor.Application.Services.Authentication;
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Users;
 using Govor.Core.Repositories.UserSessionsRepository;
 using Govor.Data.Repositories.Exceptions;

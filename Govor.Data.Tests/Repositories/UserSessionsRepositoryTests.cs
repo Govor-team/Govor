@@ -1,5 +1,6 @@
 using AutoFixture;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Data.Repositories;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;

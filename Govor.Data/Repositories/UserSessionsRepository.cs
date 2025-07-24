@@ -1,5 +1,5 @@
 using Govor.Core.Infrastructure.Extensions;
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.UserSessionsRepository;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;

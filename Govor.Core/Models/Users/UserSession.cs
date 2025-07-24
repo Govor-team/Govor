@@ -1,4 +1,4 @@
-namespace Govor.Core.Models;
+namespace Govor.Core.Models.Users;
 
 public class UserSession
 {

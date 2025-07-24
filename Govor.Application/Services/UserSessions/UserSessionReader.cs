@@ -1,5 +1,4 @@
 using Govor.Application.Interfaces.UserSession;
-using Govor.Core.Models;
 using Govor.Core.Repositories.UserSessionsRepository;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,7 @@ public class UserSessionReader : IUserSessionReader
         _logger = logger;
     }
     
-    public async Task<List<UserSession>> GetAllSessionsAsync(Guid userId)
+    public async Task<List<Govor.Core.Models.Users.UserSession>> GetAllSessionsAsync(Guid userId)
     {
         try
         {

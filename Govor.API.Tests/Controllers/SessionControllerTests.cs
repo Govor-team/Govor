@@ -4,6 +4,7 @@ using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.UserSession;
 using Govor.Contracts.DTOs;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
