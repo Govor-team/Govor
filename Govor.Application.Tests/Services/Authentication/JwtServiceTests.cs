@@ -56,22 +56,51 @@ public class JwtServiceTests
     }
 
     [Test]
-    public async Task GenerateJwtToken_ShouldReturnValidJwtString()
+    public async Task GenerateJwtToken_ShouldReturnValidJwtString_WithCorrectClaims()
     {
         // Arrange
         var user = _fixture.Create<User>();
+        var sessionId = Guid.NewGuid();
         var expectedRole = "User";
-        _invitesServiceMock.Setup(s => s.GetRoleAsync(user)).Returns(Task.FromResult(expectedRole));
-        // Act 
-        var tokenString = await _jwtService.GenerateAccessTokenAsync(user);
+        _invitesServiceMock.Setup(s => s.GetRoleAsync(user)).ReturnsAsync(expectedRole);
+    
+        // Act
+        var tokenString = await _jwtService.GenerateAccessTokenAsync(user, sessionId);
+    
+        // Assert
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(tokenString);
+
+        var claims = jwt.Claims.ToDictionary(c => c.Type, c => c.Value);
+
+        Assert.That(claims["userId"], Is.EqualTo(user.Id.ToString()));
+        Assert.That(claims["sid"], Is.EqualTo(sessionId.ToString()));
+        Assert.That(claims[ClaimTypes.Role], Is.EqualTo(expectedRole));
+        Assert.That(jwt.ValidTo, Is.GreaterThan(DateTime.UtcNow));
+    }
+    
+    [Test]
+    public async Task GenerateAccessTokenAsync_ShouldIncludeSessionIdAndRole()
+    {
+        // Arrange
+        var user = new User { Id = Guid.NewGuid(), Username = "TestUser" };
+        var sessionId = Guid.NewGuid();
+        var role = "Admin";
+        _invitesServiceMock.Setup(s => s.GetRoleAsync(user)).ReturnsAsync(role);
+
+        // Act
+        var token = await _jwtService.GenerateAccessTokenAsync(user, sessionId);
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
 
         // Assert
-        Assert.That(tokenString, Is.Not.Null.And.Not.Empty);
-        
-        // Attempt to parse the token to ensure it's a JWT
-        var handler = new JwtSecurityTokenHandler();
-        Assert.DoesNotThrow(() => handler.ReadJwtToken(tokenString));
+        var sidClaim = jwt.Claims.FirstOrDefault(c => c.Type == "sid");
+        var roleClaim = jwt.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+
+        Assert.That(sidClaim?.Value, Is.EqualTo(sessionId.ToString()));
+        Assert.That(roleClaim?.Value, Is.EqualTo(role));
     }
+
     
     [Test]
     public async Task GenerateRefreshTokenAsync_ReturnsValidRefreshToken()

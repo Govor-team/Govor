@@ -73,7 +73,7 @@ public class UserSessionRefresherTests
         // Arrange
         _sessionsRepoMock.Setup(r => r.GetByRefreshTokenAsync(OldRefreshToken)).ReturnsAsync(_session);
         _usersRepoMock.Setup(r => r.FindByIdAsync(_user.Id)).ReturnsAsync(_user);
-        _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user)).ReturnsAsync(NewAccessToken);
+        _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user, _session.Id)).ReturnsAsync(NewAccessToken);
         _jwtServiceMock.Setup(j => j.GenerateRefreshTokenAsync(_user)).ReturnsAsync(NewRefreshToken);
 
         // Act

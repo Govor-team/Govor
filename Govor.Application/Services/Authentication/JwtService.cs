@@ -21,11 +21,12 @@ public class JwtService : IJwtService
         _invitesService = invitesService;
     }
     
-    public async Task<string> GenerateAccessTokenAsync(User user)
+    public async Task<string> GenerateAccessTokenAsync(User user, Guid sessionId)
     {
         var claims = new[]
         {
             new Claim("userId", user.Id.ToString()),
+            new Claim("sid", sessionId.ToString()),
             new Claim(ClaimTypes.Role, await _invitesService.GetRoleAsync(user), ClaimValueTypes.String)
         };
         

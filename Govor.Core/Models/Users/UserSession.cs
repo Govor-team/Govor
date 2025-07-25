@@ -6,6 +6,8 @@ public class UserSession
     public Guid UserId { get; set; }
     public string RefreshToken { get; set; } = string.Empty;
     public string DeviceInfo { get; set; } = string.Empty; // "Chrome on Windows" 
+    public string PublicEncryptionKey { get; set; }
+    public string PublicSigningKey { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime ExpiresAt { get; set; }
     public bool IsRevoked { get; set; } = false;

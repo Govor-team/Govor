@@ -36,15 +36,13 @@ namespace Govor.Application.Services.UserSessions
             {
                 var sessions = await _repository.GetByUserIdAsync(user.Id);
                 var session = sessions.FirstOrDefault(s => s.DeviceInfo == deviceInfo);
-
-                var newRefreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
-                var accessToken = await _jwtService.GenerateAccessTokenAsync(user);
-            
-                var newExpiresAt = DateTime.UtcNow.AddDays(_options.RefreshTokenLifetimeDays);
-
+                
                 if (session is not null)
                 {
-                    // Всегда обновляем токен и дату
+                    var newExpiresAt = DateTime.UtcNow.AddDays(_options.RefreshTokenLifetimeDays);
+                    var accessToken = await _jwtService.GenerateAccessTokenAsync(user, session.Id);
+                    var newRefreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
+                    
                     session.RefreshToken = newRefreshToken;
                     session.ExpiresAt = newExpiresAt;
                     session.CreatedAt = DateTime.UtcNow;
@@ -52,7 +50,7 @@ namespace Govor.Application.Services.UserSessions
 
                     await _repository.UpdateAsync(session);
                     _logger.LogInformation($"Updated session for user {user.Id} on device '{deviceInfo}'");
-
+                    
                     return new RefreshResult(session.RefreshToken, accessToken);
                 }
             
@@ -65,25 +63,29 @@ namespace Govor.Application.Services.UserSessions
         
             async Task<RefreshResult> OpenNewSession()
             {
-                var newRefreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
-                var accessToken = await _jwtService.GenerateAccessTokenAsync(user);
-            
+                var sessionId = Guid.NewGuid(); 
+
+                var accessToken = await _jwtService.GenerateAccessTokenAsync(user, sessionId);
+                var refreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
+
                 var newSession = new UserSession
                 {
+                    Id = sessionId,
                     UserId = user.Id,
                     DeviceInfo = deviceInfo,
-                    RefreshToken = newRefreshToken,
+                    RefreshToken = refreshToken,
                     CreatedAt = DateTime.UtcNow,
                     ExpiresAt = DateTime.UtcNow.AddDays(_options.RefreshTokenLifetimeDays),
                     IsRevoked = false
                 };
 
                 await _repository.AddAsync(newSession);
-            
-                _logger.LogInformation($"Created new session for user {user.Id} on device '{deviceInfo}'");
 
-                return new RefreshResult(newRefreshToken, accessToken);
+                _logger.LogInformation($"Created new session {sessionId} for user {user.Id} on device '{deviceInfo}'");
+
+                return new RefreshResult(refreshToken, accessToken);
             }
+
         }
     }
 }

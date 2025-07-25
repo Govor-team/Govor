@@ -1,5 +1,4 @@
 using Govor.Application.Services.UserSessions;
-using Govor.Core.Models;
 using Govor.Core.Models.Users;
 using Govor.Core.Repositories.UserSessionsRepository;
 using Microsoft.Extensions.Logging;
@@ -19,6 +18,7 @@ public class UserSessionOpenerTests
     private IOptions<JwtRefreshOption> _options;
     private UserSessionOpener _service;
     private User _user;
+    private Guid _sessionId;
     private const string DeviceInfo = "Chrome on Windows";
     private const string GeneratedToken = "new-refresh-token";
     private const string NewAccessToken = "new-access-token";
@@ -30,8 +30,9 @@ public class UserSessionOpenerTests
         _jwtServiceMock = new Mock<IJwtService>();
         _loggerMock = new Mock<ILogger<UserSessionOpener>>();
         _options = Options.Create(new JwtRefreshOption { RefreshTokenLifetimeDays = 30 });
-
-        // Инициализируем пользователя ДО моков, чтобы не было null в Setup
+        
+        _sessionId = Guid.NewGuid();
+        
         _user = new User
         {
             Id = Guid.NewGuid(),
@@ -44,7 +45,7 @@ public class UserSessionOpenerTests
         };
 
         _jwtServiceMock.Setup(j => j.GenerateRefreshTokenAsync(_user)).ReturnsAsync(GeneratedToken);
-        _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user)).ReturnsAsync(NewAccessToken);
+        _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user, _sessionId)).ReturnsAsync(NewAccessToken);
 
         _service = new UserSessionOpener(
             _repositoryMock.Object,
@@ -60,6 +61,7 @@ public class UserSessionOpenerTests
         // Arrange 
         var session = new UserSession
         {
+            Id = _sessionId,
             UserId = _user.Id,
             DeviceInfo = DeviceInfo,
             RefreshToken = "valid-token",
@@ -87,6 +89,7 @@ public class UserSessionOpenerTests
         // Arrange 
         var session = new UserSession
         {
+            Id = _sessionId,
             UserId = _user.Id,
             DeviceInfo = DeviceInfo,
             RefreshToken = "old-token",
@@ -113,7 +116,8 @@ public class UserSessionOpenerTests
     {
         // Arrange 
         _repositoryMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync(new List<UserSession>());
-
+        _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user, It.IsAny<Guid>())).ReturnsAsync(NewAccessToken);
+        
         // Act 
         var result = await _service.OpenSessionAsync(_user, DeviceInfo);
 
@@ -134,7 +138,8 @@ public class UserSessionOpenerTests
         _repositoryMock
             .Setup(r => r.GetByUserIdAsync(_user.Id))
             .ThrowsAsync(new Govor.Data.Repositories.Exceptions.NotFoundByKeyException<Guid>(_user.Id, "userId"));
-
+        _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user, It.IsAny<Guid>())).ReturnsAsync(NewAccessToken);
+        
         // Act
         var result = await _service.OpenSessionAsync(_user, DeviceInfo);
 

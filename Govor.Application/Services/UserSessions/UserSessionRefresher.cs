@@ -48,7 +48,7 @@ public class UserSessionRefresher : IUserSessionRefresher
             var user = await _usersRepository.FindByIdAsync(session.UserId);
 
             // New tokens 
-            var newAccessToken = await _jwtService.GenerateAccessTokenAsync(user);
+            var newAccessToken = await _jwtService.GenerateAccessTokenAsync(user, session.Id);
             var newRefreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
 
             // Opening new session 
