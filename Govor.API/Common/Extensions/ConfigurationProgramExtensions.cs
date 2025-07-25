@@ -64,6 +64,7 @@ public static class ConfigurationProgramExtensions
         
         services.AddHttpContextAccessor(); // it's very important for CurrentUserService
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ICurrentUserSessionService, CurrentUserSessionService>();
         
         services.AddMemoryCache();
         services.AddScoped<IPingHandlerService, PingHandlerService>();

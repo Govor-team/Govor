@@ -7,24 +7,25 @@ using Moq;
 namespace Govor.Application.Tests.Infrastructure.Extensions;
 
 [TestFixture]
-public class CurrentUserServiceTests
+[TestOf(typeof(CurrentUserSessionService))]
+public class CurrentUserSessionServiceTests
 {
     private Mock<IHttpContextAccessor> _httpContextAccessorMock;
-    private ICurrentUserService _currentUserService;
-
+    private ICurrentUserSessionService _sessionService;
+    
     [SetUp]
     public void SetUp()
     {
         _httpContextAccessorMock = new Mock<IHttpContextAccessor>();
-        _currentUserService = new CurrentUserService(_httpContextAccessorMock.Object);
+        _sessionService = new CurrentUserSessionService(_httpContextAccessorMock.Object);
     }
 
     [Test]
-    public void GetCurrentUserId_ValidUserIdClaim_ReturnsGuid()
+    public void GetCurrentSessionId_ValidSidClaim_ReturnsGuid()
     {
         // Arrange
-        var userId = Guid.NewGuid();
-        var claims = new[] { new Claim("userId", userId.ToString()) };
+        var sid = Guid.NewGuid();
+        var claims = new[] { new Claim("sid", sid.ToString()) };
         var identity = new ClaimsIdentity(claims);
         var principal = new ClaimsPrincipal(identity);
 
@@ -34,25 +35,26 @@ public class CurrentUserServiceTests
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContextMock.Object);
 
         // Act
-        var result = _currentUserService.GetCurrentUserId();
+        var result = _sessionService.GetUserSessionId();
 
         // Assert
-        Assert.That(result, Is.EqualTo(userId));
+        Assert.That(result, Is.EqualTo(sid));
     }
-
+    
     [Test]
-    public void GetCurrentUserId_NoHttpContext_ThrowsUnauthorizedAccessException()
+    public void GetCurrentSessionId_NoHttpContext_ThrowsUnauthorizedAccessException()
     {
         // Arrange
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns((HttpContext)null);
 
         // Act & Assert
-        var ex = Assert.Throws<UnauthorizedAccessException>(() => _currentUserService.GetCurrentUserId());
-        Assert.That(ex.Message, Is.EqualTo("userID claim is missing or invalid"));
+        var ex = Assert.Throws<UnauthorizedAccessException>(() => _sessionService.GetUserSessionId());
+        Assert.That(ex.Message, Is.EqualTo("Session id (sid) claim is missing or invalid"));
     }
-
+    
+    
     [Test]
-    public void GetCurrentUserId_NoUserIdClaim_ThrowsUnauthorizedAccessException()
+    public void GetCurrentSessionId_NoSidlaim_ThrowsUnauthorizedAccessException()
     {
         // Arrange
         var claims = new[] { new Claim("otherClaim", "value") };
@@ -65,15 +67,15 @@ public class CurrentUserServiceTests
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContextMock.Object);
 
         // Act & Assert
-        var ex = Assert.Throws<UnauthorizedAccessException>(() => _currentUserService.GetCurrentUserId());
-        Assert.That(ex.Message, Is.EqualTo("userID claim is missing or invalid"));
+        var ex = Assert.Throws<UnauthorizedAccessException>(() => _sessionService.GetUserSessionId());
+        Assert.That(ex.Message, Is.EqualTo("Session id (sid) claim is missing or invalid"));
     }
-
+    
     [Test]
-    public void GetCurrentUserId_InvalidUserIdClaim_ThrowsUnauthorizedAccessException()
+    public void GetUserSessionId_InvalidSidValueClaim_ThrowsUnauthorizedAccessException()
     {
         // Arrange
-        var claims = new[] { new Claim("userId", "invalid-guid") };
+        var claims = new[] { new Claim("sid", "invalid-guid") };
         var identity = new ClaimsIdentity(claims);
         var principal = new ClaimsPrincipal(identity);
 
@@ -83,15 +85,15 @@ public class CurrentUserServiceTests
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContextMock.Object);
 
         // Act & Assert
-        var ex = Assert.Throws<UnauthorizedAccessException>(() => _currentUserService.GetCurrentUserId());
-        Assert.That(ex.Message, Is.EqualTo("userID claim is missing or invalid"));
+        var ex = Assert.Throws<UnauthorizedAccessException>(() => _sessionService.GetUserSessionId());
+        Assert.That(ex.Message, Is.EqualTo("Session id (sid) claim is missing or invalid"));
     }
 
     [Test]
-    public void GetCurrentUserId_EmptyUserIdClaim_ThrowsUnauthorizedAccessException()
+    public void GetUserSessionId_EmptySidValueClaim_ThrowsUnauthorizedAccessException()
     {
         // Arrange
-        var claims = new[] { new Claim("userId", "") };
+        var claims = new[] { new Claim("sid", "") };
         var identity = new ClaimsIdentity(claims);
         var principal = new ClaimsPrincipal(identity);
 
@@ -101,7 +103,7 @@ public class CurrentUserServiceTests
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContextMock.Object);
 
         // Act & Assert
-        var ex = Assert.Throws<UnauthorizedAccessException>(() => _currentUserService.GetCurrentUserId());
-        Assert.That(ex.Message, Is.EqualTo("userID claim is missing or invalid"));
+        var ex = Assert.Throws<UnauthorizedAccessException>(() => _sessionService.GetUserSessionId());
+        Assert.That(ex.Message, Is.EqualTo("Session id (sid) claim is missing or invalid"));
     }
 }
