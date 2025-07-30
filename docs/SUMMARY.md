@@ -4,26 +4,26 @@
 
 ## Endpoints
 
-* [Authentication](../endpoints/authentication/README.md)
-  * [AuthController](../endpoints/authentication/authcontroller.md)
-  * [RefreshController](../endpoints/authentication/refreshcontroller.md)
-* [SessionController](endpoints/sessioncontroller.md)
-* [FriendshipController](../endpoints/friendshipcontroller.md)
-* [FriendsRequestQueryController](../endpoints/friendsrequestquerycontroller.md)
-* [MediaController](../endpoints/mediacontroller.md)
-* [ChatLoadController](../endpoints/chatloadcontroller.md)
-* [OnlinePingingController(не работает)](../endpoints/onlinepingingcontroller-ne-rabotaet.md)
+* [Authentication](../docs/endpoints/authentication/README.md)
+  * [AuthController](../docs/endpoints/authentication/authcontroller.md)
+  * [RefreshController](../docs/endpoints/authentication/refreshcontroller.md)
+* [SessionController](../docs/endpoints/sessioncontroller.md)
+* [FriendshipController](../docs/endpoints/friendshipcontroller.md)
+* [FriendsRequestQueryController](../docs/endpoints/friendsrequestquerycontroller.md)
+* [MediaController](../docs/endpoints/mediacontroller.md)
+* [ChatLoadController](../docs/endpoints/chatloadcontroller.md)
+* [OnlinePingingController(не работает)](../docs/endpoints/onlinepingingcontroller-ne-rabotaet.md)
 
 ## SignalR
 
-* [PresenceHub](../signalr/presencehub.md)
-* [ChatHub](../signalr/chathub.md)
+* [PresenceHub](../docs/signalr/presencehub.md)
+* [ChatHub](../docs/signalr/chathub.md)
 
 ***
 
-* [FriendsHub](../friendshub/README.md)
-  * [FriendsHub Client (Java)](../friendshub/friendshub-client-java.md)
+* [FriendsHub](../docs/friendshub/README.md)
+  * [FriendsHub Client (Java)](../docs/friendshub/friendshub-client-java.md)
 
 ## Code Docs&#x20;
 
-* [HubResult\<T>](../code-docs/hubresult-less-than-t-greater-than.md)
+* [HubResult\<T>](../docs/code-docs/hubresult-less-than-t-greater-than.md)
