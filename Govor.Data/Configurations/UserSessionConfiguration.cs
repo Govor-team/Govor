@@ -1,5 +1,6 @@
 using Govor.Core.Models;
 using Govor.Core.Models.Users;
+using Govor.Core.Models.Users.Crypto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,11 +16,16 @@ public class UserSessionConfiguration : IEntityTypeConfiguration<UserSession>
             .IsRequired();
 
         builder.Property(us => us.DeviceInfo)
-            .HasMaxLength(200);
+            .HasMaxLength(256);
 
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(us => us.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(e => e.CryptoSession)
+            .WithOne(e => e.UserSession)
+            .HasForeignKey<UserCryptoSession>(e => e.UserSessionId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

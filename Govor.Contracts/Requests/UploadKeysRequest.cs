@@ -2,6 +2,8 @@ namespace Govor.Contracts.Requests;
 
 public class UploadKeysRequest
 {
-    public string PublicEncryptionKey { get; set; }
-    public string PublicSigningKey { get; set; }
+    public byte[] IdentityKey { get; set; }
+    public byte[] SignedPreKey { get; set; }
+    public byte[] SignedPreKeySignature { get; set; }
+    public List<byte[]> OneTimePreKeys { get; set; } = new();
 }

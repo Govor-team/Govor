@@ -1,6 +1,7 @@
 using Govor.Core.Models;
 using Govor.Core.Models.Messages;
 using Govor.Core.Models.Users;
+using Govor.Core.Models.Users.Crypto;
 using Govor.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,9 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
 {
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<UserSession> UserSessions { get; set; }
+    public virtual DbSet<UserCryptoSession> UserCryptoSessions { get; set; }
+    public virtual DbSet<SignedPreKey> SignedPreKeys { get; set; }
+    public virtual DbSet<OneTimePreKey> OneTimePreKeys { get; set; }
     public virtual DbSet<Friendship> Friendships { get; set; }
     public virtual DbSet<PrivateChat> PrivateChats { get; set; }
     public virtual DbSet<Admin> Admins { get; set; }
@@ -43,7 +47,10 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new GroupInvitationConfiguration());
         modelBuilder.ApplyConfiguration(new GroupMembershipConfiguration());
         modelBuilder.ApplyConfiguration(new GroupAdminsConfiguration());
-        
+
+        modelBuilder.ApplyConfiguration(new OneTimePreKeyConfiguration());
+        modelBuilder.ApplyConfiguration(new UserCryptoSessionConfiguration());
+        modelBuilder.ApplyConfiguration(new SignedPreKeyConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

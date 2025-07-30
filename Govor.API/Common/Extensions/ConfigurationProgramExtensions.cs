@@ -11,6 +11,7 @@ using Govor.Application.Interfaces.Medias;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Interfaces.UserOnlineStatus;
 using Govor.Application.Interfaces.UserSession;
+using Govor.Application.Interfaces.UserSession.Crypto;
 using Govor.Application.Services;
 using Govor.Application.Services.Authentication;
 using Govor.Application.Services.Friends;
@@ -18,6 +19,7 @@ using Govor.Application.Services.Medias;
 using Govor.Application.Services.Messages;
 using Govor.Application.Services.UserOnlineStatus;
 using Govor.Application.Services.UserSessions;
+using Govor.Application.Services.UserSessions.Crypto;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
@@ -91,6 +93,10 @@ public static class ConfigurationProgramExtensions
 
         services.AddScoped<IUserSessionReader, UserSessionReader>();
         services.AddScoped<IUserSessionRevoker, UserSessionRevoker>();
+
+        services.AddScoped<ISessionKeyAttacher, SessionKeyAttacher>();
+        services.AddScoped<ISessionKeysReader, SessionKeysReader>();
+        services.AddScoped<IOneTimePreKeysRotator, OneTimePreKeysRotator>();
     }
 
     public static void AddRepositories(this IServiceCollection services)
