@@ -46,7 +46,7 @@ public class AuthService : IAccountService
             PasswordHash = passwordHash,
             Description = string.Empty,
             CreatedOn = DateOnly.FromDateTime(DateTime.UtcNow),
-            IconId = Guid.NewGuid(),
+            IconId = Guid.Empty,
             WasOnline = DateTime.UtcNow,
             InviteId = invitation.Id
         };

@@ -1,5 +1,6 @@
 using AutoMapper;
 using Govor.API.Extensions.Mapping;
+using Govor.Application.Profiles;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses;
 using Govor.Core.Models;
@@ -23,5 +24,7 @@ public class MappingProfile : Profile
         CreateMap<Friendship, FriendshipDto>();
 
         CreateMap<UserSession, SessionDto>();
+
+        CreateMap<UserProfile, UserProfileDto>();
     }
 }

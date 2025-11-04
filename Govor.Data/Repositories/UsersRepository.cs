@@ -162,6 +162,8 @@ public class UsersRepository : IUsersRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found user by given id {user.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

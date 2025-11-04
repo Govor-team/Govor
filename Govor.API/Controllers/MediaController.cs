@@ -1,6 +1,7 @@
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Medias;
 using Govor.Contracts.Requests;
+using Govor.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -47,7 +48,7 @@ public class MediaController : Controller
         try
         {
             byte[] fileBytes = await ReadFileAsync(request.FromFile);
-
+           
             var media = new Media(
                 _currentUserService.GetCurrentUserId(),
                 DateTime.UtcNow,
@@ -55,8 +56,15 @@ public class MediaController : Controller
                 fileBytes,
                 request.Type,
                 request.MimeType,
-                request.EncryptedKey
-            );
+                request.EncryptedKey,
+                request.OwnerType,
+                null)
+            {
+                OwnerType = request.OwnerType,
+                OwnerId = request.OwnerType == MediaOwnerType.Avatar
+            ? _currentUserService.GetCurrentUserId()
+            : null,
+            };
 
             var result = await _mediaService.UploadMediaAsync(media);
 

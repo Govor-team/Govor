@@ -117,6 +117,8 @@ public class GroupRepository : IGroupsRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found group by given id {group.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

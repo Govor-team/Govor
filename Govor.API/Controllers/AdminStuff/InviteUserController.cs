@@ -9,7 +9,7 @@ namespace Govor.API.Controllers.AdminStuff;
 
 [Route("api/admin/[controller]")]
 [ApiController]
-[Authorize(Roles = "Admin")]
+//[Authorize(Roles = "Admin")]
 public class InviteUserController : Controller
 {
     private readonly IInvitesRepository _repository;

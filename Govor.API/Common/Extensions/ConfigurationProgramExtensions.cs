@@ -97,6 +97,8 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<ISessionKeyAttacher, SessionKeyAttacher>();
         services.AddScoped<ISessionKeysReader, SessionKeysReader>();
         services.AddScoped<IOneTimePreKeysRotator, OneTimePreKeysRotator>();
+        
+        services.AddScoped<IProfileService, ProfileService>();
     }
 
     public static void AddRepositories(this IServiceCollection services)

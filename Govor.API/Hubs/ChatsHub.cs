@@ -51,7 +51,7 @@ public class ChatsHub : Hub
         await base.OnConnectedAsync();
     }
 
-    public override async Task OnDisconnectedAsync(Exception? exception)
+    public override async Task OnDisconnectedAsync(Exception exception)
     {
         var userId = _userAccessor.GetUserId(Context, true);
         if (userId != Guid.Empty)
@@ -87,13 +87,19 @@ public class ChatsHub : Hub
 
     public async Task<HubResult<UserMessageResponse>> Send(MessageRequest request)
     {
-        var senderId= _userAccessor.GetUserId(Context);
+        var senderId = _userAccessor.GetUserId(Context);
 
         if (string.IsNullOrWhiteSpace(request.EncryptedContent) &&
             (request.MediaAttachments == null || !request.MediaAttachments.Any()))
         {
             _logger.LogWarning("Empty message received from user {UserId}", senderId);
             return HubResult<UserMessageResponse>.BadRequest("Message must contain content or media.");
+        }
+
+        if (request.EncryptedContent.Length > 50_000)
+        {
+            _logger.LogWarning("User {SenderId} tried to send a too long message (length: {Length})", senderId, request.EncryptedContent.Length);
+            return HubResult<UserMessageResponse>.BadRequest("Message cannot exceed 50,000 characters.");
         }
 
         _logger.LogInformation("Sending message from {SenderId} to {RecipientId} ({RecipientType})",
@@ -143,7 +149,6 @@ public class ChatsHub : Hub
         }
     }
 
-    
     public async Task<HubResult<MessageRemovedResponse>> Remove(RemoveMessageRequest request)
     {
         var removerId = _userAccessor.GetUserId(Context);
@@ -182,7 +187,6 @@ public class ChatsHub : Hub
             return LogAndError<MessageRemovedResponse>(removerId, request.MessageId, "Unhandled deletion error", ex);
         }
     }
-
 
     public async Task<HubResult<MessageEditResponse>> Edit(EditMessageRequest request)
     {
@@ -232,7 +236,7 @@ public class ChatsHub : Hub
         }
     }
 
-
+    #region common
     private UserMessageResponse BuildUserMessageResponse(Message message, Guid? replyToId)
     {
         return new UserMessageResponse
@@ -305,4 +309,5 @@ public class ChatsHub : Hub
         _logger.LogWarning(ex, "{Msg}: {UserId} -> {TargetId}", msg, userId, targetId);
         return HubResult<T>.NotFound("Message not found.");
     }
+    #endregion
 }

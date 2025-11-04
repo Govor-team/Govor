@@ -19,7 +19,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5000", "https://5.129.212.144:5000")
+        policy.WithOrigins("https://localhost:7155", "http://localhost:7155")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -126,6 +126,7 @@ app.MapControllers();
 
 app.MapHub<ChatsHub>("/hubs/chats"); 
 app.MapHub<FriendsHub>("/hubs/friends");
+app.MapHub<ProfileHub>("/hubs/profiles");
 
 app.MapSwagger().RequireAuthorization();
 

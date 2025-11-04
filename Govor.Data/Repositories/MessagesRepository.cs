@@ -128,6 +128,8 @@ public class MessagesRepository : IMessagesRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found message by given id {message.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

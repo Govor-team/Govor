@@ -23,7 +23,12 @@ public class UserSessionReaderTests
     public void SetUp()
     {
         _fixture = new Fixture();
-        
+        _fixture.Behaviors.OfType<ThrowingRecursionBehavior>()
+            .ToList()
+            .ForEach(b => _fixture.Behaviors.Remove(b));
+
+        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+
         _mockUserSessionsRepository = new Mock<IUserSessionsRepository>();
         _mockLogger = new Mock<ILogger<UserSessionReader>>();
         

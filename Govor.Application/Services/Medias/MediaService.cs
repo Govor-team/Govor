@@ -35,7 +35,9 @@ public class MediaService : IMediaService
                 DateCreated = file.UploadedOn,
                 MediaType = file.Type,
                 MineType = file.MimeType,
-                Url = url
+                Url = url,
+                OwnerType = file.OwnerType,
+                OwnerId = file.OwnerId,
             });
             
             await _dbContext.SaveChangesAsync();
@@ -87,7 +89,9 @@ public class MediaService : IMediaService
                 contentBytes,
                 mediaFile.MediaType,
                 mediaFile.MineType,
-                string.Empty
+                string.Empty,
+                mediaFile.OwnerType,
+                mediaFile.OwnerId
             );
         }
         catch (FileNotFoundException ex)
@@ -95,5 +99,25 @@ public class MediaService : IMediaService
             _logger.LogWarning(ex, "Media file not found on storage.");
             throw;
         }
+    }
+    public async Task AttachToMessageAsync(Guid mediaId, Guid messageId)
+    {
+        var mediaFile = await _dbContext.MediaFiles
+            .FirstOrDefaultAsync(x => x.Id == mediaId)
+            ?? throw new KeyNotFoundException($"No media found by given id {mediaId}");
+
+        if (mediaFile.OwnerType != MediaOwnerType.Message)
+        {
+            _logger.LogWarning("Attempt to attach already owned media {MediaId}", mediaId);
+            throw new InvalidOperationException($"Media {mediaId} is already attached to {mediaFile.OwnerType}");
+        }
+
+        mediaFile.OwnerType = MediaOwnerType.Message;
+        mediaFile.OwnerId = messageId;
+
+        _dbContext.MediaFiles.Update(mediaFile);
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("Media {MediaId} successfully attached to message {MessageId}", mediaId, messageId);
     }
 }

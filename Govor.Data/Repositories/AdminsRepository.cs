@@ -64,6 +64,8 @@ public class AdminsRepository(GovorDbContext context, IObjectValidator<Admin> va
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found admin by given id {admin.UserId}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

@@ -31,7 +31,7 @@ public class AccesserToDownloadMediaServiceTests
         _groupId = Guid.NewGuid();
         _mediaFileId = Guid.NewGuid();
 
-        // Seed message from user to other user
+        // Базовое сообщение и медиа
         var message = new Message
         {
             Id = Guid.NewGuid(),
@@ -40,7 +40,6 @@ public class AccesserToDownloadMediaServiceTests
             RecipientType = RecipientType.User
         };
 
-
         var media = new MediaFile
         {
             Id = _mediaFileId,
@@ -48,7 +47,9 @@ public class AccesserToDownloadMediaServiceTests
             MineType = "image/png",
             MediaType = MediaType.Image,
             UploaderId = _userId,
-            DateCreated = DateTime.UtcNow
+            DateCreated = DateTime.UtcNow,
+            OwnerType = MediaOwnerType.Message,
+            OwnerId = message.Id
         };
 
         var attachment = new MediaAttachments
@@ -108,7 +109,9 @@ public class AccesserToDownloadMediaServiceTests
             MineType = "image/png",
             MediaType = MediaType.Image,
             UploaderId = _userId,
-            DateCreated = DateTime.UtcNow
+            DateCreated = DateTime.UtcNow,
+            OwnerType = MediaOwnerType.Message,
+            OwnerId = groupMessage.Id
         };
 
         var attachment = new MediaAttachments
@@ -141,6 +144,145 @@ public class AccesserToDownloadMediaServiceTests
     public async Task HasAccessAsync_ReturnsFalse_IfMediaNotAttached()
     {
         var result = await _accesser.HasAccessAsync(Guid.NewGuid(), _userId);
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task HasAccessAsync_ReturnsTrue_ForUserAvatar()
+    {
+        var avatarMedia = new MediaFile
+        {
+            Id = Guid.NewGuid(),
+            Url = "/media/avatar.png",
+            MineType = "image/png",
+            MediaType = MediaType.Image,
+            UploaderId = _userId,
+            OwnerType = MediaOwnerType.Avatar,
+            OwnerId = _userId,
+            DateCreated = DateTime.UtcNow
+        };
+
+        await _dbContext.MediaFiles.AddAsync(avatarMedia);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accesser.HasAccessAsync(avatarMedia.Id, _userId);
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task HasAccessAsync_ReturnsFalse_ForOtherUserAvatar()
+    {
+        var avatarMedia = new MediaFile
+        {
+            Id = Guid.NewGuid(),
+            Url = "/media/avatar2.png",
+            MineType = "image/png",
+            MediaType = MediaType.Image,
+            UploaderId = _otherUserId,
+            OwnerType = MediaOwnerType.Avatar,
+            OwnerId = _otherUserId,
+            DateCreated = DateTime.UtcNow
+        };
+
+        await _dbContext.MediaFiles.AddAsync(avatarMedia);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accesser.HasAccessAsync(avatarMedia.Id, _userId);
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task HasAccessAsync_ReturnsTrue_ForGroupAvatarMember()
+    {
+        var groupAvatar = new MediaFile
+        {
+            Id = Guid.NewGuid(),
+            Url = "/media/group_avatar.png",
+            MineType = "image/png",
+            MediaType = MediaType.Image,
+            UploaderId = _userId,
+            OwnerType = MediaOwnerType.GroupAvatar,
+            OwnerId = _groupId,
+            DateCreated = DateTime.UtcNow
+        };
+
+        var membership = new GroupMembership
+        {
+            Id = Guid.NewGuid(),
+            GroupId = _groupId,
+            UserId = _otherUserId
+        };
+
+        await _dbContext.MediaFiles.AddAsync(groupAvatar);
+        await _dbContext.GroupMemberships.AddAsync(membership);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accesser.HasAccessAsync(groupAvatar.Id, _otherUserId);
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task HasAccessAsync_ReturnsFalse_ForGroupAvatarNonMember()
+    {
+        var groupAvatar = new MediaFile
+        {
+            Id = Guid.NewGuid(),
+            Url = "/media/group_avatar2.png",
+            MineType = "image/png",
+            MediaType = MediaType.Image,
+            UploaderId = _userId,
+            OwnerType = MediaOwnerType.GroupAvatar,
+            OwnerId = _groupId,
+            DateCreated = DateTime.UtcNow
+        };
+
+        await _dbContext.MediaFiles.AddAsync(groupAvatar);
+        await _dbContext.SaveChangesAsync();
+
+        var unrelatedUserId = Guid.NewGuid();
+        var result = await _accesser.HasAccessAsync(groupAvatar.Id, unrelatedUserId);
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task HasAccessAsync_ReturnsTrue_ForSystemMedia()
+    {
+        var systemMedia = new MediaFile
+        {
+            Id = Guid.NewGuid(),
+            Url = "/media/system.png",
+            MineType = "image/png",
+            MediaType = MediaType.Image,
+            UploaderId = _userId,
+            OwnerType = MediaOwnerType.System,
+            DateCreated = DateTime.UtcNow
+        };
+
+        await _dbContext.MediaFiles.AddAsync(systemMedia);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accesser.HasAccessAsync(systemMedia.Id, Guid.NewGuid());
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task HasAccessAsync_ReturnsFalse_ForUnknownOwnerType()
+    {
+        var unknownMedia = new MediaFile
+        {
+            Id = Guid.NewGuid(),
+            Url = "/media/unknown.png",
+            MineType = "image/png",
+            MediaType = MediaType.Image,
+            UploaderId = _userId,
+            OwnerType = (MediaOwnerType)999, // неизвестный тип
+            DateCreated = DateTime.UtcNow
+        };
+
+        await _dbContext.MediaFiles.AddAsync(unknownMedia);
+        await _dbContext.SaveChangesAsync();
+
+        var result = await _accesser.HasAccessAsync(unknownMedia.Id, _userId);
         Assert.That(result, Is.False);
     }
 

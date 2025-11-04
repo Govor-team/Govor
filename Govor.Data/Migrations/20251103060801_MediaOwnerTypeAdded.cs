@@ -6,25 +6,34 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Govor.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddUploaderIdToMediaFile : Migration
+    public partial class MediaOwnerTypeAdded : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<Guid>(
-                name: "UploaderId",
+                name: "OwnerId",
                 table: "MediaFiles",
-                type: "char(36)",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "OwnerType",
+                table: "MediaFiles",
+                type: "integer",
                 nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
-                collation: "ascii_general_ci");
+                defaultValue: 0);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "UploaderId",
+                name: "OwnerId",
+                table: "MediaFiles");
+
+            migrationBuilder.DropColumn(
+                name: "OwnerType",
                 table: "MediaFiles");
         }
     }

@@ -13,7 +13,7 @@ public class VerifyFriendship : IVerifyFriendship
     private readonly ILogger<VerifyFriendship> _logger;
     private const string FriendshipNotAcceptedError = "Friendship between user {0} and friend {1} does not exist or is not accepted.";
 
-    public VerifyFriendship(IFriendshipsRepository friendshipsRepository, ILogger<VerifyFriendship> logger = null)
+    public VerifyFriendship(IFriendshipsRepository friendshipsRepository, ILogger<VerifyFriendship> logger)
     {
         _friendshipsRepository = friendshipsRepository ?? throw new ArgumentNullException(nameof(friendshipsRepository));
         _logger = logger;
@@ -42,14 +42,16 @@ public class VerifyFriendship : IVerifyFriendship
                 throw new FriendshipException(errorMessage);
             }
 
-            _logger?.LogInformation(
+            _logger.LogInformation("hello");
+            
+            _logger.LogInformation(
                 "Friendship verified successfully for targetUserId={TargetUserId}, friendUserId={FriendUserId}",
                 targetUserId, friendUserId);
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
             var errorMessage = string.Format(FriendshipNotAcceptedError, targetUserId, friendUserId);
-            _logger?.LogError(errorMessage);
+            _logger.LogError(errorMessage);
             
             throw new FriendshipException(errorMessage);
         }

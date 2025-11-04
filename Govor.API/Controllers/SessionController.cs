@@ -15,6 +15,7 @@ public class SessionController : Controller
 {
     private readonly ILogger<SessionController> _logger;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ICurrentUserSessionService _currentUserSessionService;
     private readonly IUserSessionReader _userSessionReader;
     private readonly IUserSessionRevoker _userSessionRevoker;
     private readonly IMapper _mapper;
@@ -22,12 +23,14 @@ public class SessionController : Controller
     public SessionController(
         ILogger<SessionController> logger,
         ICurrentUserService currentUserService,
+        ICurrentUserSessionService currentUserSessionService,
         IUserSessionReader userSessionReader,
         IUserSessionRevoker userSessionRevoker,
         IMapper mapper)
     {
         _logger = logger;
         _currentUserService = currentUserService;
+        _currentUserSessionService = currentUserSessionService;
         _userSessionReader = userSessionReader;
         _userSessionRevoker = userSessionRevoker;
         _mapper = mapper;
@@ -86,7 +89,40 @@ public class SessionController : Controller
             return StatusCode(500, "Unexpected Error! Please try again later.");
         }
     }
-    
+
+    [HttpDelete("close")]
+    public async Task<IActionResult> CloseCurrent()
+    {
+        try
+        {
+            await _userSessionRevoker.CloseSessionByIdAsync(
+                _currentUserSessionService.GetUserSessionId(),
+                _currentUserService.GetCurrentUserId());
+
+            return Ok();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return Forbid(ex.Message);
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex) 
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, "Unexpected Error! Please try again later.");
+        }
+    }
+
     [HttpDelete("close/all")]
     public async Task<IActionResult> CloseAllSessions()
     {

@@ -1,5 +1,5 @@
 using Govor.Application.Interfaces.Medias;
-using Govor.Core.Models.Messages;
+using Govor.Core.Models;
 using Govor.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,20 +14,35 @@ public class AccesserToDownloadMediaService : IAccesserToDownloadMedia
         _dbContext = dbContext;
     }
 
-    public async Task<bool> HasAccessAsync(Guid mediaFileId, Guid userId)
+    public async Task<bool> HasAccessAsync(Guid mediaId, Guid userId)
     {
-        return await _dbContext.MediaAttachments
-            .Include(ma => ma.Message)
-            .AnyAsync(ma =>
-                ma.MediaFileId == mediaFileId &&
-                (
-                    (ma.Message.RecipientType == RecipientType.User &&
-                     (ma.Message.SenderId == userId || ma.Message.RecipientId == userId))
-                    ||
-                    (ma.Message.RecipientType == RecipientType.Group &&
-                     _dbContext.GroupMemberships.Any(gm =>
-                         gm.GroupId == ma.Message.RecipientId &&
-                         gm.UserId == userId))
-                ));
+        var media = await _dbContext.MediaFiles
+            .AsNoTracking()
+            .Where(m => m.Id == mediaId)
+            .Select(m => new { m.OwnerType, m.OwnerId, m.UploaderId })
+            .FirstOrDefaultAsync();
+
+        if (media is null)
+            return false;
+
+        return media.OwnerType switch
+        {
+            MediaOwnerType.Avatar => true, // media.OwnerId == userId
+            MediaOwnerType.GroupAvatar => await _dbContext.GroupMemberships
+                .AnyAsync(gm => gm.GroupId == media.OwnerId && gm.UserId == userId),
+
+            MediaOwnerType.Message => await _dbContext.MediaAttachments
+                .AnyAsync(ma =>
+                    ma.MediaFileId == mediaId &&
+                    (
+                        ma.Message.SenderId == userId ||
+                        ma.Message.RecipientId == userId ||
+                        _dbContext.GroupMemberships.Any(gm =>
+                            gm.GroupId == ma.Message.RecipientId && gm.UserId == userId)
+                    )),
+
+            MediaOwnerType.System => true,
+            _ => false
+        };
     }
 }

@@ -1,4 +1,5 @@
-using Govor.Application.Interfaces;
+﻿using Govor.Application.Interfaces;
+using Govor.Application.Interfaces.Medias;
 using Govor.Application.Interfaces.Messages;
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Core.Models;
@@ -18,7 +19,8 @@ public class MessageCommandService : IMessageCommandService
     private readonly IUsersRepository _usersRepository; 
     private readonly IGroupsRepository _groupsRepository; 
     private readonly IPrivateChatsRepository _privateChats;
-    private readonly IVerifyFriendship _verifyFriendship; 
+    private readonly IVerifyFriendship _verifyFriendship;
+    private readonly IMediaService _mediaService;
     private readonly ILogger<MessageCommandService> _logger;
 
     public MessageCommandService(
@@ -27,6 +29,7 @@ public class MessageCommandService : IMessageCommandService
         IGroupsRepository groupsRepository,
         IVerifyFriendship verifyFriendship,
         IPrivateChatsRepository privateChats,
+        IMediaService mediaService,
         ILogger<MessageCommandService> logger)
     {
         _messagesRepository = messagesRepository;
@@ -34,6 +37,7 @@ public class MessageCommandService : IMessageCommandService
         _groupsRepository = groupsRepository;
         _verifyFriendship = verifyFriendship;
         _privateChats = privateChats;
+        _mediaService = mediaService;
         _logger = logger;
     }
 
@@ -96,6 +100,15 @@ public class MessageCommandService : IMessageCommandService
                     MediaFileId = m.MediaId
                 }).ToList() ?? new List<MediaAttachments>()
             };
+
+            // If there is media, we link them.
+            if (sendParams.Media != null && sendParams.Media.Any())
+            {
+                foreach (var media in sendParams.Media)
+                {
+                    await _mediaService.AttachToMessageAsync(media.MediaId, messageId);
+                }
+            }
 
             await _messagesRepository.AddAsync(message);
             _logger.LogInformation("Message {MessageId} from {SenderId} to {RecipientId} ({RecipientType}) saved successfully.", messageId, sendParams.FromUserId, sendParams.RecipientId, sendParams.RecipientType);

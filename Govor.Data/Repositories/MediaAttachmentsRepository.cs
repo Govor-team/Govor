@@ -82,6 +82,8 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found attachments by given id {attachments.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

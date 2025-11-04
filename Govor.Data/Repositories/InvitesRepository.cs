@@ -100,6 +100,8 @@ public class InvitesRepository : IInvitesRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found invitation by given id {invitation.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

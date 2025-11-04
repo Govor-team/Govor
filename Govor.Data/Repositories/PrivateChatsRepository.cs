@@ -77,6 +77,8 @@ public class PrivateChatsRepository : IPrivateChatsRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found private chat by given id {chat.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

@@ -3,7 +3,6 @@ using Govor.API.Controllers;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.UserSession;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models;
 using Govor.Core.Models.Users;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +17,7 @@ public class SessionControllerTests
 {
     private Mock<ILogger<SessionController>> _loggerMock;
     private Mock<ICurrentUserService> _currentUserServiceMock;
+    private Mock<ICurrentUserSessionService> _currentUserSessionServiceMock;
     private Mock<IUserSessionReader> _userSessionReaderMock;
     private Mock<IUserSessionRevoker> _userSessionRevokerMock;
     private Mock<IMapper> _mapperMock;
@@ -28,17 +28,20 @@ public class SessionControllerTests
     {
         _loggerMock = new Mock<ILogger<SessionController>>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
+        _currentUserSessionServiceMock = new Mock<ICurrentUserSessionService>();
         _userSessionReaderMock = new Mock<IUserSessionReader>();
         _userSessionRevokerMock = new Mock<IUserSessionRevoker>();
         _mapperMock = new Mock<IMapper>();
         _controller = new SessionController(
             _loggerMock.Object,
             _currentUserServiceMock.Object,
+            _currentUserSessionServiceMock.Object,
             _userSessionReaderMock.Object,
             _userSessionRevokerMock.Object,
             _mapperMock.Object);
     }
 
+    #region GetAllSessions
     [Test]
     public async Task GetAllSessions_Successful_ReturnsOkWithMappedSessions()
     {
@@ -106,7 +109,9 @@ public class SessionControllerTests
             exception,
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
     }
+    #endregion
 
+    #region CloseSession
     [Test]
     public async Task CloseSession_ValidSessionId_ReturnsOk()
     {
@@ -213,7 +218,105 @@ public class SessionControllerTests
             exception,
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
     }
+    #endregion
 
+    #region CloseCurrentSession
+    [Test]
+    public async Task CloseCurrentSession_ValidSessionIdAndUserId_ReturnsOk()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        _currentUserServiceMock.Setup(s => s.GetCurrentUserId()).Returns(userId);
+        _currentUserSessionServiceMock.Setup(s => s.GetUserSessionId()).Returns(sessionId);
+
+        // Act
+        var result = await _controller.CloseCurrent();
+
+        // Assert
+        Assert.That(result, Is.TypeOf<OkResult>());
+        _userSessionRevokerMock.Verify(r => r.CloseSessionByIdAsync(sessionId, userId), Times.Once());
+        _loggerMock.VerifyNoOtherCalls();
+    }
+
+    [Test]
+    public async Task CloseCurrentSession_UnauthorizedAccess_ReturnsForbid()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var exception = new UnauthorizedAccessException("Unauthorized");
+        _currentUserServiceMock.Setup(s => s.GetCurrentUserId()).Returns(userId);
+        _currentUserSessionServiceMock.Setup(s => s.GetUserSessionId()).Returns(sessionId);
+        _userSessionRevokerMock.Setup(r => r.CloseSessionByIdAsync(sessionId, userId)).ThrowsAsync(exception);
+
+        // Act
+        var result = await _controller.CloseCurrent();
+
+        // Assert
+        Assert.That(result, Is.TypeOf<ForbidResult>());
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            exception,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
+    }
+
+    [Test]
+    public async Task CloseCurrentSession_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var exception = new NotFoundException("Session not found");
+        _currentUserServiceMock.Setup(s => s.GetCurrentUserId()).Returns(userId);
+        _currentUserSessionServiceMock.Setup(s => s.GetUserSessionId()).Returns(sessionId);
+        _userSessionRevokerMock.Setup(r => r.CloseSessionByIdAsync(sessionId, userId)).ThrowsAsync(exception);
+
+        // Act
+        var result = await _controller.CloseCurrent();
+
+        // Assert
+        Assert.That(result, Is.TypeOf<NotFoundObjectResult>());
+        var notFoundResult = result as NotFoundObjectResult;
+        Assert.That(notFoundResult.Value, Is.EqualTo("Session not found"));
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            exception,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
+    }
+
+    [Test]
+    public async Task CloseCurrentSession_InvalidOperation_ReturnsBadRequest()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var exception = new InvalidOperationException("Invalid operation");
+        _currentUserServiceMock.Setup(s => s.GetCurrentUserId()).Returns(userId);
+        _currentUserSessionServiceMock.Setup(s => s.GetUserSessionId()).Returns(sessionId);
+        _userSessionRevokerMock.Setup(r => r.CloseSessionByIdAsync(sessionId, userId)).ThrowsAsync(exception);
+
+        // Act
+        var result = await _controller.CloseCurrent();
+
+        // Assert
+        Assert.That(result, Is.TypeOf<BadRequestObjectResult>());
+        var badRequestResult = result as BadRequestObjectResult;
+        Assert.That(badRequestResult.Value, Is.EqualTo("Invalid operation"));
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            exception,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
+    }
+    #endregion
+
+    #region CloseAllSessions
     [Test]
     public async Task CloseAllSessions_Successful_ReturnsOk()
     {
@@ -276,4 +379,5 @@ public class SessionControllerTests
             exception,
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
     }
+    #endregion
 }

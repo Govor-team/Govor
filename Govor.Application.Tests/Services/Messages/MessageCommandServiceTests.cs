@@ -1,5 +1,6 @@
-using Govor.Application.Exceptions.VerifyFriendship;
+﻿using Govor.Application.Exceptions.VerifyFriendship;
 using Govor.Application.Interfaces;
+using Govor.Application.Interfaces.Medias;
 using Govor.Application.Interfaces.Messages.Parameters;
 using Govor.Application.Services.Messages;
 using Govor.Core.Models;
@@ -22,6 +23,7 @@ public class MessageCommandServiceTests
     private Mock<IGroupsRepository> _mockGroupsRepo;
     private Mock<IVerifyFriendship> _mockVerifyFriendship;
     private Mock<IPrivateChatsRepository> _mockPrivateChats;
+    private Mock<IMediaService> _mockMediaService;   
     private Mock<ILogger<MessageCommandService>> _mockLogger;
     private MessageCommandService _messageService;
     
@@ -33,6 +35,7 @@ public class MessageCommandServiceTests
         _mockGroupsRepo = new Mock<IGroupsRepository>();
         _mockVerifyFriendship = new Mock<IVerifyFriendship>();
         _mockPrivateChats = new Mock<IPrivateChatsRepository>();
+        _mockMediaService = new Mock<IMediaService>();
         _mockLogger = new Mock<ILogger<MessageCommandService>>();
 
         _messageService = new MessageCommandService(
@@ -41,6 +44,7 @@ public class MessageCommandServiceTests
             _mockGroupsRepo.Object,
             _mockVerifyFriendship.Object,
             _mockPrivateChats.Object,
+            _mockMediaService.Object,
             _mockLogger.Object);
     }
 
@@ -52,7 +56,6 @@ public class MessageCommandServiceTests
         // Arrange
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
-        
         var sendMessageParams = new SendMessage("Hello", 
             null,
             recipientId,
@@ -66,6 +69,7 @@ public class MessageCommandServiceTests
         _mockMessagesRepo.Setup(r => r.AddAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
         _mockPrivateChats.Setup(c => c.Exist(senderId, recipientId)).Returns(true);
         _mockPrivateChats.Setup(c => c.GetByMembersAsync(senderId, recipientId)).ReturnsAsync(new PrivateChat(){Id = recipientId});
+        
         // Act
         var result = await _messageService.SendMessageAsync(sendMessageParams);
         // Assert 
@@ -79,7 +83,53 @@ public class MessageCommandServiceTests
             m.RecipientType == RecipientType.User &&
             m.EncryptedContent == "Hello")), Times.Once);
     }
-    
+
+    [Test]
+    public async Task SendMessageAsync_ToUser_When_AttachMediaThrowsException_ReturnsFailure()
+    {
+        // Arrange
+        var senderId = Guid.NewGuid();
+        var recipientId = Guid.NewGuid();
+        var sendMediaId = Guid.NewGuid();
+
+        var sendMessageParams = new SendMessage(
+            "Hello",
+            null,
+            recipientId,
+            RecipientType.User,
+            senderId,
+            DateTime.UtcNow,
+            new List<SendMedia> { new SendMedia(sendMediaId, string.Empty) });
+
+        _mockUsersRepo.Setup(r => r.ExistsByIdAsync(recipientId)).ReturnsAsync(true);
+        _mockVerifyFriendship.Setup(v => v.VerifyAsync(senderId, recipientId)).Returns(Task.CompletedTask);
+        _mockMessagesRepo.Setup(r => r.AddAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
+        _mockPrivateChats.Setup(c => c.Exist(senderId, recipientId)).Returns(true);
+        _mockPrivateChats.Setup(c => c.GetByMembersAsync(senderId, recipientId))
+            .ReturnsAsync(new PrivateChat { Id = recipientId });
+
+        // ! 
+        _mockMediaService
+            .Setup(m => m.AttachToMessageAsync(sendMediaId, It.IsAny<Guid>()))
+            .ThrowsAsync(new Exception("Unexpected DB error"));
+
+        // Act
+        var result = await _messageService.SendMessageAsync(sendMessageParams);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.IsSuccess, Is.False);
+        Assert.That(result.Exception, Is.Not.Null);
+        Assert.That(result.Exception.Message, Is.EqualTo("Unexpected DB error"));
+
+        // Проверяем, что сообщение не было сохранено
+        _mockMessagesRepo.Verify(r => r.AddAsync(It.IsAny<Message>()), Times.Never);
+
+        // Проверяем, что метод прикрепления медиа вызывался
+        _mockMediaService.Verify(m => m.AttachToMessageAsync(sendMediaId, It.IsAny<Guid>()), Times.Once);
+    }
+
+
     [Test]
     public async Task SendMessageAsync_ToGroup_Success()
     {

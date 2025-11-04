@@ -1,6 +1,7 @@
-using System.ComponentModel.DataAnnotations;
+using Govor.Core.Models;
 using Govor.Core.Models.Messages;
 using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace Govor.Contracts.Requests;
 
@@ -14,4 +15,6 @@ public class MediaUploadRequest
     public string MimeType { get; set; } = string.Empty;
     [Required]
     public string EncryptedKey { get; set; } = string.Empty;
+    [Required]
+    public MediaOwnerType OwnerType { get; set; } = MediaOwnerType.Message;
 }

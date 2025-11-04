@@ -11,7 +11,8 @@ public class UserSession
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime ExpiresAt { get; set; }
     public bool IsRevoked { get; set; } = false;
-    
+    // public DateTime? RevokedAt { get; set; } TODO: Clear old UserSessions 
+
     public UserCryptoSession CryptoSession { get; set; }
 
     public override bool Equals(object? obj)

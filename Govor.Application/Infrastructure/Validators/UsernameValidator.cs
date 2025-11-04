@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Interfaces.Authentication;

@@ -87,6 +87,8 @@ public class FriendshipsRepository : IFriendshipsRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found friendship by given id {friendship.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
