@@ -22,12 +22,12 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "https://localhost:7155",
                 "http://localhost:7155",
-                "https://govor-team-govor-8ce1.twc1.net", 
+                "https://govor-team-govor-8ce1.twc1.net",
                 "http://govor-team-govor-8ce1.twc1.net"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+                )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -109,10 +109,10 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
-         
+    builder.WebHost.UseUrls("http://0.0.0.0:8080");
 }
 
 app.UseSwagger();
