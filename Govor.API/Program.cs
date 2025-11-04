@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
 using Govor.Application.Services.Authentication;
@@ -19,7 +19,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://localhost:7155", "http://localhost:7155")
+        policy.WithOrigins(
+                "https://localhost:7155",
+                "http://localhost:7155",
+                "https://govor-team-govor-8ce1.twc1.net", 
+                "http://govor-team-govor-8ce1.twc1.net"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
