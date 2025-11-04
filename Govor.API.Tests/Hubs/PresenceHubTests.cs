@@ -4,6 +4,7 @@ using Govor.API.Hubs;
 using Govor.Application.Interfaces.UserOnlineStatus;
 using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Users;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -185,5 +186,11 @@ public class PresenceHubTests
                     It.Is<object[]>(args => args.Length == 1 && (Guid)args[0] == _userId),
                     It.IsAny<CancellationToken>()),
             Times.Never); 
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _hub?.Dispose();
     }
 }

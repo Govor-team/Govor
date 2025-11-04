@@ -114,4 +114,11 @@ public class RefreshControllerTests
         // Assert
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
+
+
+    [TearDown]
+    public void TearDown()
+    {
+        _controller?.Dispose();
+    }
 }

@@ -55,4 +55,11 @@ public class PingHandlerServiceTests
         // Assert
         Assert.That(updatedUser.WasOnline, Is.EqualTo(originalTime));
     }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _dbContext?.Dispose();
+        _memoryCache?.Dispose();
+    }
 }

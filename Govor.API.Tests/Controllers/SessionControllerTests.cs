@@ -380,4 +380,10 @@ public class SessionControllerTests
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
     }
     #endregion
+
+    [TearDown]
+    public void TearDown()
+    {
+        _controller?.Dispose();
+    }
 }

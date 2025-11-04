@@ -335,4 +335,10 @@ public class FriendsHubTests
         Assert.That(result.Status, Is.EqualTo(HubResultStatus.ServerError));
         Assert.That(result.ErrorMessage, Is.EqualTo("Unexpected error! Please try later!"));
     }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _hub?.Dispose();
+    }
 }

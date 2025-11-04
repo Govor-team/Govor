@@ -112,6 +112,13 @@ public class OnlinePingingControllerTests
         _loggerMock.VerifyLog(LogLevel.Error, exception.Message, Times.Once());
         _pingHandlerServiceMock.Verify(x => x.Ping(It.IsAny<Guid>()), Times.Never());
     }
+
+
+    [TearDown]
+    public void TearDown()
+    {
+        _controller?.Dispose();
+    }
 }
 
 // Helper extension for verifying logger calls

@@ -3,6 +3,7 @@ using Govor.API.Common.SignalR.Helpers;
 using Govor.API.Hubs;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Messages;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -43,5 +44,12 @@ public class ChatsHubTests
     public void SendMessage_Success()
     {
         
+    }
+
+
+    [TearDown]
+    public void TearDown()
+    {
+        _chatsHub?.Dispose();
     }
 }

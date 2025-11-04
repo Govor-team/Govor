@@ -257,4 +257,10 @@ public class ChatLoadControllerTests
         // Assert
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
     }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _controller?.Dispose();
+    }
 }
