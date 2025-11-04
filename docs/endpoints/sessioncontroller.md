@@ -75,6 +75,37 @@ description: >-
       "Unexpected Error! Please try again later."
       ```
 
+#### <mark style="color:$info;">CloseSession</mark>
+
+* **Description**: Closes a current session for the authenticated user.
+* **Route**: `[DELETE] api/session/close/`
+* **HTTP Method**: `DELETE`
+* **Request**:
+  * No body.
+* **Responses**:
+  * <mark style="color:$success;">**200 OK**</mark>: Indicates session was successfully closed.
+    * No body.
+  *   <mark style="color:$danger;">**400 Bad Request**</mark>: If `sessionId` is invalid or operation fails.
+
+      ```json
+      "string"
+      ```
+  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
+
+      ```json
+      "string"
+      ```
+  *   <mark style="color:$danger;">**404 Not Found**</mark>: If session is not found.
+
+      ```json
+      "string"
+      ```
+  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
+
+      ```json
+      "Unexpected Error! Please try again later."
+      ```
+
 #### <mark style="color:$info;">CloseAllSessions</mark>
 
 * **Description**: Closes all active sessions for the authenticated user.
@@ -89,7 +120,7 @@ description: >-
       ```json
       "string"
       ```
-  *   <mark style="color:$danger;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
+  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
 
       ```json
       "Unexpected Error! Please try again later."
