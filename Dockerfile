@@ -13,10 +13,6 @@ RUN dotnet restore Govor.API/Govor.API.csproj
 
 # Копируем весь код
 COPY . .
-
-# УДАЛЯЕМ launchSettings.json
-RUN rm -f Govor.API/Properties/launchSettings.json
-
 WORKDIR /src/Govor.API
 RUN dotnet publish -c Release -o /app/publish
 
@@ -24,10 +20,6 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-
-# Принудительно устанавливаем порт
-ENV ASPNETCORE_URLS=http://+:8080
-ENV ASPNETCORE_ENVIRONMENT=Production
 
 EXPOSE 8080
 
