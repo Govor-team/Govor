@@ -1,9 +1,9 @@
-# School Messenger (ASP.NET Core WebAPI)
+#School Messenger (ASP.NET Core WebAPI)
 
 A simple real-time messenger built with ASP.NET Core Web API + Entity Framework Core.  
 This is my school project that I'm working on in my free time to level up my backend development skills.
 
-## Current Features
+##Current Features
 - Registration and authentication (JWT)
 - Creating private chats and real-time messaging (via SignalR)
 - Sending text messages and images
@@ -12,7 +12,7 @@ This is my school project that I'm working on in my free time to level up my bac
 
 (The list will be updated as new features are added)
 
-## Tech Stack
+##Tech Stack
 - Backend: ASP.NET Core 8 Web API
 - Database: PostgreSQL or Microsoft SQL Server (configurable via appsettings)
 - Authentication: JWT + Refresh Tokens
