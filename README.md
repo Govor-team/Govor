@@ -18,3 +18,5 @@ This is my school project that I'm working on in my free time to level up my bac
 - Authentication: JWT + Refresh Tokens
 - Real-time communication: SignalR
 - Frontend (separate project for now): .NET MAUI (cross-platform desktop/mobile client)
+
+dock: https://nas-3.gitbook.io/govor-api
