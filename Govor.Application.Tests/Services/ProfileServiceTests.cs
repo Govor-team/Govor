@@ -1,6 +1,7 @@
 ﻿using Govor.Application.Services;
 using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Users;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -64,7 +65,19 @@ public class ProfileServiceTests
         Assert.ThrowsAsync<NullReferenceException>(() =>
             _service.GetUserProfileAsync(Guid.NewGuid()));
     }
+    
+    [Test]
+    public void GetUserProfileAsync_ThrowsNotFoundException_WhenNotFoundByKeyException()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        _mockUsersRepo.Setup(r => r.FindByIdAsync(It.IsAny<Guid>()))
+            .ThrowsAsync(new NotFoundByKeyException<Guid>(userId));
 
+        // Act + Assert
+        Assert.ThrowsAsync<NotFoundException>(() =>
+            _service.GetUserProfileAsync(userId));
+    }
     // ---------- SetDescription ----------
 
     [Test]

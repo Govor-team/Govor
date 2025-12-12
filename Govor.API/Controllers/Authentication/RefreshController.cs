@@ -14,13 +14,15 @@ public class RefreshController : Controller
     private readonly ILogger<RefreshController> _logger;
     private readonly IUserSessionRefresher _userSession;
     
-    public RefreshController(ILogger<RefreshController> logger, IUserSessionRefresher userSession)
+    public RefreshController(
+        ILogger<RefreshController> logger,
+        IUserSessionRefresher userSession)
     {
         _logger = logger;
         _userSession = userSession;
     }
     
-    [RequireHttps] 
+    //[RequireHttps] 
     [HttpPost("refresh")] // api/auth/token/refresh
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest refreshRequest)
     {

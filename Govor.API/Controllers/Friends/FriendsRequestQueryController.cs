@@ -8,9 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.Friends;
 
-[ApiController]
+
 [Authorize]
 [Route("api/friends")]
+[ApiController]
 public class FriendsRequestQueryController : Controller
 {
     private readonly ILogger<FriendsRequestQueryController> _logger;
@@ -18,7 +19,8 @@ public class FriendsRequestQueryController : Controller
     private readonly ICurrentUserService _currentUserService;
     private readonly IMapper _mapper;
     
-    public FriendsRequestQueryController(ILogger<FriendsRequestQueryController> logger,
+    public FriendsRequestQueryController(
+        ILogger<FriendsRequestQueryController> logger,
         IFriendRequestQueryService friendsService,
         ICurrentUserService currentUserService,
         IMapper mapper)

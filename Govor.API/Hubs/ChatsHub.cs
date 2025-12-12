@@ -19,7 +19,11 @@ public class ChatsHub : Hub
     private readonly IUserGroupsService _userService;
     private readonly IHubUserAccessor _userAccessor;
 
-    public ChatsHub(ILogger<ChatsHub> logger, IMessageCommandService messageCommandService, IUserGroupsService userService, IHubUserAccessor userAccessor)
+    public ChatsHub(
+        ILogger<ChatsHub> logger,
+        IMessageCommandService messageCommandService,
+        IUserGroupsService userService,
+        IHubUserAccessor userAccessor)
     {
         _logger = logger;
         _messageCommandService = messageCommandService;
@@ -60,10 +64,8 @@ public class ChatsHub : Hub
             _logger.LogInformation("User {UserId} disconnected with ConnectionId {ConnectionId} and removed from their group",
                 userId, Context.ConnectionId);
 
-            var userGroups =
-                await _userService
-                    .GetUserGroupsAsync(
-                        userId); 
+            var userGroups = await _userService.GetUserGroupsAsync(userId); 
+
             foreach (var group in userGroups)
             {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"group_{group.Id}");
@@ -235,6 +237,7 @@ public class ChatsHub : Hub
             return LogAndError<MessageEditResponse>(editor, request.MessageId, "Unhandled exception error", ex);
         }
     }
+
 
     #region common
     private UserMessageResponse BuildUserMessageResponse(Message message, Guid? replyToId)

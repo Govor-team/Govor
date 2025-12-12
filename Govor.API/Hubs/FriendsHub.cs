@@ -111,9 +111,13 @@ public class FriendsHub : Hub
         {
             var userId = _userAccessor.GetUserId(Context);
             var friendship = await _friendRequestService.AcceptAsync(friendshipId, userId);
-            await Clients.Group(userId.ToString())
-                         .SendAsync("FriendRequestAccepted", _mapper.Map<FriendshipDto>(friendship));
             
+            await Clients.Group(userId.ToString())
+                .SendAsync("FriendRequestAccepted", _mapper.Map<FriendshipDto>(friendship));
+
+            await Clients.Group(friendship.RequesterId.ToString())
+                .SendAsync( "YourFriendRequestAccepted", _mapper.Map<UserDto>(friendship.Addressee));
+
             _logger.LogInformation($"Friend request accepted for user {userId} from {userId}.");
             return HubResult<object>.Ok();
         }
@@ -140,9 +144,14 @@ public class FriendsHub : Hub
         {
             var userId = _userAccessor.GetUserId(Context);
             var friendship = await _friendRequestService.RejectAsync(friendshipId, userId);
+            var dto = _mapper.Map<FriendshipDto>(friendship);
+
             await Clients.Group(userId.ToString())
-                         .SendAsync("FriendRequestRejected", _mapper.Map<FriendshipDto>(friendship));
-            
+                         .SendAsync("FriendRequestRejected", dto);
+
+            await Clients.Group(friendship.RequesterId.ToString())
+                         .SendAsync("YourFriendRequestRejected", dto);
+
             _logger.LogInformation($"Friend request rejected for user {userId} from {userId}.");
             return HubResult<object>.Ok();
         }

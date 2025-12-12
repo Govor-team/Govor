@@ -22,4 +22,4 @@ public record Media(Guid UploaderId,
     MediaOwnerType OwnerType,
     Guid? OwnerId);
 
-public record MediaUploadResult(Guid? MediaId, string Url);
+public record MediaUploadResult(Guid MediaId, string Url);

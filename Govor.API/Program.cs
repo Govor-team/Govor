@@ -133,7 +133,8 @@ app.MapHub<ChatsHub>("/hubs/chats");
 app.MapHub<FriendsHub>("/hubs/friends");
 app.MapHub<ProfileHub>("/hubs/profiles");
 
-app.MapSwagger().RequireAuthorization();
+app.MapSwagger()
+    .RequireAuthorization();
 
 app.Map("/", () => "Not for browsers");
 

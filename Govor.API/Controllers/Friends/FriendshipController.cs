@@ -16,7 +16,8 @@ public class FriendshipController : Controller
     private readonly ICurrentUserService _currentUserService;
     private readonly IMapper _mapper;
     
-    public FriendshipController(ILogger<FriendshipController> logger,
+    public FriendshipController(
+        ILogger<FriendshipController> logger,
         IFriendshipService friendsService,
         ICurrentUserService currentUserService,
         IMapper mapper)

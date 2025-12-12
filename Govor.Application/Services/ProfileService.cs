@@ -1,6 +1,7 @@
 ﻿using Govor.Application.Interfaces;
 using Govor.Application.Profiles;
 using Govor.Core.Repositories.Users;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Govor.Application.Services;
@@ -19,15 +20,23 @@ public class ProfileService : IProfileService
     public async Task<UserProfile> GetUserProfileAsync(Guid userId)
     {
         _logger.LogInformation("Gettings user {userId} profile", userId);
-        var user = await _userRepository.FindByIdAsync(userId);
-
-        return new UserProfile
+        try
         {
-            Id = user.Id,
-            Username = user.Username,
-            Description = user.Description,
-            IconId = user.IconId
-        };
+            var user = await _userRepository.FindByIdAsync(userId);
+
+            return new UserProfile
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Description = user.Description,
+                IconId = user.IconId
+            };
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new NotFoundException("User's profile cant be found with given id", ex);
+        }
+
     }
 
     public async Task SetDescription(string description, Guid userId)

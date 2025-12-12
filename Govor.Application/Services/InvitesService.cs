@@ -49,11 +49,5 @@ public class InvitesService : IInvitesService
             throw new InviteLinkInvalidException(inviteCode);
         }
     }
-
-
-    public string GenerateInvitationLink(Invitation invitation)
-    {
-        throw new NotImplementedException();
-    }
 }
 

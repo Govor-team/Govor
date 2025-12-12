@@ -27,9 +27,7 @@ public class FriendshipService : IFriendshipService
         {
             all = await _usersRepository.SearchPotentialFriendsAsync(currentId, query);
 
-            return all
-                .Where(u => u.Id != currentId)
-                .ToList();
+            return all;
         }
         catch (NotFoundByKeyException<(string, Guid)> ex)
         {
@@ -37,7 +35,7 @@ public class FriendshipService : IFriendshipService
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            return all.Where(u => u.Id != currentId).ToList();
+            return [];
         }
         catch (Exception ex)
         {
@@ -58,7 +56,7 @@ public class FriendshipService : IFriendshipService
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            throw new InvalidOperationException("User not found", ex);
+            throw new InvalidOperationException("Nothing was found for the specified id.", ex);
         }
     }
 }

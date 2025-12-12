@@ -11,20 +11,17 @@ namespace Govor.Application.Services.Authentication;
 public class AuthService : IAccountService
 {
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IJwtService _jwtService;
     private readonly IUsersRepository _usersRepository;
     private readonly IAdminsRepository _adminsRepository;
     private readonly IUsernameValidator _usernameValidator;
     
     public AuthService(IUsersRepository usersRepository, 
-        IJwtService jwtService,
         IPasswordHasher passwordHasher,
         IAdminsRepository adminsRepository,
         IUsernameValidator usernameValidator
        )
     {
         _usersRepository = usersRepository;
-        _jwtService = jwtService;
         _passwordHasher = passwordHasher;
         _adminsRepository = adminsRepository;
         _usernameValidator = usernameValidator;

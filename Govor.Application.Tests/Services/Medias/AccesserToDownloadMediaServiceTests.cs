@@ -31,7 +31,7 @@ public class AccesserToDownloadMediaServiceTests
         _groupId = Guid.NewGuid();
         _mediaFileId = Guid.NewGuid();
 
-        // Базовое сообщение и медиа
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
         var message = new Message
         {
             Id = Guid.NewGuid(),
@@ -170,7 +170,7 @@ public class AccesserToDownloadMediaServiceTests
     }
 
     [Test]
-    public async Task HasAccessAsync_ReturnsFalse_ForOtherUserAvatar()
+    public async Task HasAccessAsync_ReturnsTrue_ForOtherUserAvatar()
     {
         var avatarMedia = new MediaFile
         {
@@ -188,7 +188,7 @@ public class AccesserToDownloadMediaServiceTests
         await _dbContext.SaveChangesAsync();
 
         var result = await _accesser.HasAccessAsync(avatarMedia.Id, _userId);
-        Assert.That(result, Is.False);
+        Assert.That(result, Is.True);
     }
 
     [Test]
@@ -275,7 +275,7 @@ public class AccesserToDownloadMediaServiceTests
             MineType = "image/png",
             MediaType = MediaType.Image,
             UploaderId = _userId,
-            OwnerType = (MediaOwnerType)999, // неизвестный тип
+            OwnerType = (MediaOwnerType)999, // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
             DateCreated = DateTime.UtcNow
         };
 

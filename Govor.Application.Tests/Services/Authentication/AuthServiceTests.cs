@@ -43,7 +43,6 @@ public class AuthServiceTests
         
         _accountService = new AuthService(
             _usersRepositoryMock.Object,
-            _jwtServiceMock.Object,
             _passwordHasherMock.Object,
             _adminsRepositoryMock.Object,
             _usernameValidatorMock.Object

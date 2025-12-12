@@ -1,5 +1,4 @@
 using AutoFixture;
-using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Services.Friends;
 using Govor.Core.Models;
@@ -115,12 +114,14 @@ public class FriendshipServiceTests
     public void SearchUsersAsync_Throws_UnauthorizedAccessException_IfThrowsSomeExceptionInFriendshipsRepository()
     {
         // Arrange 
-        _friendshipsRepositoryMock
-            .Setup(u => u.FindByUserIdAsync(It.IsAny<Guid>()))
+        _usersRepositoryMock
+            .Setup(u => u.SearchPotentialFriendsAsync(It.IsAny<Guid>(), "test"))
             .ThrowsAsync(new Exception("test"));
         
         // Act & Assert 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(async () => await _service.SearchUsersAsync("test", Guid.NewGuid()));
+        Assert.ThrowsAsync<UnauthorizedAccessException>(
+            async () => await _service.SearchUsersAsync("test", Guid.NewGuid())
+            );
     }
     
     // GetFriendsAsync

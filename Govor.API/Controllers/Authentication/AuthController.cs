@@ -30,7 +30,7 @@ public class AuthController : Controller
         _logger = logger;
     }
     
-    [RequireHttps] 
+    //[RequireHttps] 
     [HttpPost("register")]// api/auth/register
     public async Task<IActionResult> Register([FromBody] RegistrationRequest registrationRequest)
     {
@@ -74,7 +74,7 @@ public class AuthController : Controller
         }
     }
     
-    [RequireHttps] 
+    //[RequireHttps] 
     [HttpPost("login")]// api/auth/login
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {

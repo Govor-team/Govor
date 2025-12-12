@@ -13,5 +13,19 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasOne(u => u.Invite)
             .WithMany(i => i.Users)
             .HasForeignKey(u => u.InviteId);
+        
+        builder.Property(u => u.Username)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.HasIndex(u => u.Username).IsUnique();
+
+        builder.Property(u => u.Description)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
+        builder.Property(u => u.PasswordHash)
+            .IsRequired()
+            .HasMaxLength(128);
     }
 }
