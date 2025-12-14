@@ -45,6 +45,7 @@ public static class ConfigurationProgramExtensions
     public static void AddServices(this IServiceCollection services)
     {
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IJwtTokenHasher, JwtTokenHasher>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAccountService, AuthService>();
         services.AddScoped<IUsersAdministration, UsersService>();

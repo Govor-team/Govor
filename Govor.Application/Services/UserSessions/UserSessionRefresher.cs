@@ -36,7 +36,7 @@ public class UserSessionRefresher : IUserSessionRefresher
     {
         try
         {
-            var session = await _sessionsRepository.GetByRefreshTokenAsync(refreshToken);
+            var session = await _sessionsRepository.GetByHashedRefreshTokenAsync(refreshToken);
 
             if (session.IsRevoked || session.ExpiresAt <= DateTime.UtcNow)
                 throw new UnauthorizedAccessException("Refresh token is invalid or expired");
@@ -55,7 +55,7 @@ public class UserSessionRefresher : IUserSessionRefresher
             var newSession = new UserSession
             {
                 UserId = user.Id,
-                RefreshToken = newRefreshToken,
+                RefreshTokenHash = newRefreshToken,
                 DeviceInfo = session.DeviceInfo,
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(_options.RefreshTokenLifetimeDays)

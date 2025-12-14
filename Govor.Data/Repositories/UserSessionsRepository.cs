@@ -62,12 +62,12 @@ public class UserSessionsRepository : IUserSessionsRepository
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<bool>(isRevoked, "Sessions is revoked does not exist"));
     }
 
-    public async Task<UserSession> GetByRefreshTokenAsync(string refreshToken)
+    public async Task<UserSession> GetByHashedRefreshTokenAsync(string hash)
     {
         return await _context.UserSessions
             .AsNoTracking()
-            .FirstOrDefaultAsync(session => session.RefreshToken == refreshToken)
-                ?? throw new NotFoundByKeyException<string>(refreshToken, "Session with given refresh token does not exist");
+            .FirstOrDefaultAsync(session => session.RefreshTokenHash == hash)
+                ?? throw new NotFoundByKeyException<string>(hash, "Session with given refresh token does not exist");
     }
 
     public async Task AddAsync(UserSession userSession)
@@ -93,7 +93,7 @@ public class UserSessionsRepository : IUserSessionsRepository
                 .Where(u => u.Id == userSession.Id)
                 .ExecuteUpdateAsync(u => u
                     .SetProperty(a => a.UserId, userSession.UserId)
-                    .SetProperty(u => u.RefreshToken, userSession.RefreshToken)
+                    .SetProperty(u => u.RefreshTokenHash, userSession.RefreshTokenHash)
                     .SetProperty(u => u.DeviceInfo, userSession.DeviceInfo)
                     .SetProperty(u => u.CreatedAt, userSession.CreatedAt)
                     .SetProperty(u => u.ExpiresAt, userSession.ExpiresAt)
@@ -154,15 +154,15 @@ public class UserSessionsRepository : IUserSessionsRepository
         return _context.UserSessions.Any(session => session.Id == sessionId);
     }
 
-    public bool Exist(string refresh)
+    public bool Exist(string hashedToken)
     {
-        return _context.UserSessions.Any(session => session.RefreshToken == refresh);
+        return _context.UserSessions.Any(session => session.RefreshTokenHash == hashedToken);
     }
 
     public bool Exist(UserSession userSession)
     {
         return _context.UserSessions.Any(session => session.Id == userSession.Id &&
-                                                    session.RefreshToken == userSession.RefreshToken &&
+                                                    session.RefreshTokenHash == userSession.RefreshTokenHash &&
                                                     session.IsRevoked == userSession.IsRevoked &&
                                                     session.CreatedAt == userSession.CreatedAt &&
                                                     session.ExpiresAt == userSession.ExpiresAt &&

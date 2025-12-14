@@ -212,7 +212,7 @@ public class UserSessionsRepositoryTests
             .With(f => f.IsRevoked, true)
             .CreateMany(random.Next(2, 10)).ToList();
         
-        var token = sessions.First().RefreshToken;
+        var token = sessions.First().RefreshTokenHash;
         
         await using var context = new GovorDbContext(_options);
         var repository = new UserSessionsRepository(context);
@@ -221,7 +221,7 @@ public class UserSessionsRepositoryTests
         await context.SaveChangesAsync();
         
         // Act 
-        var result = await repository.GetByRefreshTokenAsync(token);
+        var result = await repository.GetByHashedRefreshTokenAsync(token);
         
         // Assert 
         Assert.That(result, Is.Not.Null);
@@ -235,7 +235,7 @@ public class UserSessionsRepositoryTests
         using var context = new GovorDbContext(_options);
         var repository = new UserSessionsRepository(context);
         // Act & Assert 
-        Assert.ThrowsAsync<NotFoundByKeyException<string>>(async () => await repository.GetByRefreshTokenAsync(_fixture.Create<string>()));
+        Assert.ThrowsAsync<NotFoundByKeyException<string>>(async () => await repository.GetByHashedRefreshTokenAsync(_fixture.Create<string>()));
     }
     
     [Test]
@@ -281,7 +281,7 @@ public class UserSessionsRepositoryTests
         // Act 
         var result1 = repository.Exist(session);
         var result2 = repository.Exist(session.Id);
-        var result3 = repository.Exist(session.RefreshToken);
+        var result3 = repository.Exist(session.RefreshTokenHash);
         
         // Assert 
         Assert.That(result1, Is.True);
@@ -301,7 +301,7 @@ public class UserSessionsRepositoryTests
         // Act 
         var result1 = repository.Exist(session);
         var result2 = repository.Exist(session.Id);
-        var result3 = repository.Exist(session.RefreshToken);
+        var result3 = repository.Exist(session.RefreshTokenHash);
         // Assert 
         Assert.That(result1, Is.False);
         Assert.That(result2, Is.False);

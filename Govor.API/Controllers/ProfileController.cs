@@ -41,7 +41,6 @@ public class ProfileController : ControllerBase
         _mapper = mapper;
     }
     
-    [RequestSizeLimit(40_000)]
     [HttpPost("avatar")] // api/profile/avatar
     public async Task<IActionResult> UploadAvatar([FromForm] AvatarUploadRequest request)
     {
@@ -96,7 +95,7 @@ public class ProfileController : ControllerBase
         return ms.ToArray();
     }
     
-    [HttpGet("dowload/me")]
+    [HttpGet("download/me")]
     public async Task<IActionResult> DownloadProfile()
     {
         try

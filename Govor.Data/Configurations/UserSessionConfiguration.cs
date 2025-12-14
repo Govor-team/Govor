@@ -12,7 +12,7 @@ public class UserSessionConfiguration : IEntityTypeConfiguration<UserSession>
     {
         builder.HasKey(us => us.Id);
 
-        builder.Property(us => us.RefreshToken)
+        builder.Property(us => us.RefreshTokenHash)
             .IsRequired();
 
         builder.Property(us => us.DeviceInfo)

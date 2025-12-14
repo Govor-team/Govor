@@ -58,7 +58,7 @@ public class UserSessionRefresherTests
 
         _session = new UserSession
         {
-            RefreshToken = OldRefreshToken,
+            RefreshTokenHash = OldRefreshToken,
             UserId = _user.Id,
             DeviceInfo = "Chrome",
             CreatedAt = DateTime.UtcNow.AddDays(-5),
@@ -71,7 +71,7 @@ public class UserSessionRefresherTests
     public async Task RefreshTokenAsync_ValidToken_ReturnsNewTokensAndCreatesNewSession()
     {
         // Arrange
-        _sessionsRepoMock.Setup(r => r.GetByRefreshTokenAsync(OldRefreshToken)).ReturnsAsync(_session);
+        _sessionsRepoMock.Setup(r => r.GetByHashedRefreshTokenAsync(OldRefreshToken)).ReturnsAsync(_session);
         _usersRepoMock.Setup(r => r.FindByIdAsync(_user.Id)).ReturnsAsync(_user);
         _jwtServiceMock.Setup(j => j.GenerateAccessTokenAsync(_user, _session.Id)).ReturnsAsync(NewAccessToken);
         _jwtServiceMock.Setup(j => j.GenerateRefreshTokenAsync(_user)).ReturnsAsync(NewRefreshToken);
@@ -87,7 +87,7 @@ public class UserSessionRefresherTests
         _sessionsRepoMock.Verify(r => r.UpdateAsync(_session), Times.Once);
         _sessionsRepoMock.Verify(r => r.AddAsync(It.Is<UserSession>(s =>
             s.UserId == _user.Id &&
-            s.RefreshToken == NewRefreshToken &&
+            s.RefreshTokenHash == NewRefreshToken &&
             s.DeviceInfo == _session.DeviceInfo)), Times.Once);
     }
 
@@ -96,7 +96,7 @@ public class UserSessionRefresherTests
     {
         // Arrange
         _session.IsRevoked = true;
-        _sessionsRepoMock.Setup(r => r.GetByRefreshTokenAsync(OldRefreshToken)).ReturnsAsync(_session);
+        _sessionsRepoMock.Setup(r => r.GetByHashedRefreshTokenAsync(OldRefreshToken)).ReturnsAsync(_session);
         
         // Act & Assert 
         var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
@@ -110,7 +110,7 @@ public class UserSessionRefresherTests
     {
         // Arrange 
         _session.ExpiresAt = DateTime.UtcNow.AddMinutes(-1);
-        _sessionsRepoMock.Setup(r => r.GetByRefreshTokenAsync(OldRefreshToken)).ReturnsAsync(_session);
+        _sessionsRepoMock.Setup(r => r.GetByHashedRefreshTokenAsync(OldRefreshToken)).ReturnsAsync(_session);
         
         // Act & Assert 
         var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
@@ -123,7 +123,7 @@ public class UserSessionRefresherTests
     public void RefreshTokenAsync_TokenNotFound_ThrowsUnauthorizedAccessException()
     {
         // Arrange 
-        _sessionsRepoMock.Setup(r => r.GetByRefreshTokenAsync(OldRefreshToken))
+        _sessionsRepoMock.Setup(r => r.GetByHashedRefreshTokenAsync(OldRefreshToken))
             .ThrowsAsync(new NotFoundByKeyException<string>("token", OldRefreshToken));
         // Act & Assert 
         var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
