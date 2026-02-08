@@ -116,7 +116,7 @@ app.UseSwaggerUI();
 
 app.UseCors("AllowFrontend");
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseRouting();
 
