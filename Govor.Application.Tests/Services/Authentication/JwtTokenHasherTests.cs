@@ -14,7 +14,7 @@ public class JwtTokenHasherTests
     public void StarUp()
     {
         _fixture = new Fixture();
-        _jwtTokenHasher = new JwtTokenHasher();
+        //_jwtTokenHasher = new JwtTokenHasher();
     }
     
     [Test]

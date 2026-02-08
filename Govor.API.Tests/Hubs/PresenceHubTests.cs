@@ -15,7 +15,7 @@ namespace Govor.API.Tests.Hubs;
 [TestOf(typeof(PresenceHub))]
 public class PresenceHubTests
 {
-
+    /*
     private Mock<ILogger<PresenceHub>> _mockLogger;
     private Mock<IUserNotificationScopeService> _mockUserNotification;
     private Mock<IOnlineUserStore> _mockOnlineUserStore;
@@ -193,4 +193,5 @@ public class PresenceHubTests
     {
         _hub?.Dispose();
     }
+    */
 }

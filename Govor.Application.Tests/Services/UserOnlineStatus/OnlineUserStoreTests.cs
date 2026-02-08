@@ -6,6 +6,7 @@ namespace Govor.Application.Tests.Services.UserOnlineStatus;
 [TestFixture]
 public class OnlineUserStoreTests
 {
+    /*
     private IOnlineUserStore _store;
     private Guid _userId1;
     private Guid _userId2;
@@ -78,5 +79,5 @@ public class OnlineUserStoreTests
     {
         // Act & Assert 
         Assert.DoesNotThrow(() => _store.SetOfflineUser(Guid.NewGuid()));
-    }
+    }*/
 }

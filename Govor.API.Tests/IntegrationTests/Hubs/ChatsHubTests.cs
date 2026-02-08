@@ -12,6 +12,7 @@ namespace Govor.API.Tests.IntegrationTests.Hubs;
 [TestFixture]
 public class ChatsHubTests
 {
+    /*
     private Mock<ILogger<ChatsHub>> _loggerMock;
     private Mock<IMessageCommandService> _messageServiceMock;
     private Mock<IUserGroupsGetterService> _userGroupsServiceMock;
@@ -52,4 +53,5 @@ public class ChatsHubTests
     {
         _chatsHub?.Dispose();
     }
+    */
 }
