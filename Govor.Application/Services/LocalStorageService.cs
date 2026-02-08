@@ -1,5 +1,4 @@
 using Govor.Application.Interfaces;
-using Microsoft.AspNetCore.Hosting;
 namespace Govor.Application.Services;
 
 public class LocalStorageService : IStorageService
@@ -33,7 +32,7 @@ public class LocalStorageService : IStorageService
         var fullPath = Path.Combine(folder, uniqueFileName);
         
         await using var stream = new FileStream(fullPath, FileMode.Create);
-        stream.WriteAsync(data, 0, data.Length);
+        await stream.WriteAsync(data, 0, data.Length);
         
         return Path.Combine(date, uniqueFileName);
     }

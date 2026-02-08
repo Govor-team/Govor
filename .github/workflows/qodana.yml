@@ -1,0 +1,22 @@
+name: Qodana Analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  qodana:
+    name: Run Qodana Code Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Qodana
+        uses: JetBrains/qodana-action@v2024.1
+        with:
+          # Указываем путь к qodana.yaml (если он не в корне)
+          args: --ide QDNET --project-dir .

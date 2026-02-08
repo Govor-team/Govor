@@ -1,0 +1,9 @@
+﻿namespace Govor.Contracts.DTOs;
+
+public class UserProfileDto
+{
+    public Guid Id { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public Guid? IconId { get; set; }
+}

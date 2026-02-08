@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Users;
 
 namespace Govor.Core.Repositories.Admins;
 

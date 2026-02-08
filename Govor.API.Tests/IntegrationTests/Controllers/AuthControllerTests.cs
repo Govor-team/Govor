@@ -1,11 +1,12 @@
 using AutoFixture;
-using Govor.API.Controllers;
-using Govor.API.Services.Authentication.Interfaces;
+using Govor.API.Controllers.Authentication;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Exceptions.InvitesService;
 using Govor.Application.Interfaces.Authentication;
+using Govor.Application.Interfaces.UserSession;
 using Govor.Contracts.Requests;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -19,6 +20,7 @@ public class AuthControllerTests
     private Mock<IAccountService> _accountServiceMock;
     private Mock<IInvitesService> _invitesServiceMock;
     private Mock<ILogger<AuthController>> _loggerMock;
+    private Mock<IUserSessionOpener> _userSessionOpenerMock;
     private AuthController _controller;
     
     [SetUp]
@@ -31,10 +33,12 @@ public class AuthControllerTests
         _accountServiceMock = new Mock<IAccountService>();
         _invitesServiceMock = new Mock<IInvitesService>();
         _loggerMock = new Mock<ILogger<AuthController>>();
-
+        _userSessionOpenerMock = new Mock<IUserSessionOpener>();
+        
         _controller = new AuthController(
             _accountServiceMock.Object,
             _invitesServiceMock.Object,
+            _userSessionOpenerMock.Object,
             _loggerMock.Object
         );
     }
@@ -46,10 +50,19 @@ public class AuthControllerTests
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
         var invitation = _fixture.Create<Invitation>();
-        var token = _fixture.Create<string>();
+        var token = _fixture.Create<RefreshResult>();
+        
+        var user = _fixture.Build<User>()
+            .With(x => x.Username).Create();
+        
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ReturnsAsync(invitation);
 
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Returns(invitation);
-        _accountServiceMock.Setup(s => s.RegistrationAsync(request.Name, request.Password, invitation)).ReturnsAsync(token);
+       
+        _accountServiceMock.Setup(l => l.RegistrationAsync(request.Name, request.Password, invitation))
+            .ReturnsAsync(user);
+        
+        _userSessionOpenerMock.Setup(f => f.OpenSessionAsync(user, request.DeviceInfo))
+            .ReturnsAsync(token);
 
         // Act
         var result = await _controller.Register(request);
@@ -57,8 +70,11 @@ public class AuthControllerTests
         // Assert
         Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = result as OkObjectResult;
-        dynamic value = okResult.Value;
-        Assert.That((string)value.GetType().GetProperty("token").GetValue(value, null), Is.EqualTo(token));
+
+        var response = okResult?.Value as RefreshResult;
+        Assert.That(response, Is.Not.Null);
+        Assert.That(response.accessToken, Is.EqualTo(token.accessToken));
+        Assert.That(response.refreshToken, Is.EqualTo(token.refreshToken));
     }
     
     [Test]
@@ -80,14 +96,14 @@ public class AuthControllerTests
     {
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Throws(new InviteLinkInvalidException(request.InviteLink));
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ThrowsAsync(new InviteLinkInvalidException(request.InviteLink));
 
         // Act
         var result = await _controller.Register(request);
 
         // Assert
-        Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
-        var notFoundObjectResult = result as NotFoundObjectResult;
+        Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+        var notFoundObjectResult = result as BadRequestObjectResult;
         Assert.That(notFoundObjectResult.Value, Is.EqualTo("Invite link invalid."));
     }
 
@@ -97,7 +113,7 @@ public class AuthControllerTests
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
         var invitation = _fixture.Create<Invitation>();
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Returns(invitation);
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ReturnsAsync(invitation);
         _accountServiceMock.Setup(s => s.RegistrationAsync(request.Name, request.Password, invitation))
             .ThrowsAsync(new UserAlreadyExistException(request.Name));
 
@@ -116,7 +132,7 @@ public class AuthControllerTests
         // Arrange
         var request = _fixture.Create<RegistrationRequest>();
         var invitation = _fixture.Create<Invitation>();
-        _invitesServiceMock.Setup(s => s.Validate(request.InviteLink)).Returns(invitation);
+        _invitesServiceMock.Setup(s => s.ValidateAsync(request.InviteLink)).ReturnsAsync(invitation);
         _accountServiceMock.Setup(s => s.RegistrationAsync(request.Name, request.Password, invitation))
             .ThrowsAsync(new System.Exception("Generic error"));
     
@@ -136,16 +152,26 @@ public class AuthControllerTests
     {
         // Arrange 
         var loginRequest = _fixture.Create<LoginRequest>();
-        var token = _fixture.Create<string>();
-        _accountServiceMock.Setup(l => l.LoginAsync(loginRequest.Name, loginRequest.Password)).ReturnsAsync(token);
+        var token = _fixture.Create<RefreshResult>();
+        
+        var user = _fixture.Build<User>()
+            .With(x => x.Username).Create();
+       
+        _accountServiceMock.Setup(l => l.LoginAsync(loginRequest.Name, loginRequest.Password)).ReturnsAsync(user);
+        
+        _userSessionOpenerMock.Setup(f => f.OpenSessionAsync(user, loginRequest.DeviceInfo))
+            .ReturnsAsync(token);
         
         // Act 
         var result = await _controller.Login(loginRequest);
         // Assert 
         Assert.That(result, Is.InstanceOf<OkObjectResult>());
         var okResult = result as OkObjectResult;
-        dynamic value = okResult.Value;
-        Assert.That((string)value.GetType().GetProperty("token").GetValue(value, null), Is.EqualTo(token));
+
+        var response = okResult?.Value as RefreshResult;
+        Assert.That(response, Is.Not.Null);
+        Assert.That(response.accessToken, Is.EqualTo(token.accessToken));
+        Assert.That(response.refreshToken, Is.EqualTo(token.refreshToken));
     }
     
     [Test]

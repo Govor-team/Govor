@@ -1,4 +1,5 @@
-using Govor.API.Services;
+using Govor.Application.Interfaces;
+using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,24 +10,36 @@ namespace Govor.API.Controllers;
 public class InviteController : ControllerBase
 {
     private readonly IGroupService _groupService;
-
-    public InviteController(IGroupService groupService)
+    private readonly ILogger<InviteController> _logger;
+    private readonly ICurrentUserService _currentUser;
+    public InviteController(IGroupService groupService, 
+        ILogger<InviteController> logger)
     {
         _groupService = groupService;
+        _logger = logger;
     }
     
-    [HttpGet("{code}")]
     [Authorize]
+    [HttpGet("{code}")]
     public IActionResult JoinGroup(string code)
     {
-        var group = _groupService.GetGroupByInvite(code);
-        if (group == null) return NotFound();
-        
-        return Ok(new
+        try
         {
-            groupId = group.Id,
-            name = group.Name,
-            isChannel = group.IsChannel
-        });
+            _groupService.AddUserToGroupByInvitationAsync(_currentUser.GetCurrentUserId(), code);
+            
+            var group = _groupService.GetGroupByInviteCode(code);
+
+            return Ok(new
+            {
+                groupId = group.Id,
+                name = group.Name,
+                isChannel = group.IsChannel
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, ex.Message);
+        }
     }
 }

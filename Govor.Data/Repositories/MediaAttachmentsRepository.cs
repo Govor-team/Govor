@@ -1,6 +1,6 @@
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Govor.Core.Repositories.MediasAttachments;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +23,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         return await _context.MediaAttachments
             .AsNoTracking()
             .Include(ma => ma.Message)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("No media attachments found."));
     }
 
@@ -31,6 +32,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         return await _context.MediaAttachments
             .AsNoTracking()
             .Include(ma => ma.Message)
+            .AsSplitQuery()
             .Where(m => m.MessageId == messageId)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(messageId, "No media attachments found by given message Id"));
     }
@@ -40,6 +42,7 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         return await _context.MediaAttachments
             .AsNoTracking()
             .Include(ma => ma.Message)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id)
             ?? throw new NotFoundByKeyException<Guid>(id, "No media attachments found by given Id");
     }
@@ -74,17 +77,13 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
                 .ExecuteUpdateAsync(u => u
                     .SetProperty(m => m.MessageId, attachments.MessageId)
                     .SetProperty(m => m.Message, attachments.Message)
-                    .SetProperty(m => m.FilePath, attachments.FilePath)
-                    .SetProperty(m => m.MimeType, attachments.MimeType)
-                    .SetProperty(m => m.EncryptedKey, attachments.EncryptedKey)
+                    .SetProperty(m => m.MediaFileId, attachments.MediaFileId)
                 );
 
             if (rowsAffected == 0)
-                throw new NotFoundByKeyException<Guid>(attachments.Id);
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new UpdateException($"Not found attachments by given id {attachments.Id}", ex);
+                throw new UpdateException($"Not found attachments by given id {attachments.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -122,11 +121,8 @@ public class MediaAttachmentsRepository : IMediaAttachmentsRepository
         
         return _context.MediaAttachments.Any(
             e => e.Id == attachments.Id &&
-            e.EncryptedKey == attachments.EncryptedKey &&
-            e.MimeType == attachments.MimeType &&
-            e.FilePath == attachments.FilePath && 
             e.MessageId == attachments.MessageId &&
-            e.Type == attachments.Type
+            e.MediaFileId == attachments.MediaFileId
             );
     }
 }

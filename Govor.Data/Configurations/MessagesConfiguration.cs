@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -24,11 +24,6 @@ public class MessagesConfiguration : IEntityTypeConfiguration<Message>
             .WithOne()
             .HasForeignKey(mv => mv.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(m => m.ReplyToMessage)
-            .WithMany()
-            .HasForeignKey(m => m.ReplyToMessageId)
-            .OnDelete(DeleteBehavior.Restrict); 
 
         builder.Property(m => m.EncryptedContent)
             .IsRequired();

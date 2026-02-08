@@ -1,6 +1,7 @@
 using AutoFixture;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 
 namespace Govor.API.Tests.UnitTests.Infrastructure.Validators;
 

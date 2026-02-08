@@ -1,6 +1,7 @@
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Friendships;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,7 @@ public class FriendshipsRepository : IFriendshipsRepository
             .AsNoTracking()
             .Include(x => x.Requester)
             .Include(x => x.Addressee)
+            .AsSplitQuery()
             .ToListOrThrowIfEmpty(new NotFoundException("Database is empty"));
     }
 
@@ -33,6 +35,7 @@ public class FriendshipsRepository : IFriendshipsRepository
             .AsNoTracking()
             .Include(x => x.Requester)
             .Include(x => x.Addressee)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new NotFoundByKeyException<Guid>(id, "Friendship with given id was not found");
     }
@@ -43,7 +46,9 @@ public class FriendshipsRepository : IFriendshipsRepository
             .AsNoTracking()
             .Include(x => x.Requester)
             .Include(x => x.Addressee)
-            .Where(x => x.RequesterId == userId)
+            .AsSplitQuery()
+            .Where(f =>
+                (f.RequesterId == userId || f.AddresseeId == userId))
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(userId, "Friendship with given user id was not found"));
     }
 
@@ -81,11 +86,9 @@ public class FriendshipsRepository : IFriendshipsRepository
                 );
 
             if (rowsAffected == 0)
-                throw new NotFoundByKeyException<Guid>(friendship.Id);
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            throw new UpdateException($"Not found friendship by given id {friendship.Id}", ex);
+                throw new UpdateException($"Not found friendship by given id {friendship.Id}");
+
+            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -114,6 +117,7 @@ public class FriendshipsRepository : IFriendshipsRepository
 
     public bool Exist(Guid requesterId, Guid addresseeId)
     {
-        return _context.Friendships.AsNoTracking().Any(x => (x.RequesterId == requesterId && x.AddresseeId == addresseeId));
+        return _context.Friendships.AsNoTracking().Any(x => (x.RequesterId == requesterId && x.AddresseeId == addresseeId) ||
+                                                            x.RequesterId == addresseeId && x.AddresseeId == requesterId);
     }
 }

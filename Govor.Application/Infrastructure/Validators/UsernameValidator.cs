@@ -1,14 +1,13 @@
-using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Govor.Application.Exceptions.AuthService;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Core.Infrastructure.Validators;
 
-namespace Govor.Application.Validators;
+namespace Govor.Application.Infrastructure.Validators;
 
 public class UsernameValidator : IUsernameValidator
 {
-    private readonly Regex _usernameRegex = new(@"^[А-Яа-яЁё]+$", RegexOptions.Compiled);
+    private readonly Regex _usernameRegex = new(@"^[А-Яа-яЁё]+[А-Яа-яЁё0-9]*$", RegexOptions.Compiled);
     
     public void Validate(string username)
     {

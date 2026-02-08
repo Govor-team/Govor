@@ -1,4 +1,4 @@
-using Govor.API.Services.AdminsStuff.Interfaces;
+using Govor.Application.Interfaces;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Requests;
 using Govor.Core.Repositories.Invaites;
@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.AdminStuff;
 
-[Route("api/[controller]")]
+[Route("api/admin/[controller]")]
 [ApiController]
-[Authorize(Roles = "Admin")]
+//[Authorize(Roles = "Admin")]
 public class InviteUserController : Controller
 {
     private readonly IInvitesRepository _repository;
@@ -52,13 +52,13 @@ public class InviteUserController : Controller
             _logger.LogInformation("Getting all active invitations by administrator");
 
             var read = await _repository.GetAllAsync();
-            var result = read.Where(x => x.IsActive == true).ToList();
+            var result = read.Where(x => x.IsActive).ToList();
             
-            List<InvitationDto> dtos = new List<InvitationDto>();
+            List<InvitationResponses> dtos = new List<InvitationResponses>();
             
             foreach (var inv in result)
             {
-                dtos.Add(new InvitationDto(){
+                dtos.Add(new InvitationResponses(){
                     Id = inv.Id,
                     Description = inv.Description,
                     IsAdmin = inv.IsAdmin, 
@@ -67,6 +67,7 @@ public class InviteUserController : Controller
                     CreatedAt = inv.DateCreated,
                     EndAt = inv.EndDate,
                     IsActive = inv.IsActive,
+                    ParticipantCount = inv.Users.Count,
                 });
             }
             
@@ -87,11 +88,11 @@ public class InviteUserController : Controller
             _logger.LogInformation("Getting all invitations by administrator");
             var read = await _repository.GetAllAsync();
 
-            List<InvitationDto> dtos = new List<InvitationDto>();
+            List<InvitationResponses> dtos = new List<InvitationResponses>();
             
             foreach (var inv in read)
             {
-                dtos.Add(new InvitationDto(){
+                dtos.Add(new InvitationResponses(){
                     Id = inv.Id,
                     Description = inv.Description,
                     IsAdmin = inv.IsAdmin, 
@@ -100,6 +101,7 @@ public class InviteUserController : Controller
                     CreatedAt = inv.DateCreated,
                     EndAt = inv.EndDate,
                     IsActive = inv.IsActive,
+                    ParticipantCount = inv.Users.Count,
                 });
             }
             
@@ -120,17 +122,17 @@ public class InviteUserController : Controller
             _logger.LogInformation("Getting invitations {id} by administrator");
             var read = await _repository.FindByIdAsync(id);
             
-            var response = new InvitationDto(){
-                    Id = read.Id,
-                    Description = read.Description,
-                    IsAdmin = read.IsAdmin, 
-                    MaxParticipants = read.MaxParticipants,
-                    Code = read.Code, 
-                    CreatedAt = read.DateCreated,
-                    EndAt = read.EndDate,
-                    IsActive = read.IsActive,
+            var response = new InvitationResponses(){
+                Id = read.Id,
+                Description = read.Description,
+                IsAdmin = read.IsAdmin, 
+                MaxParticipants = read.MaxParticipants,
+                Code = read.Code, 
+                CreatedAt = read.DateCreated,
+                EndAt = read.EndDate,
+                IsActive = read.IsActive,
+                ParticipantCount = read.Users.Count,
             };
-            
             
             return Ok(response);
         }

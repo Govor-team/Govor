@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Core.Models.Messages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -10,17 +10,14 @@ public class MediaAttachmentsConfiguration : IEntityTypeConfiguration<MediaAttac
     {
         builder.HasKey(ma => ma.Id);
 
-        builder.Property(ma => ma.FilePath)
-            .IsRequired();
+        builder.HasOne(ma => ma.Message)
+            .WithMany(m => m.MediaAttachments)
+            .HasForeignKey(ma => ma.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Property(ma => ma.MimeType)
-            .IsRequired();
-
-        builder.Property(ma => ma.EncryptedKey)
-            .HasMaxLength(512); // зависит от шифра
-
-        builder.Property(ma => ma.Type)
-            .HasConversion<string>() // enum as string (e.g., "Image")
-            .IsRequired();
+        builder.HasOne(ma => ma.MediaFile)
+            .WithMany()
+            .HasForeignKey(ma => ma.MediaFileId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

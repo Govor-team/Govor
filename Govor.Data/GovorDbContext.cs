@@ -1,5 +1,7 @@
-using System.Text.RegularExpressions;
 using Govor.Core.Models;
+using Govor.Core.Models.Messages;
+using Govor.Core.Models.Users;
+using Govor.Core.Models.Users.Crypto;
 using Govor.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +10,10 @@ namespace Govor.Data;
 public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContext(options)
 {
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<UserSession> UserSessions { get; set; }
+    public virtual DbSet<UserCryptoSession> UserCryptoSessions { get; set; }
+    public virtual DbSet<SignedPreKey> SignedPreKeys { get; set; }
+    public virtual DbSet<OneTimePreKey> OneTimePreKeys { get; set; }
     public virtual DbSet<Friendship> Friendships { get; set; }
     public virtual DbSet<PrivateChat> PrivateChats { get; set; }
     public virtual DbSet<Admin> Admins { get; set; }
@@ -18,13 +24,16 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
     public virtual DbSet<MessageView> MessageViews { get; set; }
     public virtual DbSet<MessageReaction> MessageReactions { get; set; }
     public virtual DbSet<MediaAttachments> MediaAttachments { get; set; }
+    public virtual DbSet<MediaFile> MediaFiles { get; set; }
    
     public virtual DbSet<ChatGroup> ChatGroups { get; set; }
+    public virtual DbSet<GroupInvitation> GroupInvitations { get; set; }
     public virtual DbSet<GroupMembership> GroupMemberships { get; set; }
     public virtual DbSet<GroupAdmins> GroupAdmins { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfiguration(new UserSessionConfiguration());
         modelBuilder.ApplyConfiguration(new FriendshipConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new InvitationConfiguration());
@@ -33,7 +42,15 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new MessageReactionConfiguration());
         modelBuilder.ApplyConfiguration(new MediaAttachmentsConfiguration());
         modelBuilder.ApplyConfiguration(new MessageViewConfiguration());
-        
+        modelBuilder.ApplyConfiguration(new MediaFileConfiguration());
+        modelBuilder.ApplyConfiguration(new ChatGroupConfigurator());
+        modelBuilder.ApplyConfiguration(new GroupInvitationConfiguration());
+        modelBuilder.ApplyConfiguration(new GroupMembershipConfiguration());
+        modelBuilder.ApplyConfiguration(new GroupAdminsConfiguration());
+
+        modelBuilder.ApplyConfiguration(new OneTimePreKeyConfiguration());
+        modelBuilder.ApplyConfiguration(new UserCryptoSessionConfiguration());
+        modelBuilder.ApplyConfiguration(new SignedPreKeyConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

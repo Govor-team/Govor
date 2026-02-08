@@ -8,15 +8,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Core", "Govor.Core\Go
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Data", "Govor.Data\Govor.Data.csproj", "{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Console", "Govor.Console\Govor.Console.csproj", "{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.ConsoleClient", "Govor.ConsoleClient\Govor.ConsoleClient.csproj", "{F4535DC3-BDFB-4EB2-B259-F92B6BBB535B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4ED5259A-6FB4-4D89-8E6B-4778DC68F7D4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{114F53C1-B0AB-4BA0-9E36-0E811D1B3776}"
+	ProjectSection(SolutionItems) = preProject
+		Dockerfile = Dockerfile
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Contracts", "Govor.Contracts\Govor.Contracts.csproj", "{4E94907F-BE20-42A6-AB15-637850FEAD11}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Application", "Govor.Application\Govor.Application.csproj", "{FC5EDCA8-FD58-4078-8FB1-2BDBB2F6CA3E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Application.Tests", "Govor.Application.Tests\Govor.Application.Tests.csproj", "{F56A64DF-2938-4BE0-83F2-B86429F19259}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.Data.Tests", "Govor.Data.Tests\Govor.Data.Tests.csproj", "{CF6B23EC-932A-4998-BA95-C94CAB7B092C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Govor.ConsoleClient.Tests", "Govor.ConsoleClient.Tests\Govor.ConsoleClient.Tests.csproj", "{B1E79EB6-DBD3-4E82-AB6D-DCFCE6533965}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,6 +61,18 @@ Global
 		{FC5EDCA8-FD58-4078-8FB1-2BDBB2F6CA3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC5EDCA8-FD58-4078-8FB1-2BDBB2F6CA3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC5EDCA8-FD58-4078-8FB1-2BDBB2F6CA3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F56A64DF-2938-4BE0-83F2-B86429F19259}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F56A64DF-2938-4BE0-83F2-B86429F19259}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F56A64DF-2938-4BE0-83F2-B86429F19259}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F56A64DF-2938-4BE0-83F2-B86429F19259}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF6B23EC-932A-4998-BA95-C94CAB7B092C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF6B23EC-932A-4998-BA95-C94CAB7B092C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF6B23EC-932A-4998-BA95-C94CAB7B092C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF6B23EC-932A-4998-BA95-C94CAB7B092C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1E79EB6-DBD3-4E82-AB6D-DCFCE6533965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1E79EB6-DBD3-4E82-AB6D-DCFCE6533965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1E79EB6-DBD3-4E82-AB6D-DCFCE6533965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1E79EB6-DBD3-4E82-AB6D-DCFCE6533965}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{15031CBD-F319-4755-BA91-B86F20BD8E37} = {4ED5259A-6FB4-4D89-8E6B-4778DC68F7D4}
@@ -61,5 +82,8 @@ Global
 		{E4EDB179-7EB5-468D-9C1F-0CBE2E5E459E} = {114F53C1-B0AB-4BA0-9E36-0E811D1B3776}
 		{4E94907F-BE20-42A6-AB15-637850FEAD11} = {114F53C1-B0AB-4BA0-9E36-0E811D1B3776}
 		{FC5EDCA8-FD58-4078-8FB1-2BDBB2F6CA3E} = {114F53C1-B0AB-4BA0-9E36-0E811D1B3776}
+		{F56A64DF-2938-4BE0-83F2-B86429F19259} = {4ED5259A-6FB4-4D89-8E6B-4778DC68F7D4}
+		{CF6B23EC-932A-4998-BA95-C94CAB7B092C} = {4ED5259A-6FB4-4D89-8E6B-4778DC68F7D4}
+		{B1E79EB6-DBD3-4E82-AB6D-DCFCE6533965} = {4ED5259A-6FB4-4D89-8E6B-4778DC68F7D4}
 	EndGlobalSection
 EndGlobal

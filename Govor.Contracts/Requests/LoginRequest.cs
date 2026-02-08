@@ -13,4 +13,5 @@ public class LoginRequest
     [Required]
     [MinLength(8)]
     public string Password { get; init; }
+    public string DeviceInfo { get; init; }
 }

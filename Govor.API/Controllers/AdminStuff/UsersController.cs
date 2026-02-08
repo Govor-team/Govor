@@ -1,4 +1,7 @@
-using Govor.API.Services.AdminsStuff.Interfaces;
+using Govor.Application.Interfaces;
+using Govor.Contracts.Responses.Admins;
+using Govor.Core.Models.Users;
+using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,15 +25,54 @@ public class UsersController : Controller
     [HttpGet]
     public async Task<IActionResult> AllUsers()
     {
-        _logger.LogInformation("Getting all users by administrator");
-        var read = await _users.GetAllUsersAsync();
+        try
+        {
+            _logger.LogInformation("Getting all users by administrator");
+            var read = await _users.GetAllUsersAsync();
         
-        return Ok(read);
+            return Ok(BuildUserDtos(read));
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return StatusCode(500, e.Message);
+        }
+
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetUserById(Guid id)
     {
-        return Ok(id);
+        try
+        {
+            _logger.LogInformation($"Getting user {id} by administrator");
+            var read = await _users.GetUserById(id);
+            return Ok(BuildUserDtos([read]).First());
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(ex.Message);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return StatusCode(500, e.Message);
+        }
     }
+    
+    
+    private List<UserResponse> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserResponse
+    {
+        Id = user.Id,
+        Username = user.Username,
+        Description = user.Description,
+        WasOnline = user.WasOnline,
+        IconId = user.IconId,
+        PasswordHash = user.PasswordHash,
+        InviteId = user.InviteId,
+        CreatedOn = user.CreatedOn,
+        IsAdmin = user.Invite?.IsAdmin ?? false,
+    }).ToList();
+
 }

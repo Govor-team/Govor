@@ -1,7 +1,7 @@
-using System.Text;
-using Govor.API.Extensions;
+﻿using System.Text;
+using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
-using Govor.Application.Services;
+using Govor.Application.Services.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -11,23 +11,30 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 var services = builder.Services;
 
+builder.AddLogger();// Serilog
+
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.WithOrigins(
+                "https://localhost:7155",
+                "http://localhost:7155",
+                "https://govor-team-govor-8ce1.twc1.net",
+                "http://govor-team-govor-8ce1.twc1.net"
+                )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
-builder.Services.Configure<JwtOption>(configuration.GetSection(nameof(JwtOption)));
+builder.Services.Configure<JwtAccessOption>(configuration.GetSection(nameof(JwtAccessOption)));
 
 // Add services
-builder.Services.AddSignalR();
+builder.Services.AddSignalRConf();// signalR
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -39,7 +46,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtOption:SecretKeу"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtAccessOption:SecretKey"]!))
         };
         options.Events = new JwtBearerEvents
         {
@@ -64,6 +71,8 @@ builder.Services.AddControllers();
 builder.Services.AddServices();
 builder.Services.AddRepositories();
 builder.Services.AddValidators();
+
+builder.Services.AddOptionsConfiguration(configuration);
 
 builder.Services.AddGovorDbContext(configuration); // GovorDbContext init
 
@@ -94,17 +103,22 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+
 //builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    builder.WebHost.UseUrls("http://0.0.0.0:8080");
 }
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 
@@ -114,9 +128,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<ChatsHub>("/api/chats"); 
 
-app.MapSwagger().RequireAuthorization();
+app.MapHub<ChatsHub>("/hubs/chats"); 
+app.MapHub<FriendsHub>("/hubs/friends");
+app.MapHub<ProfileHub>("/hubs/profiles");
+
+app.MapSwagger()
+    .RequireAuthorization();
 
 app.Map("/", () => "Not for browsers");
 

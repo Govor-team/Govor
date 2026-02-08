@@ -1,8 +1,11 @@
-using Govor.Core.Models;
+using System.Security.Claims;
+using Govor.Core.Models.Users;
 
-namespace Govor.API.Services.Authentication.Interfaces;
+namespace Govor.Application.Interfaces.Authentication;
 
 public interface IJwtService
 {
-    string GenerateJwtToken(User user);
+    Task<string> GenerateAccessTokenAsync(User user, Guid sessionId);
+    Task<string> GenerateRefreshTokenAsync(User user);
+    ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
 }

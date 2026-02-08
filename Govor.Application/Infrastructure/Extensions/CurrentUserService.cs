@@ -6,21 +6,23 @@ namespace Govor.Application.Infrastructure.Extensions;
 
 public class CurrentUserService : ICurrentUserService
 {
-    private readonly ClaimsPrincipal _user;
-    
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
     public CurrentUserService(IHttpContextAccessor httpContextAccessor)
     {
-        _user = httpContextAccessor.HttpContext.User;
+        _httpContextAccessor = httpContextAccessor;
     }
-    
+
     public Guid GetCurrentUserId()
     {
-        var userIdClaim = _user.FindFirst("userId")?.Value;
-        
+        var user = _httpContextAccessor.HttpContext?.User;
+        var userIdClaim = user?.FindFirst("userId")?.Value;
+
         if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
         {
             throw new UnauthorizedAccessException("userID claim is missing or invalid");
         }
+
         return userId;
     }
 }

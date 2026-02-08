@@ -1,9 +1,10 @@
 using Govor.Core.Models;
+using Govor.Core.Models.Users;
 
-namespace Govor.API.Services.Authentication.Interfaces;
+namespace Govor.Application.Interfaces.Authentication;
 
 public interface IInvitesService
 {
-    public Task<string> GetRole(User user);
-    public Invitation Validate(string inviteCode);
+    public Task<string> GetRoleAsync(User user);
+    public Task<Invitation> ValidateAsync(string inviteCode);
 }
