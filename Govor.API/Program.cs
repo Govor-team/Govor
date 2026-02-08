@@ -107,7 +107,7 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
-    builder.WebHost.UseUrls("http://72.56.93.242:8080");
+    builder.WebHost.UseUrls("http://0.0.0.0:8080");
     //builder.WebHost.UseUrls("http://192.168.1.107:8080");
 }
 
