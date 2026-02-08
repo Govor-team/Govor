@@ -14,7 +14,7 @@ public class ChatsHubTests
 {
     private Mock<ILogger<ChatsHub>> _loggerMock;
     private Mock<IMessageCommandService> _messageServiceMock;
-    private Mock<IUserGroupsService> _userGroupsServiceMock;
+    private Mock<IUserGroupsGetterService> _userGroupsServiceMock;
     private Mock<IHubUserAccessor> _hubUserAccessorMock;
     private Fixture _fixture;
     private ChatsHub _chatsHub;
@@ -27,7 +27,7 @@ public class ChatsHubTests
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
         
         _messageServiceMock = new Mock<IMessageCommandService>();
-        _userGroupsServiceMock = new Mock<IUserGroupsService>();
+        _userGroupsServiceMock = new Mock<IUserGroupsGetterService>();
         _loggerMock = new Mock<ILogger<ChatsHub>>();
         _hubUserAccessorMock = new Mock<IHubUserAccessor>();
 

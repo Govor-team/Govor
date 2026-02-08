@@ -100,6 +100,19 @@ public class MediaService : IMediaService
             throw;
         }
     }
+
+    public async Task<bool> HasMediaAsync(Guid mediaId)
+    {
+        return await _dbContext.MediaFiles.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == mediaId) is not null;
+    }
+
+    public async Task<bool> HasMediaByUrlAsync(string url)
+    {
+        return await _dbContext.MediaFiles.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Url == url) is not null;
+    }
+
     public async Task AttachToMessageAsync(Guid mediaId, Guid messageId)
     {
         var mediaFile = await _dbContext.MediaFiles

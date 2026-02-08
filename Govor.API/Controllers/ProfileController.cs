@@ -72,14 +72,6 @@ public class ProfileController : ControllerBase
             await _profileService.SetNewIcon(userId, mediaInfo.MediaId);
             var iconId = mediaInfo.MediaId;
             
-            var payload = new { userId, iconId };
-            
-            await _profileHubContext.Clients.All.SendAsync(
-                "AvatarUpdated", 
-                payload
-            );
-
-
             return Ok(mediaInfo);
         }
         catch (System.Exception ex)

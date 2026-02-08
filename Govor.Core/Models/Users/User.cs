@@ -19,17 +19,7 @@ public class User
     public override bool Equals(object? obj)
     {
         var user = obj as User;
-        
-        return Id == user.Id &&
-               Username == user.Username &&
-               Description == user.Description &&
-               PasswordHash == user.PasswordHash &&
-               IconId == user.IconId &&
-               CreatedOn == user.CreatedOn &&
-               WasOnline == user.WasOnline &&
-               InviteId == user.InviteId &&
-               Invite == user.Invite &&
-               SentFriendRequests == user.SentFriendRequests &&
-               ReceivedFriendRequests == user.ReceivedFriendRequests;
+
+        return Id == user.Id;
     }
 }

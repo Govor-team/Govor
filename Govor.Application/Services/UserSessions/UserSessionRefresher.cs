@@ -16,6 +16,7 @@ public class UserSessionRefresher : IUserSessionRefresher
     private readonly ILogger<UserSessionRefresher> _logger;
     private readonly IUsersRepository _usersRepository;
     private readonly JwtRefreshOption _options;
+    private readonly IJwtTokenHasher _jwtTokenHasher;
     private readonly IJwtService _jwtService;
 
     public UserSessionRefresher(
@@ -23,12 +24,14 @@ public class UserSessionRefresher : IUserSessionRefresher
         ILogger<UserSessionRefresher> logger,
         IUsersRepository usersRepository,
         IOptions<JwtRefreshOption> options,
+        IJwtTokenHasher jwtTokenHasher,
         IJwtService jwtService)
     {
         _sessionsRepository = sessionsRepository;
         _logger = logger;
         _usersRepository = usersRepository;
         _options = options.Value;
+        _jwtTokenHasher = jwtTokenHasher;
         _jwtService = jwtService;
     }
 
@@ -36,7 +39,8 @@ public class UserSessionRefresher : IUserSessionRefresher
     {
         try
         {
-            var session = await _sessionsRepository.GetByHashedRefreshTokenAsync(refreshToken);
+            
+            var session = await _sessionsRepository.GetByHashedRefreshTokenAsync(_jwtTokenHasher.HashToken(refreshToken));
 
             if (session.IsRevoked || session.ExpiresAt <= DateTime.UtcNow)
                 throw new UnauthorizedAccessException("Refresh token is invalid or expired");
@@ -50,12 +54,14 @@ public class UserSessionRefresher : IUserSessionRefresher
             // New tokens 
             var newAccessToken = await _jwtService.GenerateAccessTokenAsync(user, session.Id);
             var newRefreshToken = await _jwtService.GenerateRefreshTokenAsync(user);
-
+            
+            var newRefreshTokenHash = _jwtTokenHasher.HashToken(newRefreshToken);
+            
             // Opening new session 
             var newSession = new UserSession
             {
                 UserId = user.Id,
-                RefreshTokenHash = newRefreshToken,
+                RefreshTokenHash = newRefreshTokenHash,
                 DeviceInfo = session.DeviceInfo,
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(_options.RefreshTokenLifetimeDays)

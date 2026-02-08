@@ -9,6 +9,8 @@ public interface IMediaService
     public Task DeleteMediaAsync(Guid fileId);
     public Task<Media> GetMediaByUrlAsync(string url);
     public Task<Media> GetMediaByIdAsync(Guid mediaId);
+    public Task<bool> HasMediaAsync(Guid mediaId);
+    public Task<bool> HasMediaByUrlAsync(string url);
     Task AttachToMessageAsync(Guid mediaId, Guid messageId);
 }
 

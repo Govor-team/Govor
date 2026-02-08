@@ -42,6 +42,14 @@ public class PrivateChatsRepository : IPrivateChatsRepository
             ?? throw new NotFoundByKeyException<(Guid, Guid)>((memberAId, memberBId), "Private Chat with given members Id's does not exist");
     }
 
+    public async Task<List<PrivateChat>> GetAllOfUser(Guid userId)
+    {
+        return await _context.PrivateChats
+                   .AsNoTracking()
+                   .Where(f => f.UserAId == userId || f.UserBId == userId)
+                   .ToListOrThrowIfEmpty(new NotFoundByKeyException<Guid>(userId, "Private Chat with given member Id's does not exist"));
+    }
+
     public async Task AddAsync(PrivateChat chat)
     {
         try

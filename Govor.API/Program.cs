@@ -22,6 +22,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "https://localhost:7155",
                 "http://localhost:7155",
+                "http://192.168.1.107:8080",
+                "http://0.0.0.0:8080",
                 "https://govor-team-govor-8ce1.twc1.net",
                 "http://govor-team-govor-8ce1.twc1.net"
                 )
@@ -113,6 +115,7 @@ if (!app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
     builder.WebHost.UseUrls("http://0.0.0.0:8080");
+    builder.WebHost.UseUrls("http://192.168.1.107:8080");
 }
 
 app.UseSwagger();
@@ -132,6 +135,7 @@ app.MapControllers();
 app.MapHub<ChatsHub>("/hubs/chats"); 
 app.MapHub<FriendsHub>("/hubs/friends");
 app.MapHub<ProfileHub>("/hubs/profiles");
+app.MapHub<PresenceHub>("/hubs/presence");
 
 app.MapSwagger()
     .RequireAuthorization();

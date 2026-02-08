@@ -9,11 +9,11 @@ using Moq;
 namespace Govor.Application.Tests.Services;
 
 [TestFixture]
-public class UserGroupsServiceTests
+public class UserGroupsGetterServiceTests
 {
     private Fixture _fixture;
     private Mock<IGroupsRepository> _repositoryMock;
-    private IUserGroupsService _service;
+    private IUserGroupsGetterService _getterService;
 
     [SetUp]
     public void SetUp()
@@ -29,7 +29,7 @@ public class UserGroupsServiceTests
         
         _repositoryMock = new Mock<IGroupsRepository>();
         
-        _service = new UserGroupsService(_repositoryMock.Object);
+        _getterService = new UserGroupsGetterService(_repositoryMock.Object);
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class UserGroupsServiceTests
             .ReturnsAsync([chats.First()]);
         
         // Act 
-        var result = await _service.GetUserGroupsAsync(userId);
+        var result = await _getterService.GetUserGroupsAsync(userId);
         
         // Assert 
         Assert.That(result, Is.Not.Null);
@@ -61,7 +61,7 @@ public class UserGroupsServiceTests
             .ThrowsAsync(new NotFoundByKeyException<Guid>(userId));
         
         // Act 
-        var result = await _service.GetUserGroupsAsync(userId);
+        var result = await _getterService.GetUserGroupsAsync(userId);
         
         // Assert 
         Assert.That(result, Is.Not.Null);

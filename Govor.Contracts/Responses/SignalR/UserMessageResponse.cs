@@ -3,15 +3,15 @@ using Govor.Core.Models.Messages;
 
 namespace Govor.Contracts.Responses.SignalR;
 
-public record UserMessageResponse
+public class UserMessageResponse
 {
-    public Guid MessageId { get; init; }
-    public Guid SenderId { get; init; }
-    public Guid RecipientId { get; init; }
-    public RecipientType RecipientType{get; init; }
-    public string EncryptedContent { get; init; } = string.Empty;
-    public Guid? ReplyToMessageId { get; init; }
-    public DateTime SentAt { get; init; }
-    public bool IsEdited { get; init; } = false;
-    public List<MediaFile> MediaAttachments { get; init; } = new List<MediaFile>();
+    public Guid MessageId { get; set; }
+    public Guid SenderId { get; set; }
+    public Guid RecipientId { get; set; }
+    public RecipientType RecipientType{get; set; }
+    public string EncryptedContent { get; set; } = string.Empty;
+    public Guid? ReplyToMessageId { get; set; }
+    public DateTime SentAt { get; set; }
+    public bool IsEdited { get; set; } = false;
+    public List<MediaFile> MediaAttachments { get; set; } = new List<MediaFile>();
 }

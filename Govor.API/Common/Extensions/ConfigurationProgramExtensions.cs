@@ -1,5 +1,6 @@
 using Govor.API.Common.Mapping;
 using Govor.API.Common.SignalR.Helpers;
+using Govor.API.Hubs.Infrastructure;
 using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Infrastructure.Validators;
@@ -52,6 +53,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IInvitesService, InvitesService>();
         services.AddScoped<IInvitationGenerator, InvitationGenerator>();
         services.AddScoped<IUsernameValidator, UsernameValidator>();
+        services.AddScoped<ISynchingService, SynchingService>();
         
         // Friends services 
         services.AddScoped<IFriendshipService, FriendshipService>();
@@ -74,7 +76,8 @@ public static class ConfigurationProgramExtensions
         
         services.AddScoped<IMessageCommandService, MessageCommandService>();
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
-        services.AddScoped<IUserGroupsService, UserGroupsService>();
+        services.AddScoped<IUserGroupsGetterService, UserGroupsGetterService>();
+        services.AddScoped<IUserPrivateChatsGetterService, UserPrivateChatsGetter>();
         services.AddScoped<IMessagesLoader, MessagesLoader>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IAccesserToDownloadMedia, AccesserToDownloadMediaService>();
@@ -86,6 +89,10 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IUserNotificationScopeService, UserNotificationScopeService>();
         services.AddScoped<IUserPresenceReader, UserPresenceReader>();
         services.AddSingleton<IOnlineUserStore, OnlineUserStore>();
+        
+        // Hubs Infrastructure
+        services.AddScoped<IChatNotificationService, ChatNotificationService>();
+        services.AddScoped<IConnectionManager, ConnectionManager>();
         
         // Auto Mapper 
         services.AddAutoMapper(typeof(MappingProfile));

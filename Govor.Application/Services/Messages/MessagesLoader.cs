@@ -25,26 +25,24 @@ public class MessagesLoader : IMessagesLoader
     }
     
     public async Task<List<Message>> LoadMessagesInUserChat(
-        Guid userId,
+        Guid privateChatId,
         Guid currentUser,
         Guid? startMessageId,
         int before = 20,
         int after = 2)
     {
-        if (userId == Guid.Empty)
-            throw new ArgumentException("User id cannot be empty");
+        if (privateChatId == Guid.Empty)
+            throw new ArgumentException("PrivateChatId id cannot be empty");
 
-        if (!_privateChatsRepository.Exist(userId, currentUser))
+        if (!_privateChatsRepository.Exist(privateChatId))
             throw new InvalidOperationException("Private chat not found");
-
-        var chat = await _privateChatsRepository.GetByMembersAsync(userId, currentUser);
-
+        
         var query = _dbContext.Messages
             .AsNoTracking()
             .Include(m => m.MediaAttachments)
             .ThenInclude(m => m.MediaFile)
             .Where(m => m.RecipientType == RecipientType.User &&
-                        m.RecipientId == chat.Id);
+                        m.RecipientId == privateChatId);
 
         if (startMessageId is null)
         {

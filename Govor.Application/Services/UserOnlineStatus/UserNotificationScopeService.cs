@@ -26,7 +26,7 @@ public class UserNotificationScopeService : IUserNotificationScopeService
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-            _logger.LogError(ex, ex.Message);
+            _logger.LogWarning(ex, ex.Message);
             throw new InvalidOperationException("User not found");
         }
     }

@@ -102,8 +102,6 @@ public class UserSessionsRepository : IUserSessionsRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found user session by given id {userSession.Id}");
-
-            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

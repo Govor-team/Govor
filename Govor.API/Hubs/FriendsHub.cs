@@ -44,6 +44,7 @@ public class FriendsHub : Hub
 
         await base.OnConnectedAsync();
     } 
+    
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var userId = _userAccessor.GetUserId(Context, true);
@@ -76,10 +77,14 @@ public class FriendsHub : Hub
         {
             var userId = _userAccessor.GetUserId(Context);
             var friendship = await _friendRequestService.SendAsync(userId, targetUserId);
+            var dto =  _mapper.Map<FriendshipDto>(friendship);
             
             await Clients.Group(targetUserId.ToString())
-                .SendAsync("FriendRequestReceived", _mapper.Map<FriendshipDto>(friendship));
-
+                .SendAsync("FriendRequestReceived", dto);
+            
+            await Clients.Group(userId.ToString())
+                .SendAsync("YourFriendRequestReceived", dto);
+            
             _logger.LogInformation($"Friend request received for user {targetUserId} from {userId}.");
             return HubResult<object>.Created();
         }
@@ -111,12 +116,13 @@ public class FriendsHub : Hub
         {
             var userId = _userAccessor.GetUserId(Context);
             var friendship = await _friendRequestService.AcceptAsync(friendshipId, userId);
+            var dto =  _mapper.Map<FriendshipDto>(friendship);
             
             await Clients.Group(userId.ToString())
-                .SendAsync("FriendRequestAccepted", _mapper.Map<FriendshipDto>(friendship));
+                .SendAsync("FriendRequestAccepted", dto);
 
             await Clients.Group(friendship.RequesterId.ToString())
-                .SendAsync( "YourFriendRequestAccepted", _mapper.Map<UserDto>(friendship.Addressee));
+                .SendAsync( "YourFriendRequestAccepted", dto);
 
             _logger.LogInformation($"Friend request accepted for user {userId} from {userId}.");
             return HubResult<object>.Ok();

@@ -5,11 +5,11 @@ using Govor.Data.Repositories.Exceptions;
 
 namespace Govor.Application.Services;
 
-public class UserGroupsService : IUserGroupsService
+public class UserGroupsGetterService : IUserGroupsGetterService
 {
     private readonly IGroupsRepository _groupRep;
     
-    public UserGroupsService(IGroupsRepository groupsRepository)
+    public UserGroupsGetterService(IGroupsRepository groupsRepository)
     {
         _groupRep = groupsRepository;
     }

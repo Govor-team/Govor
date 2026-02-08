@@ -11,7 +11,7 @@ namespace Govor.API.Controllers;
 
 [ApiController]
 [Authorize(Roles = "Admin, User")]
-[Route("api/chats")]
+[Route("api")]
 public class ChatLoadController : Controller
 {
     private readonly ICurrentUserService _currentUser;
@@ -31,9 +31,9 @@ public class ChatLoadController : Controller
         _mapper = mapper;
     }
     
-    [HttpGet("group-messages")]
+    [HttpGet("groups/{groupId:guid}/messages")]
     public async Task<IActionResult> GetGroupMessages( 
-         Guid chatId,
+         Guid groupId,
          [FromQuery] MessageQuery query)
     {
         try
@@ -42,7 +42,7 @@ public class ChatLoadController : Controller
                 return BadRequest("Values must be non-negative and total must not exceed 100.");
 
             var result = await _messagesLoader.LoadMessagesInChatGroup(
-                chatId,
+                groupId,
                 _currentUser.GetCurrentUserId(),
                 query.StartMessageId,
                 query.Before,
@@ -74,7 +74,7 @@ public class ChatLoadController : Controller
         }
     }
     
-    [HttpGet("user-messages")]
+    [HttpGet("user/{userId:guid}/messages")]
     public async Task<IActionResult> GetUserMessages(
         Guid userId,
         [FromQuery] MessageQuery query)

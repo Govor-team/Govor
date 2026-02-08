@@ -20,6 +20,9 @@ public class MappingProfile : Profile
 
         CreateMap<User, UserDto>()
             .AfterMap<UserToUserDtoMappingAction>();
+
+        CreateMap<UserProfile, UserProfileDto>()
+            .AfterMap<UserProfileToUserProfileDtoMappingAction>();
         
         CreateMap<Friendship, FriendshipDto>();
 

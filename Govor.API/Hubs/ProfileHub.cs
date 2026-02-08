@@ -1,11 +1,9 @@
 ﻿using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Friends;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Medias;
+using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses.SignalR;
-using Govor.Core.Models;
-using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Groups;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -19,6 +17,7 @@ public class ProfileHub : Hub
     private readonly IFriendshipService _friendsService;
     private readonly IProfileService _profileService;
     private readonly IHubUserAccessor _userAccessor;
+    private readonly ISynchingService _synchingService;
     private readonly ILogger<ProfileHub> _logger;
     private readonly IMediaService _mediaService; 
     
@@ -27,46 +26,24 @@ public class ProfileHub : Hub
         IFriendshipService friendsService,
         IProfileService profileService,
         IHubUserAccessor userAccessor,
+        ISynchingService synchingService,
+        IMediaService mediaService,
         ILogger<ProfileHub> logger)
     {
         _groupsRepository = groupsRepository;
         _friendsService = friendsService;
         _profileService = profileService;
         _userAccessor = userAccessor;
+        _synchingService = synchingService;
+        _mediaService = mediaService;
         _logger = logger;
     }
 
     public override async Task OnConnectedAsync()
     {
         var userId = _userAccessor.GetUserId(Context);
-        
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"user-{userId}");
 
-        // Friends
-        try
-        {
-            var friendships = await _friendsService.GetFriendsAsync(userId);
-            foreach (var friends in friendships)
-                await Groups.AddToGroupAsync(Context.ConnectionId, $"friends-{friends.Id}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to get friends for user {userId}", userId);
-        }
-        
-        // Groups
-        try
-        {
-            var groups = await _groupsRepository.GetByUserIdAsync(userId);
-            foreach (var group in groups)
-                await Groups.AddToGroupAsync(Context.ConnectionId, $"group-{group.Id}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to get groups for user {userId}", userId);
-        }
-
-        _logger.LogInformation("User {UserId} connected with ConnectionId {ConnectionId}", userId, Context.ConnectionId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"user:{userId}");
 
         await base.OnConnectedAsync();
     }
@@ -76,57 +53,36 @@ public class ProfileHub : Hub
         var userId = _userAccessor.GetUserId(Context);
         
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"user-{userId}");
-
-        // Friends
-        try
-        {
-            var friendships = await _friendsService.GetFriendsAsync(userId);
-            
-            foreach (var friendship in friendships)
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"friends-{friendship.Id}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to remove user {userId} from friend groups", userId);
-        }
-
-        // Groups
-        try
-        {
-            var groups = await _groupsRepository.GetByUserIdAsync(userId);
-
-            foreach (var group in groups)
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"group-{group.Id}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to remove user {userId} from groups", userId);
-        }
-
+        
         await base.OnDisconnectedAsync(exception);
     }
     
     public async Task<HubResult<bool>> SetDescription(string description)
     {
-        if(description.Length > 500)
-            return HubResult<bool>.Error("The description cannot be longer than 500 characters.");
-        
+        if (description.Length > 500)
+            return HubResult<bool>.Error("Description length exceeded.");
+
         var userId = _userAccessor.GetUserId(Context);
 
         try
         {
+            description = _synchingService.NormalizeNewlines(description);
             await _profileService.SetDescription(description, userId);
 
-            var payload = new { userId, description };
+            var payload = new DescriptionUpdatePayload
+            {
+                UserId = userId,
+                Description = description
+            };
 
-            await NotifyFriendsAndGroupsAsync(userId, "DescriptionUpdated", payload);
+            await NotifyProfileUpdatedAsync(userId, "DescriptionUpdated", payload);
 
             return HubResult<bool>.Ok(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while updating the user's {userId} descripton!", userId);
-            return HubResult<bool>.Error("An unaccounted error on the server!");
+            _logger.LogError(ex, "Failed to update description for user {UserId}", userId);
+            return HubResult<bool>.Error("Server error.");
         }
     }
 
@@ -136,14 +92,14 @@ public class ProfileHub : Hub
 
         try
         {
-            if (iconId == Guid.Empty)
-                return HubResult<bool>.BadRequest("IconId can't be empty!");
+            if (iconId == Guid.Empty || !await _mediaService.HasMediaAsync(iconId))
+                return HubResult<bool>.BadRequest("Invalid icon id.");
 
             await _profileService.SetNewIcon(userId, iconId);
 
-            var payload = new { userId, iconId };
+            var payload = new AvatarUpdatePayload(){UserId = userId, IconId = iconId};
 
-            await NotifyFriendsAndGroupsAsync(userId, "AvatarUpdated", payload);
+            await NotifyProfileUpdatedAsync(userId, "AvatarUpdated", payload);
 
             return HubResult<bool>.Ok(true);
         }
@@ -154,50 +110,70 @@ public class ProfileHub : Hub
         }
     }
     
-    private async Task NotifyFriendsAndGroupsAsync(Guid userId, string eventName, object payload)
+    private async Task NotifyProfileUpdatedAsync(
+        Guid UserId,
+        string eventName,
+        object payload)
     {
-        var friendIds = Enumerable.Empty<User>();
-        var groups = Enumerable.Empty<ChatGroup>();
-
         try
         {
-            friendIds = await _friendsService.GetFriendsAsync(userId);
+            var recipients = new HashSet<Guid>();
+
+            // 1. Friends
+            try
+            {
+                var friends = await _friendsService.GetFriendsAsync(UserId);
+                recipients.UnionWith(friends.Select(f => f.Id));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "User has no friends for user {userId}", UserId);
+            }
+            
+            // 2. (pending)
+            try
+            {
+                var potentialFriends = await _friendsService.GetPotentialFriendsAsync(UserId);
+                recipients.UnionWith(potentialFriends.Select(p => p.Id));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "User has potential friends for user {userId}", UserId);
+            }
+
+
+            // 3. groups
+            /*var groups = await _groupsRepository.GetByUserIdAsync(authorUserId);
+            foreach (var group in groups)
+            {
+                var members =
+                    await _groupsRepository.Get(group.Id);
+
+                recipients.UnionWith(members.Select(m => m.Id));
+            }*/
+            
+            recipients.Add(UserId);
+
+            // 5. 
+            // recipients.RemoveWhere(id =>
+            //     !_profileVisibilityService.CanViewProfile(id, authorUserId));
+
+            
+            // 6.  1 user = 1 event
+            var recipientsStrings = 
+                recipients.Select(r => $"user:{r}").ToList();
+            
+            foreach (var recipientId in recipients)
+            {
+                await Clients.Groups(recipientsStrings)
+                    .SendAsync(eventName, payload);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to load friend list for notifications. userId: {userId}", userId);
+            _logger.LogError(ex,
+                "Failed to notify profile update for user {UserId}",
+                UserId);
         }
-
-        try
-        {
-            groups = await _groupsRepository.GetByUserIdAsync(userId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to load group list for notifications. userId: {userId}", userId);
-        }
-
-        var groupIds = groups.Select(g => g.Id).ToList();
-
-        // Current user
-        await Clients.Group($"user-{userId}")
-            .SendAsync(eventName, payload);
-
-        // Friends
-        foreach (var friend in friendIds)
-        {
-            await Clients.Group($"friends-{friend.Id}")
-                .SendAsync(eventName, payload);
-        }
-
-        // Groups
-        foreach (var groupId in groupIds)
-        {
-            await Clients.Group($"group-{groupId}")
-                .SendAsync(eventName, payload);
-        }
-
-        _logger.LogInformation("Sent {EventName} for {UserId} to {Friends} friends and {Groups} groups",
-            eventName, userId, friendIds.Count(), groupIds.Count);
     }
 }

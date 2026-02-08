@@ -1,5 +1,6 @@
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Infrastructure.Validators;
+using Govor.Core.Models;
 using Govor.Core.Models.Users;
 using Govor.Core.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
@@ -77,16 +78,13 @@ public class UsersRepository : IUsersRepository
     {
         return await _context.Users
             .AsNoTracking()
-            .Include(u => u.Invite)
-            .Include(u => u.ReceivedFriendRequests)
-            .Include(u => u.SentFriendRequests)
             .AsSplitQuery()
             .Where(u => u.Id != currentUserId &&
                         u.Username.ToLower().Contains(query.ToLower()) &&
                         !_context.Friendships.Any(f =>
-                            (f.RequesterId == currentUserId && f.AddresseeId == u.Id) ||
-                            (f.RequesterId == u.Id && f.AddresseeId == currentUserId)))
-            .Take(20)
+                            ((f.RequesterId == currentUserId && f.AddresseeId == u.Id) ||
+                            (f.RequesterId == u.Id && f.AddresseeId == currentUserId)) && f.Status != FriendshipStatus.Rejected))
+            .Take(10)
             .OrderBy(u => u.Username)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<(string, Guid)>((query, currentUserId), $"Users with given query for user {currentUserId} not found"));
     }
@@ -162,8 +160,6 @@ public class UsersRepository : IUsersRepository
 
             if (rowsAffected == 0)
                 throw new UpdateException($"Not found user by given id {user.Id}");
-
-            await _context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

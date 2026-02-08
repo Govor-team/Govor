@@ -51,12 +51,22 @@ public class MessageCommandService : IMessageCommandService
             {
                 if (!await _usersRepository.ExistsByIdAsync(sendParams.RecipientId))
                 {
-                    _logger.LogWarning("Attempt to send message to non-existent user {RecipientId}", sendParams.RecipientId);
-                    return new SendMessageResult(false, new KeyNotFoundException($"Recipient user {sendParams.RecipientId} not found."), default);
+                    if (!_privateChats.Exist(sendParams.RecipientId))
+                    {
+                        _logger.LogWarning("Attempt to send message to non-existent user {RecipientId}", sendParams.RecipientId);
+                        return new SendMessageResult(false, new KeyNotFoundException($"Recipient user {sendParams.RecipientId} not found."), default);
+                    }
+                    else
+                    {
+                        recipientId = sendParams.RecipientId;
+                    }
                 }
-                // Verify friendship for private messages
-                await _verifyFriendship.VerifyAsync(sendParams.FromUserId, sendParams.RecipientId);
-                recipientId = await GetPrivateChatsIdAsync(sendParams.FromUserId, sendParams.RecipientId);
+                else
+                {
+                    // Verify friendship for private messages
+                    await _verifyFriendship.VerifyAsync(sendParams.FromUserId, sendParams.RecipientId);
+                    recipientId = await GetPrivateChatsIdAsync(sendParams.FromUserId, sendParams.RecipientId);
+                }
             }
             else if (sendParams.RecipientType == RecipientType.Group)
             {

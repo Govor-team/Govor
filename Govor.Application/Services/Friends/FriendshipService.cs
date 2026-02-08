@@ -19,6 +19,7 @@ public class FriendshipService : IFriendshipService
         _friendshipsRepository = friendshipsRepository;
     }
 
+
     public async Task<List<User>> SearchUsersAsync(string query, Guid currentId)
     {
         List<User> all = new List<User>();
@@ -40,6 +41,23 @@ public class FriendshipService : IFriendshipService
         catch (Exception ex)
         {
             throw new UnauthorizedAccessException($"When we try find friends by pattern {query} something wrong", ex);
+        }
+    }
+    
+    public async Task<List<User>> GetPotentialFriendsAsync(Guid userId)
+    {
+        try
+        {
+            var friendships = await _friendshipsRepository.FindByUserIdAsync(userId);
+
+            return friendships
+                .Where(f => f.Status == FriendshipStatus.Pending)
+                .Select(f => f.RequesterId == userId ? f.Addressee : f.Requester)
+                .ToList();
+        }
+        catch (NotFoundByKeyException<Guid> ex)
+        {
+            throw new InvalidOperationException("Nothing was found for the specified id.", ex);
         }
     }
 

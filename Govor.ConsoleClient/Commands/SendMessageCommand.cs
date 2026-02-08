@@ -34,11 +34,11 @@ public class SendMessageCommand : IInteractiveCommand
 
     public string LongHelp()
     {
-        return "Отпарвка тестовых сообщений не существующему юзеру 2";
+        return "Отпарвка тестовых сообщений существующему юзеру 2";
     }
 
     public string ShortHelp()
     {
-        return "Отпарвка тестовых сообщений не существующему юзеру";
+        return "Отпарвка тестовых сообщений существующему юзеру";
     }
 }

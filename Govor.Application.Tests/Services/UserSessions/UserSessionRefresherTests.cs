@@ -20,6 +20,7 @@ public class UserSessionRefresherTests
     private Mock<IJwtService> _jwtServiceMock;
     private Mock<ILogger<UserSessionRefresher>> _loggerMock;
     private Mock<IOptions<JwtRefreshOption>> _optionsMock;
+    private Mock<IJwtTokenHasher> _jwtTokenHasherMock;
     private JwtRefreshOption _options;
     private UserSessionRefresher _refresher;
     private const string OldRefreshToken = "old-refresh-token";
@@ -36,6 +37,7 @@ public class UserSessionRefresherTests
         _jwtServiceMock = new Mock<IJwtService>();
         _loggerMock = new Mock<ILogger<UserSessionRefresher>>();
         _optionsMock = new Mock<IOptions<JwtRefreshOption>>();
+        _jwtTokenHasherMock = new Mock<IJwtTokenHasher>();
         
         _options = new JwtRefreshOption { RefreshTokenLifetimeDays = 30 };
         
@@ -46,6 +48,7 @@ public class UserSessionRefresherTests
             _loggerMock.Object,
             _usersRepoMock.Object,
             _optionsMock.Object,
+            _jwtTokenHasherMock.Object,
             _jwtServiceMock.Object);
 
         _user = new User

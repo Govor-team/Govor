@@ -40,6 +40,14 @@ public class FriendshipsRepository : IFriendshipsRepository
             ?? throw new NotFoundByKeyException<Guid>(id, "Friendship with given id was not found");
     }
 
+    public async Task<Friendship> GetFriendshipAsync(Guid fromUserId, Guid toUserId)
+    {
+        return await _context.Friendships
+            .FirstOrDefaultAsync(x =>
+                (x.RequesterId == fromUserId && x.AddresseeId == toUserId) ||
+                (x.RequesterId == toUserId && x.AddresseeId == fromUserId));
+    }
+
     public async Task<List<Friendship>> FindByUserIdAsync(Guid userId)
     {
         return await _context.Friendships
@@ -119,5 +127,24 @@ public class FriendshipsRepository : IFriendshipsRepository
     {
         return _context.Friendships.AsNoTracking().Any(x => (x.RequesterId == requesterId && x.AddresseeId == addresseeId) ||
                                                             x.RequesterId == addresseeId && x.AddresseeId == requesterId);
+    }
+
+    public bool IsPossibilityOfCreatingFriendship(Guid requesterId, Guid addresseeId)
+    {
+        // Ищем любую существующую связь между пользователями
+        var existingFriendship = _context.Friendships
+            .AsNoTracking()
+            .FirstOrDefault(x =>
+                (x.RequesterId == requesterId && x.AddresseeId == addresseeId) ||
+                (x.RequesterId == addresseeId && x.AddresseeId == requesterId));
+
+        // Если записи нет — создавать можно
+        if (existingFriendship == null) return true;
+
+        // Если запись есть, создавать новую НЕЛЬЗЯ (нужно обновлять старую),
+        // за исключением случаев, когда статус "Rejected" или "Blocked" (смотря какая логика)
+        // Но обычно метод "IsPossibility" подразумевает именно "можно ли инициировать процесс"
+    
+        return existingFriendship.Status == FriendshipStatus.Rejected;
     }
 }

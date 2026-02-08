@@ -19,20 +19,35 @@ public class FriendRequestCommandService : IFriendRequestCommandService
     {
         if (fromUserId == toUserId)
             throw new InvalidOperationException("Cannot send a request to self user");
+        
+        var friendship = await _friendshipsRepository.GetFriendshipAsync(fromUserId, toUserId);
 
-        if (_friendshipsRepository.Exist(fromUserId, toUserId))
-            throw new RequestAlreadySentException(fromUserId, toUserId);
-
-        var friendship = new Friendship
+        if (friendship is null)
         {
-            Id = Guid.NewGuid(),
-            RequesterId = fromUserId,
-            AddresseeId = toUserId,
-            Status = FriendshipStatus.Pending
-        };
+            friendship = new Friendship
+            {
+                Id = Guid.NewGuid(),
+                RequesterId = fromUserId,
+                AddresseeId = toUserId,
+                Status = FriendshipStatus.Pending
+            };
+            await _friendshipsRepository.AddAsync(friendship);
+        }
+        else
+        {
+            if (friendship.Status == FriendshipStatus.Pending || friendship.Status == FriendshipStatus.Accepted
+                                                              || friendship.Status == FriendshipStatus.Blocked)
+            {
+                throw new RequestAlreadySentException(fromUserId, toUserId);
+            }
+            
+            friendship.RequesterId = fromUserId;
+            friendship.AddresseeId = toUserId;
+            friendship.Status = FriendshipStatus.Pending;
         
-        await _friendshipsRepository.AddAsync(friendship);
-        
+            await _friendshipsRepository.UpdateAsync(friendship);
+        }
+
         return friendship;
     }
 

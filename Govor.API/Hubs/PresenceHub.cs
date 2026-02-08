@@ -34,21 +34,22 @@ public class PresenceHub : Hub
     public override async Task OnConnectedAsync()
     {
         var userId = _userAccessor.GetUserId(Context);
-        if (userId == Guid.Empty || await _users.ExistsByIdAsync(userId) == false)
+        
+        if (userId == Guid.Empty)
         {
             _logger.LogWarning("User connected with invalid UserId claim.");
             Context.Abort();
             return;
         }
+        
+        var isFirstConnection = _onlineUserStore.AddConnection(userId, Context.ConnectionId);
 
-        _onlineUserStore.SetOnlineUser(userId);
         await Groups.AddToGroupAsync(Context.ConnectionId, userId.ToString());
 
-        var friends = await _scopeService.GetNotifiedUsers(userId);
-
-        foreach (var recipient in friends)
+        if (isFirstConnection)
         {
-            await Clients.Group(recipient.ToString())
+            var friends = await _scopeService.GetNotifiedUsers(userId);
+            await Clients.Groups(friends.Select(f => f.ToString()).ToList())
                 .SendAsync("UserOnline", userId);
         }
 
@@ -74,21 +75,38 @@ public class PresenceHub : Hub
             return;
         }
         
-        _onlineUserStore.SetOfflineUser(userId);
+        var isLastConnection = _onlineUserStore.RemoveConnection(userId, Context.ConnectionId);
         
-        // Updating was online 
-        var user = await  _users.FindByIdAsync(userId);
-        user.WasOnline = DateTime.UtcNow;
-        await _users.UpdateAsync(user);
-        
-        var friends = await _scopeService.GetNotifiedUsers(userId);
-
-        foreach (var recipient in friends)
+        if (isLastConnection)
         {
-            await Clients.Group(recipient.ToString())
-                .SendAsync("UserOffline", userId);
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                
+                var currentConnections = _onlineUserStore.GetConnections(userId);
+                if (currentConnections == null || !currentConnections.Any())
+                {
+                    var friends = await _scopeService.GetNotifiedUsers(userId);
+                    await Clients.Groups(friends.Select(f => f.ToString()).ToList())
+                        .SendAsync("UserOffline", userId);
+                    
+                    try 
+                    {
+                        var user = await _users.FindByIdAsync(userId);
+                        if (user != null)
+                        {
+                            user.WasOnline = DateTime.UtcNow;
+                            await _users.UpdateAsync(user);
+                        }
+                    }
+                    catch (Exception ex) 
+                    {
+                        _logger.LogError(ex, "Error updating WasOnline for {UserId}", userId);
+                    }
+                }
+            });
         }
-        
+
         await base.OnDisconnectedAsync(exception);
     }
 }
