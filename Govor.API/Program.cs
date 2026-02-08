@@ -19,14 +19,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "https://localhost:7155",
-                "http://localhost:7155",
-                "http://192.168.1.107:8080",
-                "http://0.0.0.0:8080",
-                "https://govor-team-govor-8ce1.twc1.net",
-                "http://govor-team-govor-8ce1.twc1.net"
-                )
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -114,8 +107,8 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
-    builder.WebHost.UseUrls("http://0.0.0.0:8080");
-    builder.WebHost.UseUrls("http://192.168.1.107:8080");
+    builder.WebHost.UseUrls("http://72.56.93.242:8080");
+    //builder.WebHost.UseUrls("http://192.168.1.107:8080");
 }
 
 app.UseSwagger();
