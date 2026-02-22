@@ -39,14 +39,10 @@ public class UserSessionRefresher : IUserSessionRefresher
     {
         try
         {
-            
             var session = await _sessionsRepository.GetByHashedRefreshTokenAsync(_jwtTokenHasher.HashToken(refreshToken));
 
             if (session.IsRevoked || session.ExpiresAt <= DateTime.UtcNow)
                 throw new UnauthorizedAccessException("Refresh token is invalid or expired");
-            
-            session.IsRevoked = true;
-            await _sessionsRepository.UpdateAsync(session);
 
             // Find user 
             var user = await _usersRepository.FindByIdAsync(session.UserId);
@@ -60,6 +56,7 @@ public class UserSessionRefresher : IUserSessionRefresher
             // Opening new session 
             var newSession = new UserSession
             {
+                Id = session.Id,
                 UserId = user.Id,
                 RefreshTokenHash = newRefreshTokenHash,
                 DeviceInfo = session.DeviceInfo,
@@ -67,7 +64,7 @@ public class UserSessionRefresher : IUserSessionRefresher
                 ExpiresAt = DateTime.UtcNow.AddDays(_options.RefreshTokenLifetimeDays)
             };
 
-            await _sessionsRepository.AddAsync(newSession);
+            await _sessionsRepository.UpdateAsync(newSession);
 
             return new RefreshResult(newRefreshToken, newAccessToken);
         }

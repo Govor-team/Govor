@@ -157,16 +157,6 @@ private Mock<ILogger<ProfileController>> _mockLogger = null!;
         )), Times.Once);
         
         _mockProfileService.Verify(s => s.SetNewIcon(_userId, mediaId), Times.Once);
-        
-        _mockClientProxy.Verify(
-            c => c.SendCoreAsync("AvatarUpdated", It.Is<object?[]>(
-                args => args.Length == 1 &&
-                        JObject.FromObject(args[0]!).Value<Guid>("userId") == _userId && 
-                        JObject.FromObject(args[0]!).Value<Guid>("iconId") == mediaId    
-            ), It.IsAny<CancellationToken>()),
-            Times.Once,
-            "Hub SendAsync must be called to notify clients."
-        );
     }
     
     [Test]

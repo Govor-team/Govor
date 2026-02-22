@@ -3,6 +3,7 @@ using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
 using Govor.Application.Services.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -13,7 +14,12 @@ var services = builder.Services;
 
 builder.AddLogger();// Serilog
 
+#if DEBUG
+builder.Configuration.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true);
+#else
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+#endif
+
 
 builder.Services.AddCors(options =>
 {
@@ -124,6 +130,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.Map("/server/ping",
+    () => new OkResult());
 
 app.MapHub<ChatsHub>("/hubs/chats"); 
 app.MapHub<FriendsHub>("/hubs/friends");

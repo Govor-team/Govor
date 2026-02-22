@@ -38,14 +38,14 @@ public class UserSessionOpener : IUserSessionOpener
         try
         {
             var sessions = await _repository.GetByUserIdAsync(user.Id);
-            var existingSession = sessions.FirstOrDefault(s => s.DeviceInfo == deviceInfo);
+            var existingSession = sessions.FirstOrDefault(s => s.DeviceInfo == deviceInfo );
 
             if (existingSession is not null)
                 return await UpdateExistingSessionAsync(user, deviceInfo, existingSession);
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
-           
+           _logger.LogError(ex, "Could not find session for user {userId}", user.Id);
         }
         
         return await CreateNewSessionAsync(user, deviceInfo);
