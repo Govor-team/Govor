@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Govor.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -54,7 +54,9 @@ namespace Govor.Data.Migrations
                     Url = table.Column<string>(type: "text", nullable: false),
                     MediaType = table.Column<string>(type: "text", nullable: false),
                     MineType = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OwnerType = table.Column<int>(type: "integer", nullable: false),
+                    OwnerId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -72,6 +74,26 @@ namespace Govor.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PrivateChats", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserPushTokens",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserSessionId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Token = table.Column<string>(type: "text", nullable: false),
+                    Provider = table.Column<string>(type: "text", nullable: false),
+                    Platform = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUsedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserPushTokens", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -98,9 +120,9 @@ namespace Govor.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Username = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    Username = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    PasswordHash = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     IconId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedOn = table.Column<DateOnly>(type: "date", nullable: false),
                     WasOnline = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -227,7 +249,7 @@ namespace Govor.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RefreshToken = table.Column<string>(type: "text", nullable: false),
+                    RefreshTokenHash = table.Column<string>(type: "text", nullable: false),
                     DeviceInfo = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -410,6 +432,12 @@ namespace Govor.Data.Migrations
                 column: "AddresseeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Friendships_Id",
+                table: "Friendships",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Friendships_RequesterId",
                 table: "Friendships",
                 column: "RequesterId");
@@ -466,9 +494,21 @@ namespace Govor.Data.Migrations
                 column: "ChatGroupId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Messages_Id",
+                table: "Messages",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Messages_PrivateChatId",
                 table: "Messages",
                 column: "PrivateChatId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Messages_RecipientId",
+                table: "Messages",
+                column: "RecipientId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_MessageViews_MessageId_UserId",
@@ -487,6 +527,12 @@ namespace Govor.Data.Migrations
                 columns: new[] { "UserCryptoSessionId", "IsUsed" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_PrivateChats_Id",
+                table: "PrivateChats",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SignedPreKeys_UserCryptoSessionId",
                 table: "SignedPreKeys",
                 column: "UserCryptoSessionId",
@@ -499,9 +545,60 @@ namespace Govor.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserPushTokens_Token",
+                table: "UserPushTokens",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPushTokens_UserId",
+                table: "UserPushTokens",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPushTokens_UserId_IsActive",
+                table: "UserPushTokens",
+                columns: new[] { "UserId", "IsActive" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPushTokens_UserSessionId",
+                table: "UserPushTokens",
+                column: "UserSessionId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_CreatedOn",
+                table: "Users",
+                column: "CreatedOn");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_InviteId",
                 table: "Users",
                 column: "InviteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Username",
+                table: "Users",
+                column: "Username",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_WasOnline",
+                table: "Users",
+                column: "WasOnline");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_Id",
+                table: "UserSessions",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserSessions_RefreshTokenHash",
+                table: "UserSessions",
+                column: "RefreshTokenHash",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserSessions_UserId",
@@ -538,6 +635,9 @@ namespace Govor.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "SignedPreKeys");
+
+            migrationBuilder.DropTable(
+                name: "UserPushTokens");
 
             migrationBuilder.DropTable(
                 name: "GroupInvitations");

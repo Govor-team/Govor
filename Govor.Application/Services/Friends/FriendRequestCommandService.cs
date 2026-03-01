@@ -1,4 +1,5 @@
 using Govor.Application.Exceptions.FriendsService;
+using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Friends;
 using Govor.Core.Models;
 using Govor.Core.Repositories.Friendships;
@@ -9,10 +10,13 @@ namespace Govor.Application.Services.Friends;
 public class FriendRequestCommandService : IFriendRequestCommandService
 {
     private readonly IFriendshipsRepository _friendshipsRepository;
-
-    public FriendRequestCommandService(IFriendshipsRepository friendshipsRepository)
+    private readonly IUserPrivateChatsCreator _privateChatsCreator;
+    public FriendRequestCommandService(
+        IFriendshipsRepository friendshipsRepository,
+        IUserPrivateChatsCreator privateChatsCreator)
     {
         _friendshipsRepository = friendshipsRepository;
+        _privateChatsCreator = privateChatsCreator;
     }
     
     public async Task<Friendship> SendAsync(Guid fromUserId, Guid toUserId)
@@ -56,7 +60,8 @@ public class FriendRequestCommandService : IFriendRequestCommandService
         try
         {
             var friendship = await _friendshipsRepository.GetByIdAsync(requestId);
-
+            
+            
             if (friendship.AddresseeId != currentUserId)
                 throw new UnauthorizedAccessException("You cannot accept this request");
 
@@ -66,6 +71,8 @@ public class FriendRequestCommandService : IFriendRequestCommandService
             friendship.Status = FriendshipStatus.Accepted;
             await _friendshipsRepository.UpdateAsync(friendship);
             
+            await _privateChatsCreator.CreateAsync(friendship.AddresseeId, friendship.RequesterId);
+        
             return friendship;
         }
         catch (NotFoundByKeyException<Guid> ex)

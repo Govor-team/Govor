@@ -1,51 +1,103 @@
 using AutoFixture;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Services.Authentication;
-
-namespace Govor.Application.Tests.Services.Authentication;
+using Microsoft.Extensions.Configuration;
 
 [TestFixture]
 public class JwtTokenHasherTests
 {
     private IJwtTokenHasher _jwtTokenHasher;
     private Fixture _fixture;
-    
+    private const string TestSecret = "SuperSecretPepper123!";
+
     [SetUp]
-    public void StarUp()
+    public void StartUp()
     {
         _fixture = new Fixture();
-        //_jwtTokenHasher = new JwtTokenHasher();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "EncryptionOption:Secret", TestSecret }
+            })
+            .Build();
+
+        _jwtTokenHasher = new JwtTokenHasher(config);
     }
-    
+
     [Test]
-    public void Given_Token_When_Hash_Then_Hash_And_Verify_Then_Result_Should_Be_True()
+    public void Given_Token_When_Hash_Then_Verify_Should_Return_True()
     {
         // Arrange
         string token = _fixture.Create<string>();
-        
-        // Act 
+
+        // Act
         string hash = _jwtTokenHasher.HashToken(token);
-        
         var result = _jwtTokenHasher.VerifyToken(token, hash);
-        
-        // Assert 
+
+        // Assert
         Assert.That(hash, Is.Not.EqualTo(token));
         Assert.That(result, Is.True);
     }
 
     [Test]
-    public void Given_Token_NotToken_When_Hash_Should_Not_Be_True_Then_Result_Should_Be_False()
+    public void Given_Invalid_Token_When_Verify_Should_Return_False()
     {
-        // Arrange 
+        // Arrange
         string token = _fixture.Create<string>();
         string notToken = _fixture.Create<string>();
-        
-        // Act 
+
+        // Act
         string hash = _jwtTokenHasher.HashToken(token);
-        
         var result = _jwtTokenHasher.VerifyToken(notToken, hash);
-        
-        // Assert 
+
+        // Assert
         Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void Given_Same_Token_When_Hash_Multiple_Times_Should_Be_Equal()
+    {
+        // Arrange
+        string token = _fixture.Create<string>();
+
+        // Act
+        string hash1 = _jwtTokenHasher.HashToken(token);
+        string hash2 = _jwtTokenHasher.HashToken(token);
+
+        // Assert
+        Assert.That(hash1, Is.EqualTo(hash2));
+    }
+
+    [Test]
+    public void Given_Different_Tokens_When_Hash_Should_Be_Different()
+    {
+        // Arrange
+        string token1 = _fixture.Create<string>();
+        string token2 = _fixture.Create<string>();
+
+        // Act
+        string hash1 = _jwtTokenHasher.HashToken(token1);
+        string hash2 = _jwtTokenHasher.HashToken(token2);
+
+        // Assert
+        Assert.That(hash1, Is.Not.EqualTo(hash2));
+    }
+
+    [Test]
+    public void Given_Null_Secret_In_Config_Should_Use_Default_Secret()
+    {
+        // Arrange
+        var emptyConfig = new ConfigurationBuilder().Build();
+        var hasherWithDefaultSecret = new JwtTokenHasher(emptyConfig);
+
+        string token = _fixture.Create<string>();
+
+        // Act
+        string hash = hasherWithDefaultSecret.HashToken(token);
+        var result = hasherWithDefaultSecret.VerifyToken(token, hash);
+
+        // Assert
+        Assert.That(result, Is.True);
     }
 }

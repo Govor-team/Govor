@@ -9,7 +9,7 @@ public class FriendshipConfiguration : IEntityTypeConfiguration<Friendship>
     public void Configure(EntityTypeBuilder<Friendship> builder)
     {
         builder.HasKey(f => f.Id);
-
+        
         builder.HasOne(f => f.Requester)
             .WithMany(u => u.SentFriendRequests)
             .HasForeignKey(f => f.RequesterId)

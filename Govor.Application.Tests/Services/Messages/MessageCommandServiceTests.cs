@@ -21,9 +21,10 @@ public class MessageCommandServiceTests
     private Mock<IMessagesRepository> _mockMessagesRepo;
     private Mock<IUsersRepository> _mockUsersRepo;
     private Mock<IGroupsRepository> _mockGroupsRepo;
+    private Mock<IPrivateChatsRepository> _mockPrivateChatsRepo;
     private Mock<IVerifyFriendship> _mockVerifyFriendship;
-    private Mock<IPrivateChatsRepository> _mockPrivateChats;
-    private Mock<IMediaService> _mockMediaService;   
+    private Mock<IMediaService> _mockMediaService;
+    private Mock<IUserPrivateChatsCreator> _mockUserPrivateChatCreator;
     private Mock<ILogger<MessageCommandService>> _mockLogger;
     private MessageCommandService _messageService;
     
@@ -33,17 +34,19 @@ public class MessageCommandServiceTests
         _mockMessagesRepo = new Mock<IMessagesRepository>();
         _mockUsersRepo = new Mock<IUsersRepository>();
         _mockGroupsRepo = new Mock<IGroupsRepository>();
+        _mockPrivateChatsRepo = new Mock<IPrivateChatsRepository>();
         _mockVerifyFriendship = new Mock<IVerifyFriendship>();
-        _mockPrivateChats = new Mock<IPrivateChatsRepository>();
         _mockMediaService = new Mock<IMediaService>();
+        _mockUserPrivateChatCreator = new Mock<IUserPrivateChatsCreator>();
         _mockLogger = new Mock<ILogger<MessageCommandService>>();
 
         _messageService = new MessageCommandService(
             _mockMessagesRepo.Object,
             _mockUsersRepo.Object,
             _mockGroupsRepo.Object,
+            _mockPrivateChatsRepo.Object,
+            _mockUserPrivateChatCreator.Object,
             _mockVerifyFriendship.Object,
-            _mockPrivateChats.Object,
             _mockMediaService.Object,
             _mockLogger.Object);
     }
@@ -56,7 +59,16 @@ public class MessageCommandServiceTests
         // Arrange
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
-        var sendMessageParams = new SendMessage("Hello", 
+
+        var privateChat = new PrivateChat
+        {
+            Id = recipientId,
+            UserAId = senderId,
+            UserBId = Guid.NewGuid()
+        };
+
+        var sendParams = new SendMessage(
+            "Hello",
             null,
             recipientId,
             RecipientType.User,
@@ -64,26 +76,28 @@ public class MessageCommandServiceTests
             DateTime.UtcNow,
             new List<SendMedia>());
 
-        _mockUsersRepo.Setup(r => r.ExistsByIdAsync(recipientId)).ReturnsAsync(true);
-        _mockVerifyFriendship.Setup(v => v.VerifyAsync(senderId, recipientId)).Returns(Task.CompletedTask);
-        _mockMessagesRepo.Setup(r => r.AddAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
-        _mockPrivateChats.Setup(c => c.Exist(senderId, recipientId)).Returns(true);
-        _mockPrivateChats.Setup(c => c.GetByMembersAsync(senderId, recipientId)).ReturnsAsync(new PrivateChat(){Id = recipientId});
-        
+        _mockPrivateChatsRepo
+            .Setup(r => r.GetByIdAsync(recipientId))
+            .ReturnsAsync(privateChat);
+
+        _mockMessagesRepo
+            .Setup(r => r.AddAsync(It.IsAny<Message>()))
+            .Returns(Task.CompletedTask);
+
         // Act
-        var result = await _messageService.SendMessageAsync(sendMessageParams);
-        // Assert 
-        Assert.That(result, Is.Not.Null);
+        var result = await _messageService.SendMessageAsync(sendParams);
+
+        // Assert
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Exception, Is.Null);
-        
-        _mockMessagesRepo.Verify(r => r.AddAsync(It.Is<Message>(m => 
-            m.SenderId == senderId && 
-            m.RecipientId == recipientId && 
+
+        _mockMessagesRepo.Verify(r => r.AddAsync(It.Is<Message>(m =>
+            m.SenderId == senderId &&
+            m.RecipientId == recipientId &&
             m.RecipientType == RecipientType.User &&
             m.EncryptedContent == "Hello")), Times.Once);
     }
-
+    
     [Test]
     public async Task SendMessageAsync_ToUser_When_AttachMediaThrowsException_ReturnsFailure()
     {
@@ -92,43 +106,42 @@ public class MessageCommandServiceTests
         var recipientId = Guid.NewGuid();
         var sendMediaId = Guid.NewGuid();
 
-        var sendMessageParams = new SendMessage(
+        var privateChat = new PrivateChat
+        {
+            Id = recipientId,
+            UserAId = senderId,
+            UserBId = recipientId
+        };
+
+        var sendParams = new SendMessage(
             "Hello",
             null,
             recipientId,
             RecipientType.User,
             senderId,
             DateTime.UtcNow,
-            new List<SendMedia> { new SendMedia(sendMediaId, string.Empty) });
+            new List<SendMedia>
+            {
+                new SendMedia(sendMediaId, string.Empty)
+            });
 
-        _mockUsersRepo.Setup(r => r.ExistsByIdAsync(recipientId)).ReturnsAsync(true);
-        _mockVerifyFriendship.Setup(v => v.VerifyAsync(senderId, recipientId)).Returns(Task.CompletedTask);
-        _mockMessagesRepo.Setup(r => r.AddAsync(It.IsAny<Message>())).Returns(Task.CompletedTask);
-        _mockPrivateChats.Setup(c => c.Exist(senderId, recipientId)).Returns(true);
-        _mockPrivateChats.Setup(c => c.GetByMembersAsync(senderId, recipientId))
-            .ReturnsAsync(new PrivateChat { Id = recipientId });
+        _mockPrivateChatsRepo
+            .Setup(r => r.GetByIdAsync(recipientId))
+            .ReturnsAsync(privateChat);
 
-        // ! 
         _mockMediaService
             .Setup(m => m.AttachToMessageAsync(sendMediaId, It.IsAny<Guid>()))
             .ThrowsAsync(new Exception("Unexpected DB error"));
 
         // Act
-        var result = await _messageService.SendMessageAsync(sendMessageParams);
+        var result = await _messageService.SendMessageAsync(sendParams);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
         Assert.That(result.IsSuccess, Is.False);
-        Assert.That(result.Exception, Is.Not.Null);
-        Assert.That(result.Exception.Message, Is.EqualTo("Unexpected DB error"));
+        Assert.That(result.Exception!.Message, Is.EqualTo("Unexpected DB error"));
 
-        // Проверяем, что сообщение не было сохранено
         _mockMessagesRepo.Verify(r => r.AddAsync(It.IsAny<Message>()), Times.Never);
-
-        // Проверяем, что метод прикрепления медиа вызывался
-        _mockMediaService.Verify(m => m.AttachToMessageAsync(sendMediaId, It.IsAny<Guid>()), Times.Once);
     }
-
 
     [Test]
     public async Task SendMessageAsync_ToGroup_Success()
@@ -162,13 +175,14 @@ public class MessageCommandServiceTests
     }
     
     [Test]
-    public async Task SendMessageAsync_ToUser_RecipientNotFound_ReturnsFailure()
+    public async Task SendMessageAsync_ToUser_PrivateChatNotFound_ReturnsFailure()
     {
         // Arrange
         var senderId = Guid.NewGuid();
         var recipientId = Guid.NewGuid();
-        
-        var sendMessageParams = new SendMessage("Hello",
+
+        var sendParams = new SendMessage(
+            "Hello",
             null,
             recipientId,
             RecipientType.User,
@@ -176,50 +190,18 @@ public class MessageCommandServiceTests
             DateTime.UtcNow,
             new List<SendMedia>());
 
-        _mockUsersRepo.Setup(r => r.ExistsByIdAsync(recipientId)).ReturnsAsync(false);
+        _mockPrivateChatsRepo
+            .Setup(r => r.GetByIdAsync(recipientId))
+            .ReturnsAsync((PrivateChat?)null);
 
         // Act
-        var result = await _messageService.SendMessageAsync(sendMessageParams);
+        var result = await _messageService.SendMessageAsync(sendParams);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
         Assert.That(result.IsSuccess, Is.False);
-        Assert.That(result.Exception, Is.Not.Null);
-        Assert.That(result.Exception,Is.TypeOf<KeyNotFoundException>());
+        Assert.That(result.Exception, Is.TypeOf<KeyNotFoundException>());
         Assert.That(result.Message, Is.Null);
     }
-
-    [Test]
-    public async Task SendMessageAsync_ToUser_FriendshipVerificationFails_ReturnsFailure()
-    {
-        // Arrange
-        var senderId = Guid.NewGuid();
-        var recipientId = Guid.NewGuid();
-        
-        var sendMessageParams = new SendMessage("Hello",
-            null,
-            recipientId,
-            RecipientType.User,
-            senderId,
-            DateTime.UtcNow,
-            new List<SendMedia>()
-            );
-
-        _mockUsersRepo.Setup(r => r.ExistsByIdAsync(recipientId)).ReturnsAsync(true);
-        _mockVerifyFriendship.Setup(v => v.VerifyAsync(senderId, recipientId)).ThrowsAsync(new FriendshipException("Not friends"));
-
-        // Act
-        var result = await _messageService.SendMessageAsync(sendMessageParams);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.IsSuccess, Is.False);
-        Assert.That(result.Exception, Is.Not.Null);
-        Assert.That(result.Exception,Is.TypeOf<FriendshipException>());
-        Assert.That(result.Message, Is.Null);
-    }
-    
-    
     
     // Test for EditMessageAsync action 
     [Test]

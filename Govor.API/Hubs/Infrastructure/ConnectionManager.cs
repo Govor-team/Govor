@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Govor.Application.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 
@@ -7,11 +8,17 @@ public class ConnectionManager : IConnectionManager
 {
     private readonly IUserGroupsGetterService _userGroupsGetterService;
     private readonly IUserPrivateChatsGetterService _userPrivateChatsGetterService;
+    private readonly IConnectionStore _connectionStore;
     private readonly IHubContext<ChatsHub> _hubContext;
 
-    public ConnectionManager(IUserGroupsGetterService userGroupsGetterService, IUserPrivateChatsGetterService userPrivateChatsGetterService, IHubContext<ChatsHub> hubContext)
+    public ConnectionManager(
+        IUserGroupsGetterService userGroupsGetterService,
+        IConnectionStore connectionStore,
+        IUserPrivateChatsGetterService userPrivateChatsGetterService, 
+        IHubContext<ChatsHub> hubContext)
     {
         _userGroupsGetterService = userGroupsGetterService;
+        _connectionStore = connectionStore;
         _userPrivateChatsGetterService = userPrivateChatsGetterService;
         _hubContext = hubContext;
     }
@@ -20,7 +27,8 @@ public class ConnectionManager : IConnectionManager
     {
         // user
         await _hubContext.Groups.AddToGroupAsync(connectionId, ChatHubConstants.GetUserGroup(userId));
-
+        _connectionStore.AddConnection(userId, connectionId);
+        
         // groups
         var userGroups = await _userGroupsGetterService.GetUserGroupsAsync(userId);
         foreach (var group in userGroups)
@@ -41,6 +49,7 @@ public class ConnectionManager : IConnectionManager
         if (userId != Guid.Empty)
         {
             await _hubContext.Groups.RemoveFromGroupAsync(connectionId, ChatHubConstants.GetUserGroup(userId));
+            _connectionStore.RemoveConnection(userId, connectionId);
         }
     }
 }

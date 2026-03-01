@@ -1,4 +1,5 @@
 using Govor.Application.Interfaces.UserSession;
+using Govor.Core.Repositories.PushTokens;
 using Govor.Core.Repositories.UserSessionsRepository;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -8,11 +9,16 @@ namespace Govor.Application.Services.UserSessions;
 public class UserSessionRevoker : IUserSessionRevoker
 {
     private readonly IUserSessionsRepository _sessionsRepository;
+    private readonly IPushTokenRepository _pushTokenRepository;
     private readonly ILogger<UserSessionRevoker> _logger;
 
-    public UserSessionRevoker(IUserSessionsRepository sessionsRepository, ILogger<UserSessionRevoker> logger)
+    public UserSessionRevoker(
+        IUserSessionsRepository sessionsRepository,
+        IPushTokenRepository pushTokenRepository,
+        ILogger<UserSessionRevoker> logger)
     {
         _sessionsRepository = sessionsRepository;
+        _pushTokenRepository = pushTokenRepository;
         _logger = logger;
     }
 
@@ -32,6 +38,8 @@ public class UserSessionRevoker : IUserSessionRevoker
             
             session.IsRevoked = true;
             await _sessionsRepository.UpdateAsync(session);
+            
+            await _pushTokenRepository.DeactivateTokenBySessionAsync(sessionId); // pushes deactivate 
         }
         catch (NotFoundByKeyException<Guid> ex)
         {
@@ -52,6 +60,8 @@ public class UserSessionRevoker : IUserSessionRevoker
                 
                 session.IsRevoked = true;
                 await _sessionsRepository.UpdateAsync(session);
+                
+                await _pushTokenRepository.DeactivateTokenBySessionAsync(session.Id); // pushes deactivate 
             }
         }
         catch (NotFoundByKeyException<Guid> ex)

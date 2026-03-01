@@ -36,7 +36,6 @@ public class ProfileService : IProfileService
         {
             throw new NotFoundException("User's profile cant be found with given id", ex);
         }
-
     }
 
     public async Task SetDescription(string description, Guid userId)

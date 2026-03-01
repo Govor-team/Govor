@@ -1,5 +1,6 @@
 using AutoFixture;
 using Govor.Application.Exceptions.FriendsService;
+using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Services.Friends;
 using Govor.Core.Models;
@@ -14,8 +15,8 @@ namespace Govor.Application.Tests.Services.Friends;
 public class FriendRequestCommandServiceTests
 {
     private Fixture _fixture;
-    private Mock<IUsersRepository> _usersRepositoryMock;
     private Mock<IFriendshipsRepository> _friendshipsRepositoryMock;
+    private Mock<IUserPrivateChatsCreator> _privateChatsCreatorMock;
     private IFriendRequestCommandService _service;
 
     [SetUp]
@@ -27,11 +28,11 @@ public class FriendRequestCommandServiceTests
             .ToList()
             .ForEach(b => _fixture.Behaviors.Remove(b));
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
-
-        _usersRepositoryMock = new Mock<IUsersRepository>();
+        
         _friendshipsRepositoryMock = new Mock<IFriendshipsRepository>();
-
-        _service = new FriendRequestCommandService(_friendshipsRepositoryMock.Object);
+        _privateChatsCreatorMock = new Mock<IUserPrivateChatsCreator>();
+        
+        _service = new FriendRequestCommandService(_friendshipsRepositoryMock.Object, _privateChatsCreatorMock.Object);
     }
     
     // SendFriendRequestAsync
@@ -55,9 +56,17 @@ public class FriendRequestCommandServiceTests
         var fromUserId = Guid.NewGuid();
         var toUserId = Guid.NewGuid();
 
+        var existingFriendship = new Friendship
+        {
+            Id = Guid.NewGuid(),
+            RequesterId = fromUserId,
+            AddresseeId = toUserId,
+            Status = FriendshipStatus.Pending
+        };
+
         _friendshipsRepositoryMock
-            .Setup(repo => repo.Exist(fromUserId, toUserId))
-            .Returns(true);
+            .Setup(repo => repo.GetFriendshipAsync(fromUserId, toUserId))
+            .ReturnsAsync(existingFriendship);
 
         // Act & Assert
         Assert.ThrowsAsync<RequestAlreadySentException>(() =>
@@ -91,17 +100,30 @@ public class FriendRequestCommandServiceTests
     
     // AcceptFriendRequestAsync
     [Test]
-    public async Task AcceptFriendRequestAsync_ValidRequest_CallsUpdateAsync()
+    public async Task AcceptFriendRequestAsync_ValidRequest_CallsUpdateAsync_AndCreatesPrivateChat()
     {
+        // Arrange
         var friendship = _fixture.Build<Friendship>()
             .With(f => f.Status, FriendshipStatus.Pending)
             .Create();
+        
+        var privateChat = new PrivateChat
+        {
+            Id = Guid.NewGuid(),
+            UserAId = friendship.AddresseeId,
+            UserBId = friendship.RequesterId
+        };
+
 
         _friendshipsRepositoryMock
             .Setup(r => r.GetByIdAsync(friendship.Id))
             .ReturnsAsync(friendship);
 
-        // Act: вызываем именно Accept, не Send
+        _privateChatsCreatorMock
+            .Setup(p => p.CreateAsync(friendship.AddresseeId, friendship.RequesterId))
+            .ReturnsAsync(privateChat);
+
+        // Act
         await _service.AcceptAsync(friendship.Id, friendship.AddresseeId);
 
         // Assert
@@ -111,6 +133,11 @@ public class FriendRequestCommandServiceTests
             f.AddresseeId == friendship.AddresseeId &&
             f.Status == FriendshipStatus.Accepted
         )), Times.Once);
+        
+        _privateChatsCreatorMock.Verify(p => p.CreateAsync(
+            friendship.AddresseeId,
+            friendship.RequesterId
+        ), Times.Once);
     }
 
     [Test]

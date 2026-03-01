@@ -11,6 +11,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
 {
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<UserSession> UserSessions { get; set; }
+    public virtual DbSet<UserPushToken>  UserPushTokens { get; set; }
     public virtual DbSet<UserCryptoSession> UserCryptoSessions { get; set; }
     public virtual DbSet<SignedPreKey> SignedPreKeys { get; set; }
     public virtual DbSet<OneTimePreKey> OneTimePreKeys { get; set; }
@@ -51,6 +52,8 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new OneTimePreKeyConfiguration());
         modelBuilder.ApplyConfiguration(new UserCryptoSessionConfiguration());
         modelBuilder.ApplyConfiguration(new SignedPreKeyConfiguration());
+        modelBuilder.ApplyConfiguration(new PrivateChatsConfiguration());
+        modelBuilder.ApplyConfiguration(new UserPushTokenConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

@@ -1,5 +1,6 @@
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Contracts.DTOs;
 using Govor.Core.Models;
 using Govor.Core.Repositories.PrivateChats;
 using Govor.Core.Repositories.Users;
@@ -17,7 +18,8 @@ public class PrivateChatController : Controller
     private readonly ICurrentUserService _currentUser;
     private readonly IUsersRepository _usersRepository; 
     private readonly IVerifyFriendship _verifyFriendship;
-    private readonly IPrivateChatsRepository _privateChats;
+    private readonly IUserPrivateChatsCreator _userPrivateChatsCreator;
+    private readonly IUserPrivateChatsGetterService _privateChatsGetter;
     private readonly ILogger<ChatLoadController> _logger;
     
     public PrivateChatController(
@@ -25,12 +27,15 @@ public class PrivateChatController : Controller
         IUsersRepository usersRepository,
         IVerifyFriendship verifyFriendship, 
         IPrivateChatsRepository privateChats,
+        IUserPrivateChatsCreator userPrivateChatsCreator,
+        IUserPrivateChatsGetterService userPrivateChatsGetterService,
         ILogger<ChatLoadController> logger)
     {
         _currentUser = currentUser;
         _usersRepository = usersRepository;
         _verifyFriendship = verifyFriendship;
-        _privateChats = privateChats;
+        _userPrivateChatsCreator = userPrivateChatsCreator;
+        _privateChatsGetter = userPrivateChatsGetterService;
         _logger = logger;
     }
     
@@ -49,9 +54,8 @@ public class PrivateChatController : Controller
 
             await _verifyFriendship.VerifyAsync(currentId, friendId);
             
-
-            var chatId = await GetPrivateChatsIdAsync(currentId, friendId);
-            return Ok(chatId);
+            var chat = await _userPrivateChatsCreator.CreateAsync(currentId, friendId);
+            return Ok(chat.Id);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -74,22 +78,32 @@ public class PrivateChatController : Controller
             return StatusCode(500, "Unexpected Error! Please try again later.");
         }
     }
-    
-    private async Task<Guid> GetPrivateChatsIdAsync(Guid userA, Guid userB)
+
+    [HttpGet("user/private-chats")]
+    public async Task<IActionResult> GetChatsByFriends()
     {
-        Guid recipientId;
-        // Makes new PrivateChat if not exist
-        if (!_privateChats.Exist(userA, userB))
+        try
         {
-            recipientId = Guid.NewGuid();
-            await _privateChats.AddAsync(new PrivateChat()
-                { Id = recipientId, UserAId = userA, UserBId = userB });
+            var currentId = _currentUser.GetCurrentUserId();
+            var chats = await _privateChatsGetter.GetUserChatsAsync(currentId);
+
+            var result = chats.Select(chat => new PrivateChatDto
+            {
+                ChatId = chat.Id,
+                FriendId = chat.UserAId == currentId ? chat.UserBId : chat.UserAId
+            }).ToList();
+
+            return Ok(result);
         }
-        else
+        catch (UnauthorizedAccessException ex)
         {
-            recipientId = (await _privateChats.GetByMembersAsync(userA, userB)).Id;
+            _logger.LogWarning(ex.Message);
+            return Forbid(ex.Message);
         }
-        
-        return recipientId;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500, "Unexpected Error! Please try again later.");
+        }
     }
 }

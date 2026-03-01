@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
 using Govor.Application.Services.Authentication;
@@ -15,11 +17,17 @@ var services = builder.Services;
 builder.AddLogger();// Serilog
 
 #if DEBUG
-builder.Configuration.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+//builder.Configuration.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true);
 #else
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 #endif
 
+FirebaseApp.Create(new AppOptions()
+{
+    Credential = GoogleCredential.FromFile("secrets/firebase-adminsdk.json")
+    // или FromStream(File.OpenRead("firebase-adminsdk.json"))
+});
 
 builder.Services.AddCors(options =>
 {

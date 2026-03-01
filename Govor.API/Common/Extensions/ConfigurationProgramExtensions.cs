@@ -10,6 +10,7 @@ using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Medias;
 using Govor.Application.Interfaces.Messages;
+using Govor.Application.Interfaces.PushNotifications;
 using Govor.Application.Interfaces.UserOnlineStatus;
 using Govor.Application.Interfaces.UserSession;
 using Govor.Application.Interfaces.UserSession.Crypto;
@@ -18,6 +19,8 @@ using Govor.Application.Services.Authentication;
 using Govor.Application.Services.Friends;
 using Govor.Application.Services.Medias;
 using Govor.Application.Services.Messages;
+using Govor.Application.Services.PushNotifications;
+using Govor.Application.Services.PushNotifications.Providers;
 using Govor.Application.Services.UserOnlineStatus;
 using Govor.Application.Services.UserSessions;
 using Govor.Application.Services.UserSessions.Crypto;
@@ -33,6 +36,7 @@ using Govor.Core.Repositories.Invaites;
 using Govor.Core.Repositories.MediasAttachments;
 using Govor.Core.Repositories.Messages;
 using Govor.Core.Repositories.PrivateChats;
+using Govor.Core.Repositories.PushTokens;
 using Govor.Core.Repositories.Users;
 using Govor.Core.Repositories.UserSessionsRepository;
 using Govor.Data;
@@ -45,7 +49,7 @@ public static class ConfigurationProgramExtensions
 {
     public static void AddServices(this IServiceCollection services)
     {
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenHasher, JwtTokenHasher>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAccountService, AuthService>();
@@ -74,10 +78,12 @@ public static class ConfigurationProgramExtensions
         services.AddMemoryCache();
         services.AddScoped<IPingHandlerService, PingHandlerService>();
         
+        services.AddScoped<IUserGroupsGetterService, UserGroupsGetterService>();
+        
         services.AddScoped<IMessageCommandService, MessageCommandService>();
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
-        services.AddScoped<IUserGroupsGetterService, UserGroupsGetterService>();
         services.AddScoped<IUserPrivateChatsGetterService, UserPrivateChatsGetter>();
+        services.AddScoped<IUserPrivateChatsCreator, UserPrivateChatsCreator>();
         services.AddScoped<IMessagesLoader, MessagesLoader>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IAccesserToDownloadMedia, AccesserToDownloadMediaService>();
@@ -85,14 +91,22 @@ public static class ConfigurationProgramExtensions
         // UserSession
         services.AddScoped<IUserSessionOpener, UserSessionOpener>();
         services.AddScoped<IUserSessionRefresher, UserSessionRefresher>();
-
+        
         services.AddScoped<IUserNotificationScopeService, UserNotificationScopeService>();
         services.AddScoped<IUserPresenceReader, UserPresenceReader>();
         services.AddSingleton<IOnlineUserStore, OnlineUserStore>();
         
         // Hubs Infrastructure
+        services.AddScoped<IPrivateChatGroupManager, PrivateChatGroupManager>();
         services.AddScoped<IChatNotificationService, ChatNotificationService>();
         services.AddScoped<IConnectionManager, ConnectionManager>();
+        
+        services.AddSingleton<IConnectionStore, ConnectionStore>();
+            
+        // Pushs
+        services.AddScoped<IPushNotificationService, PushNotificationService>();
+        services.AddSingleton<IPushNotificationProvider, FirebasePushProvider>();
+        
         
         // Auto Mapper 
         services.AddAutoMapper(typeof(MappingProfile));
@@ -120,6 +134,7 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IPrivateChatsRepository, PrivateChatsRepository>();
         services.AddScoped<IGroupsRepository, GroupRepository>();
         services.AddScoped<IUserSessionsRepository, UserSessionsRepository>();
+        services.AddScoped<IPushTokenRepository, PushTokenRepository>();
         // other
     }
 
@@ -160,6 +175,4 @@ public static class ConfigurationProgramExtensions
             });
         }
     }
-
-
 }

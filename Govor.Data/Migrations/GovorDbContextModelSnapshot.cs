@@ -299,6 +299,8 @@ namespace Govor.Data.Migrations
 
                     b.HasIndex("PrivateChatId");
 
+                    b.HasIndex("RecipientId");
+
                     b.ToTable("Messages");
                 });
 
@@ -492,12 +494,68 @@ namespace Govor.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedOn");
+
                     b.HasIndex("InviteId");
 
                     b.HasIndex("Username")
                         .IsUnique();
 
+                    b.HasIndex("WasOnline");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Govor.Core.Models.Users.UserPushToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserSessionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("UserSessionId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "IsActive");
+
+                    b.ToTable("UserPushTokens");
                 });
 
             modelBuilder.Entity("Govor.Core.Models.Users.UserSession", b =>
@@ -528,6 +586,12 @@ namespace Govor.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("RefreshTokenHash")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 

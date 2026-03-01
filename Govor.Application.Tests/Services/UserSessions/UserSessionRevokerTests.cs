@@ -1,6 +1,7 @@
 using Govor.Application.Services.UserSessions;
 using Govor.Core.Models;
 using Govor.Core.Models.Users;
+using Govor.Core.Repositories.PushTokens;
 using Govor.Core.Repositories.UserSessionsRepository;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ public class UserSessionRevokerTests
 {
         private Mock<IUserSessionsRepository> _sessionsRepositoryMock;
         private Mock<ILogger<UserSessionRevoker>> _loggerMock;
+        private Mock<IPushTokenRepository> _pushTokenRepositoryMock;
         private UserSessionRevoker _revoker;
 
         [SetUp]
@@ -21,7 +23,8 @@ public class UserSessionRevokerTests
         {
             _sessionsRepositoryMock = new Mock<IUserSessionsRepository>();
             _loggerMock = new Mock<ILogger<UserSessionRevoker>>();
-            _revoker = new UserSessionRevoker(_sessionsRepositoryMock.Object, _loggerMock.Object);
+            _pushTokenRepositoryMock = new Mock<IPushTokenRepository>();
+            _revoker = new UserSessionRevoker(_sessionsRepositoryMock.Object, _pushTokenRepositoryMock.Object, _loggerMock.Object);
         }
 
         [Test]
@@ -39,6 +42,7 @@ public class UserSessionRevokerTests
             // Assert
             Assert.That(session.IsRevoked, Is.True);
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(session), Times.Once());
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(sessionId), Times.Once());
             _loggerMock.VerifyNoOtherCalls();
         }
 
@@ -56,13 +60,16 @@ public class UserSessionRevokerTests
             var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(() => 
                 _revoker.CloseSessionByIdAsync(sessionId, differentUserId));
             Assert.That(ex.Message, Contains.Substring($"User {differentUserId} does not belong to this session {sessionId}"));
+            
             _loggerMock.Verify(l => l.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
                 It.IsAny<It.IsAnyType>(),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
+            
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UserSession>()), Times.Never());
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(sessionId), Times.Never());
         }
 
         [Test]
@@ -79,6 +86,7 @@ public class UserSessionRevokerTests
 
             // Assert
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UserSession>()), Times.Never());
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(sessionId), Times.Never());
             _loggerMock.VerifyNoOtherCalls();
         }
 
@@ -102,6 +110,7 @@ public class UserSessionRevokerTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UserSession>()), Times.Never());
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(sessionId), Times.Never());
         }
 
         [Test]
@@ -126,7 +135,11 @@ public class UserSessionRevokerTests
             Assert.That(sessions[2].IsRevoked, Is.True);
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(sessions[0]), Times.Once());
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(sessions[2]), Times.Once());
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(sessions[0].Id), Times.Once());
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(sessions[2].Id), Times.Once());
+            
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(sessions[1]), Times.Never());
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(sessions[1].Id), Times.Never);
             _loggerMock.VerifyNoOtherCalls();
         }
 
@@ -148,6 +161,8 @@ public class UserSessionRevokerTests
                 It.IsAny<It.IsAnyType>(),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once());
+            
+            _pushTokenRepositoryMock.Verify(r => r.DeactivateTokenBySessionAsync(It.IsAny<Guid>()), Times.Never);
             _sessionsRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<UserSession>()), Times.Never());
         }
 }

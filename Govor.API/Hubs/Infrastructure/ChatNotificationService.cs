@@ -1,16 +1,29 @@
+using Govor.Application.Interfaces;
+using Govor.Application.Interfaces.PushNotifications;
 using Govor.Contracts.Responses.SignalR;
 using Govor.Core.Models.Messages;
+using Govor.Core.Repositories.PrivateChats;
+using Govor.Core.Repositories.PushTokens;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Govor.API.Hubs.Infrastructure;
 
 public class ChatNotificationService : IChatNotificationService 
 {
-private readonly IHubContext<ChatsHub> _hubContext;
-
-    public ChatNotificationService(IHubContext<ChatsHub> hubContext)
+    private readonly IHubContext<ChatsHub> _hubContext;
+    private readonly IPrivateChatsRepository _privateChatsRepository;
+    private readonly IPushNotificationService _notificationService;
+    private readonly IProfileService _profileService;
+    public ChatNotificationService(
+        IProfileService profileService,
+        IHubContext<ChatsHub> hubContext, 
+        IPushNotificationService notificationService,
+        IPrivateChatsRepository privateChatsRepository)
     {
         _hubContext = hubContext;
+        _profileService = profileService;
+        _notificationService = notificationService;
+        _privateChatsRepository = privateChatsRepository;
     }
 
     public async Task NotifyMessageSentAsync(UserMessageResponse message)
@@ -19,6 +32,8 @@ private readonly IHubContext<ChatsHub> _hubContext;
         {
             await _hubContext.Clients.Group(ChatHubConstants.GetPrivateChat(message.RecipientId))
                 .SendAsync(ChatHubConstants.ReceiveMessage, message);
+            
+            await NotifyMessageReceivedInPrivateChatAsync(message);
         }
         else
         {
@@ -30,6 +45,19 @@ private readonly IHubContext<ChatsHub> _hubContext;
        //     .SendAsync(ChatHubConstants.MessageSent, message);
     }
 
+    private async Task NotifyMessageReceivedInPrivateChatAsync(UserMessageResponse message)
+    {
+        var privateChat = await _privateChatsRepository.GetByIdAsync(message.RecipientId);
+       
+        var text = message.EncryptedContent.Substring(0, Math.Min(40, message.EncryptedContent.Length));
+        var userId = message.SenderId == privateChat.UserAId ? privateChat.UserAId : privateChat.UserBId;
+       
+        var profile = await _profileService.GetUserProfileAsync(userId);
+        var title = profile.Username;
+       
+        await _notificationService.SendToUserAsync(userId, title,text, "chat_messages");
+    }
+    
     public async Task NotifyMessageRemovedAsync(MessageRemovedResponse response)
     {
         await NotifyParticipantsAsync(

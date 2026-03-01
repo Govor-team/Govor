@@ -43,36 +43,51 @@ public class MessagesLoaderTests
         // Arrange
         var chatId = Guid.NewGuid();
 
-        _privateChatsRepoMock.Setup(r => r.Exist(_currentUserId, _otherUserId)).Returns(true);
-        _privateChatsRepoMock.Setup(r => r.GetByMembersAsync(_currentUserId, _otherUserId))
-            .ReturnsAsync(new PrivateChat() { Id = chatId });
+        _privateChatsRepoMock
+            .Setup(r => r.Exist(chatId))
+            .Returns(true);
 
         var messages = new List<Message>
         {
-            new() { Id = Guid.NewGuid(), RecipientId = chatId, RecipientType = RecipientType.User }
+            new()
+            {
+                Id = Guid.NewGuid(),
+                RecipientId = chatId,
+                RecipientType = RecipientType.User,
+                SentAt = DateTime.UtcNow
+            }
         };
 
         await _dbContext.Messages.AddRangeAsync(messages);
         await _dbContext.SaveChangesAsync();
 
         // Act
-        var result = await _loader.LoadMessagesInUserChat(_currentUserId, _otherUserId, null);
+        var result = await _loader.LoadMessagesInUserChat(
+            chatId,
+            _currentUserId,
+            null);
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
     }
-
+    
     [Test]
     public async Task LoadLastMessagesInUserChat_ReturnsEmpty_WhenNoMessages()
     {
-        // Arrange 
-        _privateChatsRepoMock.Setup(r => r.Exist(_currentUserId, _otherUserId)).Returns(true);
-        _privateChatsRepoMock.Setup(r => r.GetByMembersAsync(_currentUserId, _otherUserId))
-            .ReturnsAsync(new PrivateChat { Id = Guid.NewGuid() });
-        // Act
-        var result = await _loader.LoadMessagesInUserChat(_currentUserId, _otherUserId, null);
+        // Arrange
+        var chatId = Guid.NewGuid();
 
-        // Assert 
+        _privateChatsRepoMock
+            .Setup(r => r.Exist(chatId))
+            .Returns(true);
+
+        // Act
+        var result = await _loader.LoadMessagesInUserChat(
+            chatId,
+            _currentUserId,
+            null);
+
+        // Assert
         Assert.That(result, Is.Empty);
     }
 
@@ -83,7 +98,7 @@ public class MessagesLoaderTests
         var ex = Assert.ThrowsAsync<ArgumentException>(async () =>
             await _loader.LoadMessagesInUserChat(Guid.Empty, _currentUserId, null));
 
-        Assert.That(ex.Message, Does.Contain("User id cannot be empty"));
+        Assert.That(ex.Message, Does.Contain("PrivateChatId id cannot be empty"));
     }
 
     [Test]

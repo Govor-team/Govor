@@ -9,6 +9,9 @@ public class MessagesConfiguration : IEntityTypeConfiguration<Message>
     public void Configure(EntityTypeBuilder<Message> builder)
     {
         builder.HasKey(m => m.Id);
+        
+        // Просто индекс, без unique
+        builder.HasIndex(m => m.RecipientId);
 
         builder.HasMany(m => m.Reactions)
             .WithOne(r => r.Message)

@@ -12,6 +12,14 @@ public class UserSessionConfiguration : IEntityTypeConfiguration<UserSession>
     {
         builder.HasKey(us => us.Id);
 
+        builder.HasIndex(us => us.Id)
+            .IsUnique();
+        
+        builder.HasIndex(us => us.UserId);
+        
+        builder.HasIndex(s => s.RefreshTokenHash)
+            .IsUnique(); 
+        
         builder.Property(us => us.RefreshTokenHash)
             .IsRequired();
 
