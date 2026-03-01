@@ -54,7 +54,7 @@ public class PushTokenRepository : IPushTokenRepository
     {
         if (userId == Guid.Empty)
             throw new ArgumentException("UserId cannot be empty", nameof(userId));
-
+        
         if (string.IsNullOrWhiteSpace(token))
             throw new ArgumentException("Token cannot be empty", nameof(token));
 
@@ -62,7 +62,7 @@ public class PushTokenRepository : IPushTokenRepository
             throw new ArgumentException("Platform cannot be empty", nameof(platform));
 
         var existing = await _context.UserPushTokens
-            .FirstOrDefaultAsync(t => t.Token == token);
+            .FirstOrDefaultAsync(t => t.UserSessionId == sessionId);
 
         if (existing != null)
         {
