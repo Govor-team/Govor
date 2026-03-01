@@ -39,15 +39,15 @@ public class FirebasePushProvider : IPushNotificationProvider
             Notification = new Notification
             {
                 Title = message.Title,
-                Body  = message.Body
+                Body  = message.Body,
             },
             Data = message.Data,
             Android = message.ChannelId != null ? new AndroidConfig
             {
+                Priority = Priority.High,
                 Notification = new AndroidNotification
                 {
-                    ChannelId = message.ChannelId,
-                    Priority = NotificationPriority.HIGH
+                    ChannelId = message.ChannelId ?? "chat_messages"
                 }
             } : null
         };
@@ -82,7 +82,11 @@ public class FirebasePushProvider : IPushNotificationProvider
     {
         var msg = new Message
         {
-            Notification = new Notification { Title = pm.Title, Body = pm.Body },
+            Notification = new Notification
+                { 
+                    Title = pm.Title,
+                    Body = pm.Body
+                },
             Data = pm.Data,
             Token = token
         };
@@ -91,6 +95,7 @@ public class FirebasePushProvider : IPushNotificationProvider
         {
             msg.Android = new AndroidConfig
             {
+                Priority = Priority.High,
                 Notification = new AndroidNotification { ChannelId = pm.ChannelId }
             };
         }

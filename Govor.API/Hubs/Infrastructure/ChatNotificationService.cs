@@ -50,9 +50,9 @@ public class ChatNotificationService : IChatNotificationService
         var privateChat = await _privateChatsRepository.GetByIdAsync(message.RecipientId);
        
         var text = message.EncryptedContent.Substring(0, Math.Min(40, message.EncryptedContent.Length));
-        var userId = message.SenderId == privateChat.UserAId ? privateChat.UserAId : privateChat.UserBId;
+        var userId = message.SenderId == privateChat.UserAId ? privateChat.UserBId : privateChat.UserAId;
        
-        var profile = await _profileService.GetUserProfileAsync(userId);
+        var profile = await _profileService.GetUserProfileAsync(message.SenderId);
         var title = profile.Username;
        
         await _notificationService.SendToUserAsync(userId, title,text, "chat_messages");

@@ -73,6 +73,7 @@ public class PushTokenRepository : IPushTokenRepository
             existing.Provider = provider;
             existing.UpdatedAt = DateTime.UtcNow;
             existing.LastUsedAt = DateTime.UtcNow;
+            existing.Token = token;
             existing.IsActive = true;
 
             _context.UserPushTokens.Update(existing);
