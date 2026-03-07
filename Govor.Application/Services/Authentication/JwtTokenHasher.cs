@@ -7,26 +7,35 @@ namespace Govor.Application.Services.Authentication;
 
 public class JwtTokenHasher : IJwtTokenHasher
 {
-    private readonly string _pepper;
+    private readonly byte[] _pepperBytes;
 
     public JwtTokenHasher(IConfiguration config)
     {
-        _pepper = config["EncryptionOption:Secret"] ?? "D1fault%Lxng%Randxm^Secret^Key(123!";
+        var pepper = config["EncryptionOption:Secret"]
+                     ?? throw new InvalidOperationException("Pepper is missing");
+
+        _pepperBytes = Encoding.UTF8.GetBytes(pepper);
     }
 
     public string HashToken(string token)
     {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_pepper));
-        var bytes = Encoding.UTF8.GetBytes(token);
-        var hash = hmac.ComputeHash(bytes);
+        using var hmac = new HMACSHA256(_pepperBytes);
+
+        var tokenBytes = Encoding.UTF8.GetBytes(token);
+        var hash = hmac.ComputeHash(tokenBytes);
+
         return Convert.ToBase64String(hash);
     }
 
     public bool VerifyToken(string token, string storedHash)
     {
-        var currentHashBytes = Encoding.UTF8.GetBytes(HashToken(token));
-        var storedHashBytes = Encoding.UTF8.GetBytes(storedHash);
-        
-        return CryptographicOperations.FixedTimeEquals(currentHashBytes, storedHashBytes);
+        using var hmac = new HMACSHA256(_pepperBytes);
+
+        var tokenBytes = Encoding.UTF8.GetBytes(token);
+        var computedHash = hmac.ComputeHash(tokenBytes);
+
+        var storedHashBytes = Convert.FromBase64String(storedHash);
+
+        return CryptographicOperations.FixedTimeEquals(computedHash, storedHashBytes);
     }
 }

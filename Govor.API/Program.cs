@@ -16,6 +16,9 @@ var services = builder.Services;
 
 builder.AddLogger();// Serilog
 
+
+builder.Configuration.AddJsonFile("configs/ban_usernames.json", optional: false, reloadOnChange: true);
+
 #if DEBUG
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 //builder.Configuration.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true);

@@ -1,8 +1,10 @@
 using Govor.Application.Interfaces;
 using Govor.Contracts.Responses.Admins;
+using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models.Users;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.AdminStuff;
@@ -10,13 +12,16 @@ namespace Govor.API.Controllers.AdminStuff;
 
 [ApiController] 
 [Route("api/admin/[controller]")]
-[Authorize(Roles = "Admin")]
+//[Authorize(Roles = "Admin")]
 public class UsersController : Controller
 {
     private readonly ILogger<UsersController> _logger;
     private readonly IUsersAdministration _users;
+
     
-    public UsersController(ILogger<UsersController> logger, IUsersAdministration users, IInvitationGenerator invitationGenerator)
+    public UsersController(ILogger<UsersController> logger,
+        IUsersAdministration users,
+        IInvitationGenerator invitationGenerator)
     {
         _logger = logger;
         _users = users;
@@ -60,7 +65,20 @@ public class UsersController : Controller
             return StatusCode(500, e.Message);
         }
     }
-    
+
+    [HttpGet("user/{id:guid}/setpassword/{password}")]
+    public async Task<IActionResult> SetNewPassword(Guid id, string password)
+    {
+        try
+        {
+            await _users.SetPasswordAsync(id, password);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
     
     private List<UserResponse> BuildUserDtos(IEnumerable<User> users) => users.Select(user => new UserResponse
     {

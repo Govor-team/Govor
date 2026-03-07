@@ -16,6 +16,7 @@
         <PackageReference Include="FirebaseAdmin" Version="3.4.0" />
         <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.0" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="11.0.0-preview.1.26104.118" />
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.1" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
     </ItemGroup>

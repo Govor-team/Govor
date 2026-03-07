@@ -89,15 +89,7 @@ public class JwtTokenHasherTests
     {
         // Arrange
         var emptyConfig = new ConfigurationBuilder().Build();
-        var hasherWithDefaultSecret = new JwtTokenHasher(emptyConfig);
-
-        string token = _fixture.Create<string>();
-
-        // Act
-        string hash = hasherWithDefaultSecret.HashToken(token);
-        var result = hasherWithDefaultSecret.VerifyToken(token, hash);
-
-        // Assert
-        Assert.That(result, Is.True);
+        // Act & Assert 
+        Assert.Throws<InvalidOperationException>(() => new JwtTokenHasher(emptyConfig));
     }
 }

@@ -50,13 +50,13 @@ public static class ConfigurationProgramExtensions
     public static void AddServices(this IServiceCollection services)
     {
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
-        services.AddScoped<IJwtTokenHasher, JwtTokenHasher>();
+        services.AddSingleton<IUsernameValidator, UsernameValidator>();
+        services.AddSingleton<IJwtTokenHasher, JwtTokenHasher>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAccountService, AuthService>();
         services.AddScoped<IUsersAdministration, UsersService>();
         services.AddScoped<IInvitesService, InvitesService>();
         services.AddScoped<IInvitationGenerator, InvitationGenerator>();
-        services.AddScoped<IUsernameValidator, UsernameValidator>();
         services.AddScoped<ISynchingService, SynchingService>();
         
         // Friends services 
