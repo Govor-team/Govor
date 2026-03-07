@@ -12,7 +12,7 @@ namespace Govor.API.Controllers.AdminStuff;
 
 [ApiController] 
 [Route("api/admin/[controller]")]
-//[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 public class UsersController : Controller
 {
     private readonly ILogger<UsersController> _logger;
