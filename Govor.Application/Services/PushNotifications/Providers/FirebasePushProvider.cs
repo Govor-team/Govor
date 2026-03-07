@@ -47,7 +47,8 @@ public class FirebasePushProvider : IPushNotificationProvider
                 Priority = Priority.High,
                 Notification = new AndroidNotification
                 {
-                    ChannelId = message.ChannelId ?? "chat_messages"
+                    ChannelId = message.ChannelId ?? "chat_messages",
+                    Tag = message.Tag,
                 }
             } : null
         };
@@ -96,7 +97,11 @@ public class FirebasePushProvider : IPushNotificationProvider
             msg.Android = new AndroidConfig
             {
                 Priority = Priority.High,
-                Notification = new AndroidNotification { ChannelId = pm.ChannelId }
+                Notification = new AndroidNotification
+                {
+                    ChannelId = pm.ChannelId,
+                    Tag = pm.Tag,
+                }
             };
         }
 

@@ -22,7 +22,7 @@ public class PushNotificationService : IPushNotificationService
         _logger = logger;
     }
 
-    public async Task SendToUserAsync(Guid userId, string title, string body, string channelId, Dictionary<string, string>? data = null)
+    public async Task SendToUserAsync(Guid userId, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
     {
         var tokens = await _tokenRepo.GetActiveTokensAsync(userId);
         if (tokens.Count == 0)
@@ -36,6 +36,7 @@ public class PushNotificationService : IPushNotificationService
             Title = title,
             Body = body,
             Data = data ?? new(),
+            Tag = tag,
             ChannelId = channelId
         };
 
@@ -48,7 +49,7 @@ public class PushNotificationService : IPushNotificationService
         }
     }
 
-    public async Task SendToUsersAsync(IEnumerable<Guid> userIds, string title, string body, string channelId, Dictionary<string, string>? data = null)
+    public async Task SendToUsersAsync(IEnumerable<Guid> userIds, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
     {
         if (userIds is null)
             throw new ArgumentNullException(nameof(userIds));
@@ -62,6 +63,7 @@ public class PushNotificationService : IPushNotificationService
             Title = title,
             Body = body,
             Data = data ?? new(),
+            Tag = tag,
             ChannelId = channelId
         });
         
@@ -72,7 +74,7 @@ public class PushNotificationService : IPushNotificationService
         }
     }
 
-    public async Task SendToSessionAsync(Guid sessionId, string title, string body, string channelId, Dictionary<string, string>? data = null)
+    public async Task SendToSessionAsync(Guid sessionId, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
     {
         var token = await _tokenRepo.GetActiveTokenBySessionAsync(sessionId);
         if(string.IsNullOrEmpty(token))
@@ -83,6 +85,7 @@ public class PushNotificationService : IPushNotificationService
             Title = title,
             Body = body,
             Data = data ?? new(),
+            Tag = tag,
             ChannelId = channelId
         });
         

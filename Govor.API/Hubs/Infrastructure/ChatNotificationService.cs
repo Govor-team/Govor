@@ -54,8 +54,18 @@ public class ChatNotificationService : IChatNotificationService
        
         var profile = await _profileService.GetUserProfileAsync(message.SenderId);
         var title = profile.Username;
-       
-        await _notificationService.SendToUserAsync(userId, title,text, "chat_messages");
+        Dictionary<string, string> data = new Dictionary<string, string>();
+        
+        data["chatId"] = message.RecipientId.ToString();
+        data["isGroup"] = message.RecipientType == RecipientType.Group ? "true" : "false";
+        
+        await _notificationService.SendToUserAsync(
+            userId, 
+            title,
+            text,  
+            "chat_messages",
+            $"private_chat_{message.RecipientId}",
+            data);
     }
     
     public async Task NotifyMessageRemovedAsync(MessageRemovedResponse response)
