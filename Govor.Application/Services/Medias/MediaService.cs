@@ -52,9 +52,17 @@ public class MediaService : IMediaService
         }
     }
 
-    public Task DeleteMediaAsync(Guid fileId)
+    public async Task DeleteMediaAsync(Guid mediaId)
     {
-        throw new NotImplementedException();
+        var mediaFile = await _dbContext.MediaFiles
+                            .FirstOrDefaultAsync(x => x.Id == mediaId)
+                        ?? throw new KeyNotFoundException($"No media found by given id {mediaId}");
+
+        await _storageService.RemoveAsync(mediaFile.Url);
+        
+        _dbContext.MediaFiles.Remove(mediaFile);
+
+        await _dbContext.SaveChangesAsync();
     }
 
     public Task<Media> GetMediaByUrlAsync(string url)

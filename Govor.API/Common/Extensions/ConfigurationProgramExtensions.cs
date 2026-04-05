@@ -158,20 +158,42 @@ public static class ConfigurationProgramExtensions
         {
             services.AddDbContext<GovorDbContext>(options =>
             {
-                options
-                    .UseMySql(
-                        configuration.GetConnectionString(nameof(GovorDbContext)),
-                        new MySqlServerVersion(new Version(8, 0, 21))
-                    );
-                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                var connectionString = configuration.GetConnectionString(nameof(GovorDbContext));
+
+                options.UseMySql(
+                    connectionString,
+                    new MySqlServerVersion(new Version(8, 0, 21)),
+                    mySqlOptions =>
+                    {
+                        mySqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(5),
+                            errorNumbersToAdd: null);
+                    });
+                
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
             });
         }
         else
         {
             services.AddDbContext<GovorDbContext>(options =>
             {
-                options.UseNpgsql(configuration.GetConnectionString(nameof(GovorDbContext)));
-                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                options.UseNpgsql(
+                    configuration.GetConnectionString(nameof(GovorDbContext)),
+                    npgsqlOptions =>
+                    {
+                        // retry for transient failures
+                        npgsqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(5),
+                            errorCodesToAdd: null);
+                    });
+                
+                //options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+                
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
             });
         }
     }

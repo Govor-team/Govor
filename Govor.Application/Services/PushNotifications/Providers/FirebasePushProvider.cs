@@ -1,11 +1,18 @@
 using FirebaseAdmin.Messaging;
 using Govor.Application.Interfaces.PushNotifications;
 using Govor.Application.Interfaces.PushNotifications.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Govor.Application.Services.PushNotifications.Providers;
 
 public class FirebasePushProvider : IPushNotificationProvider
 {
+    private readonly ILogger<FirebasePushProvider> _logger;
+    public FirebasePushProvider(ILogger<FirebasePushProvider> logger)
+    {
+        _logger = logger;
+    }
+    
     public string Name => "FCM";
 
     public async Task<SendPushResult> SendToTokenAsync(string token, PushMessage message)
@@ -21,6 +28,7 @@ public class FirebasePushProvider : IPushNotificationProvider
         {
             if (IsInvalidTokenError(ex))
             {
+                _logger.LogError(ex, "FCM send failed");
                 return new SendPushResult(0, 1,  [token]);
             }
 
@@ -63,7 +71,12 @@ public class FirebasePushProvider : IPushNotificationProvider
             {
                 if (!response.Responses[i].IsSuccess)
                 {
-                    failedTokens.Add(tokens[i]);
+                    var ex = response.Responses[i].Exception;
+
+                    if (ex != null && IsInvalidTokenError(ex))
+                    {
+                        failedTokens.Add(tokens[i]); // invalid
+                    }
                 }
             }
 
@@ -75,6 +88,7 @@ public class FirebasePushProvider : IPushNotificationProvider
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "FCM multicast failed");
             return new SendPushResult(0, tokens.Count, tokens.ToList());
         }
     }

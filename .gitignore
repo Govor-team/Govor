@@ -42,9 +42,10 @@ appsettings.*.json
 ## JetBrains Rider
 .idea/
 
-## Logs
+## Logs & other
 *.log
 logs/
+uploads/
 
 ## Папки для публикации
 publish/

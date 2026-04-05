@@ -95,7 +95,6 @@ public class UserSessionsRepository : IUserSessionsRepository
                     .SetProperty(a => a.UserId, userSession.UserId)
                     .SetProperty(u => u.RefreshTokenHash, userSession.RefreshTokenHash)
                     .SetProperty(u => u.DeviceInfo, userSession.DeviceInfo)
-                    .SetProperty(u => u.CreatedAt, userSession.CreatedAt)
                     .SetProperty(u => u.ExpiresAt, userSession.ExpiresAt)
                     .SetProperty(u => u.IsRevoked, userSession.IsRevoked)
                 );

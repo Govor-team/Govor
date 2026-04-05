@@ -1,3 +1,4 @@
+using System.Security;
 using Govor.Core.Infrastructure.Extensions;
 using Govor.Core.Models.Users;
 using Govor.Core.Repositories.PushTokens;
@@ -62,10 +63,13 @@ public class PushTokenRepository : IPushTokenRepository
             throw new ArgumentException("Platform cannot be empty", nameof(platform));
 
         var existing = await _context.UserPushTokens
-            .FirstOrDefaultAsync(t => t.UserSessionId == sessionId);
-
+            .FirstOrDefaultAsync(t => t.UserSessionId == sessionId && t.Platform == platform);
+        
         if (existing != null)
         {
+            if(existing.UserId != userId)
+                throw new SecurityException("Token already belongs to another user");
+            
             // Updates
             existing.UserId = userId;
             existing.UserSessionId = sessionId;
@@ -113,7 +117,12 @@ public class PushTokenRepository : IPushTokenRepository
 
         if (toRemove.Any())
         {
-            _context.UserPushTokens.RemoveRange(toRemove);
+            foreach (var token in toRemove)
+            {
+                token.IsActive = false;
+                _context.UserPushTokens.Update(token);
+            }
+            
             await _context.SaveChangesAsync();
         }
     }

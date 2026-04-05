@@ -68,7 +68,6 @@ public class ProfileController : ControllerBase
                 userId);
           
             var mediaInfo = await _mediaService.UploadMediaAsync(media);
-            
             await _profileService.SetNewIcon(userId, mediaInfo.MediaId);
             
             return Ok(mediaInfo);

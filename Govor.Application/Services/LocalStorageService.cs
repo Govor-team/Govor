@@ -49,13 +49,36 @@ public class LocalStorageService : IStorageService
 
     public async Task RemoveAsync(string url)
     {
-        var path = Path.Combine(_storagePath, url);
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException("Invalid file url");
         
-        if (File.Exists(path))
+        var rootPath = Path.GetFullPath(_storagePath);
+        
+        var fullPath = Path.GetFullPath(Path.Combine(rootPath, url));
+        
+        if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+            throw new UnauthorizedAccessException("Invalid file path");
+
+        if (!File.Exists(fullPath))
+            return;
+
+        try
         {
-            File.Delete(path);
+            var fileInfo = new FileInfo(fullPath);
+            if (fileInfo.IsReadOnly)
+                fileInfo.IsReadOnly = false;
+
+            File.Delete(fullPath);
         }
-        
+        catch (IOException ex)
+        {
+            throw new IOException($"Failed to delete file: {fullPath}", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new UnauthorizedAccessException($"No access to delete file: {fullPath}", ex);
+        }
+
         await Task.CompletedTask;
     }
 }

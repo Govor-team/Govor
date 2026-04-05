@@ -84,7 +84,7 @@ public class UsersRepository : IUsersRepository
                         !_context.Friendships.Any(f =>
                             ((f.RequesterId == currentUserId && f.AddresseeId == u.Id) ||
                             (f.RequesterId == u.Id && f.AddresseeId == currentUserId)) && f.Status != FriendshipStatus.Rejected))
-            .Take(10)
+            .Take(7)
             .OrderBy(u => u.Username)
             .ToListOrThrowIfEmpty(new NotFoundByKeyException<(string, Guid)>((query, currentUserId), $"Users with given query for user {currentUserId} not found"));
     }
