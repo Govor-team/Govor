@@ -1,7 +1,7 @@
-using Govor.Application.Interfaces.Infrastructure.Extensions;
-using Govor.Application.Interfaces.Medias;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.Medias;
 using Govor.Contracts.Requests;
-using Govor.Core.Models;
+using Govor.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

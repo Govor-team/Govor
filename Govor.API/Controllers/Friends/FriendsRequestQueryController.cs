@@ -1,8 +1,7 @@
 using AutoMapper;
-using Govor.Application.Interfaces.Friends;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Friends;
+using Govor.Application.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,16 +40,6 @@ public class FriendsRequestQueryController : Controller
 
             return Ok(response);
         }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return Ok(new List<FriendshipDto>());
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
-        }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
@@ -71,16 +60,6 @@ public class FriendsRequestQueryController : Controller
             var response = _mapper.Map<List<FriendshipDto>>(result);
             
             return Ok(response);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return Ok(new List<FriendshipDto>());
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {

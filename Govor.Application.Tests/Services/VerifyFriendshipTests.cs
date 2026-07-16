@@ -1,8 +1,7 @@
 using AutoFixture;
 using Govor.Application.Exceptions.VerifyFriendship;
-using Govor.Application.Services;
-using Govor.Core.Models;
-using Govor.Core.Repositories.Friendships;
+using Govor.Domain.Models;
+using Govor.Domain.Repositories.Friendships;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;

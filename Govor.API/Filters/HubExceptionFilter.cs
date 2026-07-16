@@ -70,7 +70,6 @@ public class HubExceptionFilter : IHubFilter
             }
         }
 
-        // Ничего не возвращаем, если не поддерживается
         return null;
     }
 }

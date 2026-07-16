@@ -23,8 +23,4 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Govor.Data\Govor.Data.csproj" />
-    </ItemGroup>
-
 </Project>

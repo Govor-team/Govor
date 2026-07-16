@@ -16,7 +16,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Govor.Contracts\Govor.Contracts.csproj" />
-        <ProjectReference Include="..\Govor.Core\Govor.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>

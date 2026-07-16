@@ -1,9 +1,7 @@
 using AutoMapper;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
-using Govor.Application.Interfaces.UserSession;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.Users.UserSessions;
 using Govor.Contracts.DTOs;
-using Govor.Core.Repositories.PushTokens;
-using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -43,7 +41,11 @@ public class SessionController : Controller
         try
         {
             var sessions = await _userSessionReader.GetAllSessionsAsync(_currentUserService.GetCurrentUserId());
-            return Ok(_mapper.Map<List<SessionDto>>(sessions));
+            
+            if(sessions.IsFailure)
+                return NotFound(sessions.Error);
+            
+            return Ok(_mapper.Map<List<SessionDto>>(sessions.Value));
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -65,8 +67,12 @@ public class SessionController : Controller
             if (sessionId == Guid.Empty)
                 return BadRequest("Invalid sessionId.");
             
-            await _userSessionRevoker.CloseSessionByIdAsync(sessionId,
+            var res = await _userSessionRevoker.CloseSessionByIdAsync(sessionId,
                 _currentUserService.GetCurrentUserId());
+            
+            if (res.IsFailure)
+                return BadRequest(res.Error);
+            
             return Ok();
         }
         catch (InvalidOperationException ex)
@@ -78,11 +84,6 @@ public class SessionController : Controller
         {
             _logger.LogWarning(ex, ex.Message);
             return Forbid(ex.Message);
-        }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound(ex.Message); 
         }
         catch (Exception ex)
         {
@@ -96,11 +97,14 @@ public class SessionController : Controller
     {
         try
         {
-            await _userSessionRevoker.CloseSessionByIdAsync(
+           var res =  await _userSessionRevoker.CloseSessionByIdAsync(
                 _currentUserSessionService.GetUserSessionId(),
                 _currentUserService.GetCurrentUserId());
-
-            return Ok();
+            
+           if(res.IsFailure)
+                return NotFound(res.Error);
+            
+           return Ok();
         }
         catch (InvalidOperationException ex)
         {
@@ -111,11 +115,6 @@ public class SessionController : Controller
         {
             _logger.LogWarning(ex, ex.Message);
             return Forbid(ex.Message);
-        }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound(ex.Message);
         }
         catch (Exception ex) 
         {
@@ -129,7 +128,11 @@ public class SessionController : Controller
     {
         try
         {
-            await _userSessionRevoker.CloseAllSessionsAsync(_currentUserService.GetCurrentUserId());
+            var res = await _userSessionRevoker.CloseAllSessionsAsync(_currentUserService.GetCurrentUserId());
+            
+            if(res.IsFailure)
+                return NotFound(res.Error);
+            
             return Ok();
         }
         catch (UnauthorizedAccessException ex)

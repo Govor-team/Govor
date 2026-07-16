@@ -1,7 +1,7 @@
 using AutoFixture;
-using Govor.Core.Infrastructure.Validators;
-using Govor.Core.Models;
-using Govor.Core.Models.Messages;
+using Govor.Domain.Common.Constants;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Messages;
 
 namespace Govor.API.Tests.UnitTests.Infrastructure.Validators;
 

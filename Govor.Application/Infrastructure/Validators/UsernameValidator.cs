@@ -1,13 +1,15 @@
 using System.Text.RegularExpressions;
-using Govor.Application.Exceptions.AuthService;
-using Govor.Application.Interfaces.Authentication;
-using Govor.Core.Infrastructure.Validators;
+using Govor.Application.Authentication.Exceptions;
+using Govor.Domain.Common.Constants;
+using Govor.Domain.Common;
 using Microsoft.Extensions.Configuration;
 
 namespace Govor.Application.Infrastructure.Validators;
 
 public class UsernameValidator : IUsernameValidator
 {
+    private const string ErrorCode = nameof(InvalidUsernameException);
+    
     private readonly Regex _usernameRegex = new(@"^[А-Яа-яЁё]+[А-Яа-яЁё0-9]*$", RegexOptions.Compiled);
     
     private readonly HashSet<string> _blockedExact;
@@ -37,43 +39,61 @@ public class UsernameValidator : IUsernameValidator
                     ?? throw new InvalidOperationException("Reserved not set");
     }
     
-    public void Validate(string username)
+    public Result Validate(string username)
     {
-        if(username.Length < UserValidator.MIN_LENGHT_OF_NAME || username.Length > UserValidator.MAX_LENGHT_OF_NAME)
-            throw new InvalidUsernameException($"Username must be between {UserValidator.MIN_LENGHT_OF_NAME} and {UserValidator.MAX_LENGHT_OF_NAME} characters.");
-
-        if (!_usernameRegex.IsMatch(username))
-            throw new InvalidUsernameException("The username must be in Cyrillic and start with a letter.");
+        if (username.Length < UserConstants.MIN_LENGHT_OF_NAME || username.Length > UserConstants.MAX_LENGHT_OF_NAME)
+        {
+            return new Error(
+                ErrorCode, 
+                $"Username must be between {UserConstants.MIN_LENGHT_OF_NAME} and {UserConstants.MAX_LENGHT_OF_NAME} characters.");
+        }
         
+        if (!_usernameRegex.IsMatch(username))
+        {
+            return new Error(
+                ErrorCode, 
+                "The username must be in Cyrillic and start with a letter.");
+        }
+
         if (Regex.IsMatch(username, @"(.)\1{4,}"))
-            throw new InvalidUsernameException("Too many repeating characters.");
+        {
+            return new Error(
+                ErrorCode, 
+                "Too many repeating characters.");
+        }
         
         var normalized = Normalize(username);
-
+        
         if (_reserved.Contains(normalized))
-            throw new InvalidUsernameException("This username is reserved.");
-
+        {
+            return new Error(
+                ErrorCode, 
+                "This username is reserved.");
+        }
+        
         if (_blockedExact.Contains(normalized))
-            throw new InvalidUsernameException("This username is not allowed.");
-
+        {
+            return new Error(
+                ErrorCode, 
+                "This username is not allowed.");
+        }
+        
         foreach (var banned in _blockedContains)
         {
             if (normalized.Contains(banned))
-                throw new InvalidUsernameException("Username contains prohibited content.");
+            {
+                return new Error(
+                    ErrorCode, 
+                    "Username contains prohibited content.");
+            }
         }
+        
+        return Result.Success();
     }
 
     public bool TryValidate(string username)
     {
-        try
-        {
-            Validate(username);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        return Validate(username).IsSuccess;
     }
         
     private static string Normalize(string username)

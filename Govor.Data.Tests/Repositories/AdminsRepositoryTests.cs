@@ -1,13 +1,13 @@
 using AutoFixture;
-using Govor.Core.Infrastructure.Validators;
-using Govor.Core.Models;
-using Govor.Core.Models.Users;
-using Govor.Data;
-using Govor.Data.Repositories;
-using Govor.Data.Repositories.Exceptions;
+using Govor.Domain.Infrastructure.Validators;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Users;
+using Govor.Domain;
+using Govor.Domain.Repositories;
+using Govor.Domain.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Govor.Data.Tests.Repositories;
+namespace Govor.Domain.Tests.Repositories;
 
 [TestFixture]
 public class AdminsRepositoryTests

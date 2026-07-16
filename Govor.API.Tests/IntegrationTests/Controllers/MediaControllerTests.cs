@@ -4,7 +4,7 @@ using Govor.API.Controllers;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Application.Interfaces.Medias;
 using Govor.Contracts.Requests;
-using Govor.Core.Models.Messages;
+using Govor.Domain.Models.Messages;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

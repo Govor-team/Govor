@@ -24,10 +24,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Govor.Application\Govor.Application.csproj" />
         <ProjectReference Include="..\Govor.Contracts\Govor.Contracts.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Contracts\" />
+        <ProjectReference Include="..\Govor.Domain\Govor.Domain.csproj" />
     </ItemGroup>
 
 </Project>

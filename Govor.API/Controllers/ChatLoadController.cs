@@ -1,9 +1,8 @@
 using AutoMapper;
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.Messages;
 using Govor.Contracts.Requests;
 using Govor.Contracts.Responses;
-using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,16 +51,6 @@ public class ChatLoadController : Controller
 
             return Ok(response);
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex.Message);
-            return Forbid(ex.Message);
-        }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
-        }
         catch (ArgumentException ex)
         {
             _logger.LogWarning(ex, ex.Message);
@@ -94,21 +83,6 @@ public class ChatLoadController : Controller
             var response = _mapper.Map<List<MessageResponse>>(result);
 
             return Ok(response);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex.Message);
-            return Forbid(ex.Message);
-        }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
         }
         catch (ArgumentException ex)
         {

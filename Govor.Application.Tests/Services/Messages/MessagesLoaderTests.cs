@@ -1,9 +1,10 @@
 using Govor.Application.Interfaces;
+using Govor.Application.Messages;
 using Govor.Application.Services.Messages;
-using Govor.Core.Models;
-using Govor.Core.Models.Messages;
-using Govor.Core.Repositories.Groups;
-using Govor.Core.Repositories.PrivateChats;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Messages;
+using Govor.Domain.Repositories.Groups;
+using Govor.Domain.Repositories.PrivateChats;
 using Govor.Data;
 using Microsoft.EntityFrameworkCore;
 using Moq;

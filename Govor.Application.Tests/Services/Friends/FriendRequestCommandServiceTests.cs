@@ -2,10 +2,11 @@ using AutoFixture;
 using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Friends;
+using Govor.Application.PrivateUserChats;
 using Govor.Application.Services.Friends;
-using Govor.Core.Models;
-using Govor.Core.Repositories.Friendships;
-using Govor.Core.Repositories.Users;
+using Govor.Domain.Models;
+using Govor.Domain.Repositories.Friendships;
+using Govor.Domain.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
 using Moq;
 

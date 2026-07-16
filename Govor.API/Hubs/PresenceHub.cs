@@ -1,6 +1,5 @@
 using Govor.API.Common.SignalR.Helpers;
-using Govor.Application.Interfaces.UserOnlineStatus;
-using Govor.Core.Repositories.Users;
+using Govor.Application.Users.UserOnlineStatus;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR;
@@ -15,17 +14,14 @@ public class PresenceHub : Hub
     private readonly IUserNotificationScopeService _scopeService;
     private readonly IOnlineUserStore _onlineUserStore;
     private readonly IHubUserAccessor _userAccessor;
-    private readonly IUsersRepository _users;
     
     public PresenceHub(
         ILogger<PresenceHub> logger,
         IUserNotificationScopeService scopeService,
         IOnlineUserStore onlineUserStore,
-        IHubUserAccessor userAccessor,
-        IUsersRepository users)
+        IHubUserAccessor userAccessor)
     {
         _logger = logger;
-        _users = users;
         _scopeService = scopeService;
         _onlineUserStore = onlineUserStore;
         _userAccessor = userAccessor;
@@ -79,32 +75,9 @@ public class PresenceHub : Hub
         
         if (isLastConnection)
         {
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(TimeSpan.FromSeconds(5));
-                
-                var currentConnections = _onlineUserStore.GetConnections(userId);
-                if (currentConnections == null || !currentConnections.Any())
-                {
-                    var friends = await _scopeService.GetNotifiedUsers(userId);
-                    await Clients.Groups(friends.Select(f => f.ToString()).ToList())
-                        .SendAsync("UserOffline", userId);
-                    
-                    try 
-                    {
-                        var user = await _users.FindByIdAsync(userId);
-                        if (user != null)
-                        {
-                            user.WasOnline = DateTime.UtcNow;
-                            await _users.UpdateAsync(user);
-                        }
-                    }
-                    catch (Exception ex) 
-                    {
-                        _logger.LogError(ex, "Error updating WasOnline for {UserId}", userId);
-                    }
-                }
-            });
+            var friends = await _scopeService.GetNotifiedUsers(userId);
+            await Clients.Groups(friends.Select(f => f.ToString()).ToList())
+                .SendAsync("UserOffline", userId);
         }
 
         await base.OnDisconnectedAsync(exception);

@@ -1,5 +1,5 @@
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Groups;
+using Govor.Application.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

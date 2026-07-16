@@ -1,4 +1,4 @@
-using Govor.Application.Exceptions.AuthService;
+using Govor.Application.Authentication.Exceptions;
 using Govor.Application.Infrastructure.Validators;
 using Microsoft.Extensions.Configuration;
 

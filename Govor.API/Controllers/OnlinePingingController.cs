@@ -1,6 +1,6 @@
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
-using Govor.Application.Interfaces.UserOnlineStatus;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.PingHandler;
+using Govor.Application.Users.UserOnlineStatus;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,16 +39,6 @@ public class OnlinePingingController : Controller
             
             _logger.LogInformation($"Ping from user {id} processed successfully");
             return Ok();
-        }
-        catch (InvalidOperationException e)
-        {
-            _logger.LogError(e, e.Message);
-            return BadRequest("User can't be found in our database.");
-        }
-        catch (UnauthorizedAccessException e)
-        {
-            _logger.LogError(e, e.Message);
-            return Forbid(e.Message);
         }
         catch (Exception e)
         {

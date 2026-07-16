@@ -1,6 +1,6 @@
 using AutoFixture;
 using Govor.Application.Services.Authentication;
-using Govor.Core.Infrastructure.Extensions;
+using Govor.Domain.Infrastructure.Extensions;
 
 namespace  Govor.Application.Tests.Services;
 

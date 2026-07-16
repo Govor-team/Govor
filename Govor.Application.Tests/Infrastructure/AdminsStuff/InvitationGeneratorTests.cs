@@ -1,8 +1,8 @@
 using AutoFixture;
 using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Application.Interfaces;
-using Govor.Core.Models;
-using Govor.Core.Repositories.Invaites;
+using Govor.Domain.Models;
+using Govor.Domain.Repositories.Invaites;
 using Moq;
 
 namespace Govor.Application.Tests.Infrastructure.AdminsStuff;

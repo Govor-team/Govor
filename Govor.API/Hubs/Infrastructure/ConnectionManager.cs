@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
+using Govor.Application.Groups;
+using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Interfaces;
+using Govor.Application.PrivateUserChats;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Govor.API.Hubs.Infrastructure;

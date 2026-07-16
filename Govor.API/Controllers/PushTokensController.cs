@@ -1,6 +1,6 @@
-using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.PushNotifications;
 using Govor.Contracts.Requests;
-using Govor.Core.Repositories.PushTokens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,15 +13,15 @@ public class PushTokensController : Controller
 {
     private readonly ICurrentUserService _currentUser;
     private readonly ICurrentUserSessionService _currentSession;
-    private readonly IPushTokenRepository _pushTokenRepo;
+    private readonly IPushTokenService _pushTokenService;
 
     public PushTokensController(
+        IPushTokenService  pushTokenService,
         ICurrentUserService currentUser,
-        ICurrentUserSessionService currentSession,
-        IPushTokenRepository pushTokenRepository)
+        ICurrentUserSessionService currentSession)
     {
+        _pushTokenService = pushTokenService;
         _currentUser = currentUser;
-        _pushTokenRepo = pushTokenRepository;
         _currentSession = currentSession;
     }
 
@@ -39,7 +39,7 @@ public class PushTokensController : Controller
             var currentId = _currentUser.GetCurrentUserId();
             var currentSessionId = _currentSession.GetUserSessionId();
 
-            await _pushTokenRepo.AddOrUpdateTokenAsync(
+            await _pushTokenService.AddOrUpdateTokenAsync(
                 userId: currentId,
                 sessionId: currentSessionId,
                 token: req.Token,

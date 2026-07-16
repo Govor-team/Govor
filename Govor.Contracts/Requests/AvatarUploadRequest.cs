@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using Govor.Core.Models;
-using Govor.Core.Models.Messages;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Messages;
 using Microsoft.AspNetCore.Http;
 
 namespace Govor.Contracts.Requests;

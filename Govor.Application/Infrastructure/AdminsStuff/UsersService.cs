@@ -1,54 +1,45 @@
-using Govor.Application.Interfaces;
-using Govor.Core.Infrastructure.Extensions;
-using Govor.Core.Models.Users;
-using Govor.Core.Repositories.Users;
-using Govor.Data.Repositories.Exceptions;
+using Govor.Application.Authentication;
+using Govor.Domain;
+using Govor.Domain.Models.Users;
+using Microsoft.EntityFrameworkCore;
 
 namespace Govor.Application.Infrastructure.AdminsStuff;
 
 public class UsersService : IUsersAdministration
 {
-    private readonly IUsersRepository _usersRepository;
+    private readonly GovorDbContext _context;
     private readonly IPasswordHasher _passwordHasher;
     
-    public UsersService(IUsersRepository usersRepository, IPasswordHasher passwordHasher)
+    public UsersService(GovorDbContext context, IPasswordHasher passwordHasher)
     {
-        _usersRepository = usersRepository;
+        _context = context;
         _passwordHasher = passwordHasher;
     }
 
     public async Task<List<User>> GetAllUsersAsync()
     {
-        try
-        {
-            var results = await _usersRepository.GetAllAsync();
-            return results;
-        }
-        catch (NotFoundException ex)
-        {
-            return new List<User>();
-        }
+        var results = await _context.Users
+            .AsNoTracking()
+            .Take(50)
+            .ToListAsync();
+        return results;
     }
 
     public async Task SetPasswordAsync(Guid userId, string password)
     {
-        try
-        {
-            var user = await _usersRepository.FindByIdAsync(userId);
-            
-            user.PasswordHash = _passwordHasher.Hash(password);
-            
-            await _usersRepository.UpdateAsync(user);
-        }
-        catch (NotFoundException ex)
-        {
-            throw new NotFoundException(ex.Message);
-        }
+        var user = await GetUserById(userId);
+
+        if (user is null)
+            return;
+
+        user.PasswordHash = _passwordHasher.Hash(password);
+
+        await _context.SaveChangesAsync();
     }
     
     public async Task<User> GetUserById(Guid userId)
     {
-        var result = await _usersRepository.FindByIdAsync(userId);
+        var result = await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
             
         return result;
     }

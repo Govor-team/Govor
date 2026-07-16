@@ -1,5 +1,5 @@
-using Govor.Core.Models;
-using Govor.Core.Models.Messages;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Messages;
 using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 

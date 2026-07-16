@@ -1,9 +1,8 @@
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.PushNotifications;
+using Govor.Application.PrivateUserChats;
+using Govor.Application.Profiles;
+using Govor.Application.PushNotifications;
 using Govor.Contracts.Responses.SignalR;
-using Govor.Core.Models.Messages;
-using Govor.Core.Repositories.PrivateChats;
-using Govor.Core.Repositories.PushTokens;
+using Govor.Domain.Models.Messages;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Govor.API.Hubs.Infrastructure;
@@ -11,19 +10,20 @@ namespace Govor.API.Hubs.Infrastructure;
 public class ChatNotificationService : IChatNotificationService 
 {
     private readonly IHubContext<ChatsHub> _hubContext;
-    private readonly IPrivateChatsRepository _privateChatsRepository;
     private readonly IPushNotificationService _notificationService;
+    private readonly IUserPrivateChatsGetterService _userPrivateChatsGetterService;
     private readonly IProfileService _profileService;
+
     public ChatNotificationService(
-        IProfileService profileService,
-        IHubContext<ChatsHub> hubContext, 
+        IHubContext<ChatsHub> hubContext,
         IPushNotificationService notificationService,
-        IPrivateChatsRepository privateChatsRepository)
+        IUserPrivateChatsGetterService userPrivateChatsGetterService, 
+        IProfileService profileService)
     {
         _hubContext = hubContext;
-        _profileService = profileService;
         _notificationService = notificationService;
-        _privateChatsRepository = privateChatsRepository;
+        _userPrivateChatsGetterService = userPrivateChatsGetterService;
+        _profileService = profileService;
     }
 
     public async Task NotifyMessageSentAsync(UserMessageResponse message)
@@ -47,12 +47,22 @@ public class ChatNotificationService : IChatNotificationService
 
     private async Task NotifyMessageReceivedInPrivateChatAsync(UserMessageResponse message)
     {
-        var privateChat = await _privateChatsRepository.GetByIdAsync(message.RecipientId);
-       
+        
+        var result = await _userPrivateChatsGetterService.GetPrivateChatAsync(message.RecipientId);
+        
+        if(result.IsFailure)
+           return;
+        var privateChat = result.Value;
+        
         var text = message.EncryptedContent.Substring(0, Math.Min(40, message.EncryptedContent.Length));
         var userId = message.SenderId == privateChat.UserAId ? privateChat.UserBId : privateChat.UserAId;
        
-        var profile = await _profileService.GetUserProfileAsync(message.SenderId);
+        var resultProf = await _profileService.GetUserProfileAsync(message.SenderId);
+        
+        if(resultProf.IsFailure)
+            return;
+        var profile = resultProf.Value;
+        
         var title = profile.Username;
         Dictionary<string, string> data = new Dictionary<string, string>();
         

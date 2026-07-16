@@ -1,10 +1,10 @@
 ﻿using Govor.API.Common.SignalR.Helpers;
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Friends;
-using Govor.Application.Interfaces.Medias;
+using Govor.Application.Friends;
+using Govor.Application.Medias;
+using Govor.Application.Profiles;
+using Govor.Application.Synching;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses.SignalR;
-using Govor.Core.Repositories.Groups;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -13,7 +13,6 @@ namespace Govor.API.Hubs;
 [Authorize]
 public class ProfileHub : Hub
 {
-    private readonly IGroupsRepository _groupsRepository;
     private readonly IFriendshipService _friendsService;
     private readonly IProfileService _profileService;
     private readonly IHubUserAccessor _userAccessor;
@@ -22,7 +21,6 @@ public class ProfileHub : Hub
     private readonly IMediaService _mediaService; 
     
     public ProfileHub(
-        IGroupsRepository groupsRepository,
         IFriendshipService friendsService,
         IProfileService profileService,
         IHubUserAccessor userAccessor,
@@ -30,7 +28,6 @@ public class ProfileHub : Hub
         IMediaService mediaService,
         ILogger<ProfileHub> logger)
     {
-        _groupsRepository = groupsRepository;
         _friendsService = friendsService;
         _profileService = profileService;
         _userAccessor = userAccessor;

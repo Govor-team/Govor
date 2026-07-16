@@ -4,7 +4,7 @@ using System.Text;
 using AutoFixture;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Services.Authentication;
-using Govor.Core.Models.Users;
+using Govor.Domain.Models.Users;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Moq;

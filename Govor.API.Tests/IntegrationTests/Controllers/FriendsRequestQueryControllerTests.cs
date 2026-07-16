@@ -4,7 +4,7 @@ using Govor.API.Controllers.Friends;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models;
+using Govor.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;

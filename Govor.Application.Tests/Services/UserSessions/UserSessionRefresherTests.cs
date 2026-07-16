@@ -1,10 +1,10 @@
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Services.Authentication;
 using Govor.Application.Services.UserSessions;
-using Govor.Core.Models;
-using Govor.Core.Models.Users;
-using Govor.Core.Repositories.Users;
-using Govor.Core.Repositories.UserSessionsRepository;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Users;
+using Govor.Domain.Repositories.Users;
+using Govor.Domain.Repositories.UserSessionsRepository;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

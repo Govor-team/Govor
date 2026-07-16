@@ -1,5 +1,5 @@
-using Govor.Application.Services;
-using Govor.Core.Models.Users;
+using Govor.Application.PingHandler;
+using Govor.Domain.Models.Users;
 using Govor.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;

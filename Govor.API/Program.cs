@@ -3,7 +3,7 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
-using Govor.Application.Services.Authentication;
+using Govor.Application.Authentication.JWT;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -29,7 +29,6 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 FirebaseApp.Create(new AppOptions()
 {
     Credential = GoogleCredential.FromFile("secrets/firebase-adminsdk.json")
-    // или FromStream(File.OpenRead("firebase-adminsdk.json"))
 });
 
 builder.Services.AddCors(options =>
@@ -81,9 +80,6 @@ builder.Services.AddControllers();
 
 // Init DI
 builder.Services.AddServices();
-builder.Services.AddRepositories();
-builder.Services.AddValidators();
-
 builder.Services.AddOptionsConfiguration(configuration);
 
 builder.Services.AddGovorDbContext(configuration); // GovorDbContext init
@@ -125,6 +121,7 @@ if (!app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
     builder.WebHost.UseUrls("http://0.0.0.0:8080");
+    builder.WebHost.UseUrls("http://10.8.0.5:5000");
     //builder.WebHost.UseUrls("http://192.168.1.107:8080");
 }
 
@@ -142,7 +139,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Map("/server/ping",
+app.MapGet("/server/ping",
     () => new OkResult());
 
 app.MapHub<ChatsHub>("/hubs/chats"); 

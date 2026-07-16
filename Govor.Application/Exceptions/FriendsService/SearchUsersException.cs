@@ -1,4 +1,4 @@
-using Govor.Core;
+using Govor.Domain;
 
 namespace Govor.Application.Exceptions.FriendsService;
 

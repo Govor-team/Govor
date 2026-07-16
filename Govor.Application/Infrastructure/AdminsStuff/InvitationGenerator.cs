@@ -1,10 +1,9 @@
-using Govor.Application.Interfaces;
-using Govor.Core.Models;
-using Govor.Core.Repositories.Invaites;
+using Govor.Domain;
+using Govor.Domain.Models;
 
 namespace Govor.Application.Infrastructure.AdminsStuff;
 
-public class InvitationGenerator(IInvitesRepository repository) : IInvitationGenerator
+public class InvitationGenerator(GovorDbContext context) : IInvitationGenerator
 {
     public async Task<string> GenerateInvitationCode(DateTime time, int maxUsers, bool isAdmin, string description = "")
     {
@@ -19,7 +18,9 @@ public class InvitationGenerator(IInvitesRepository repository) : IInvitationGen
             IsAdmin = isAdmin
         };
 
-        await repository.AddAsync(newInvitation);
+        await context.Invitations.AddAsync(newInvitation);
+        
+        await context.SaveChangesAsync();
         
         return newInvitation.Code;
     }

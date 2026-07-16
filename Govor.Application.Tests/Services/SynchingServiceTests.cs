@@ -1,4 +1,4 @@
-using Govor.Application.Services;
+using Govor.Application.Synching;
 
 namespace Govor.Application.Tests.Services;
 

@@ -1,11 +1,11 @@
 using Govor.API.Common.SignalR.Helpers;
 using Govor.API.Hubs.Infrastructure;
 using Govor.Application.Exceptions.VerifyFriendship;
-using Govor.Application.Interfaces.Messages;
-using Govor.Application.Interfaces.Messages.Parameters;
+using Govor.Application.Messages;
+using Govor.Application.Messages.Parameters;
 using Govor.Contracts.Requests.SignalR;
 using Govor.Contracts.Responses.SignalR;
-using Govor.Core.Models.Messages;
+using Govor.Domain.Models.Messages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -15,20 +15,24 @@ namespace Govor.API.Hubs;
 public class ChatsHub : Hub
 {
     private readonly ILogger<ChatsHub> _logger;
-    private readonly IMessageCommandService _commandService;
+    private readonly IMessageSendingService _messageSendingService;
+    private readonly IMessageEditingService _messageEditingService;
+    private readonly IMessageRemovingService _messageRemovingService;
     private readonly IHubUserAccessor _userAccessor;
     private readonly IChatNotificationService _notifier;
     private readonly IConnectionManager _connectionManager;
 
-    public ChatsHub(
-        ILogger<ChatsHub> logger,
-        IMessageCommandService commandService,
+
+    public ChatsHub(ILogger<ChatsHub> logger,
+        IMessageSendingService messageSendingService, 
+        IMessageEditingService messageEditingService, 
         IHubUserAccessor userAccessor,
         IChatNotificationService notifier,
         IConnectionManager connectionManager)
     {
         _logger = logger;
-        _commandService = commandService;
+        _messageSendingService = messageSendingService;
+        _messageEditingService = messageEditingService;
         _userAccessor = userAccessor;
         _notifier = notifier;
         _connectionManager = connectionManager;
@@ -69,7 +73,7 @@ public class ChatsHub : Hub
             ValidateMessageRequest(request);
 
             var sendParams = MapToSendMessage(request, userId);
-            var result = await _commandService.SendMessageAsync(sendParams);
+            var result = await _messageSendingService.SendMessageAsync(sendParams);
 
             if (!result.IsSuccess)
                 throw new InvalidOperationException(result.Exception.Message ?? "Failed to send message");
@@ -87,7 +91,7 @@ public class ChatsHub : Hub
     {
         return await SafeExecute(async (userId) =>
         {
-            var result = await _commandService.DeleteMessageAsync(new DeleteMessage(userId, request.MessageId));
+            var result = await _messageRemovingService.DeleteMessageAsync(new DeleteMessage(userId, request.MessageId));
 
             if (!result.IsSuccess || result.OriginalMessage == null)
                 throw new InvalidOperationException("Message deletion failed");
@@ -112,7 +116,7 @@ public class ChatsHub : Hub
         return await SafeExecute(async (userId) =>
         {
             var editParams = new EditMessage(userId, request.MessageId, request.NewEncryptedContent, DateTime.UtcNow);
-            var result = await _commandService.EditMessageAsync(editParams);
+            var result = await _messageEditingService.EditMessageAsync(editParams);
 
             if (!result.IsSuccess || result.OriginalMessage == null)
                 throw new InvalidOperationException("Edit message error");

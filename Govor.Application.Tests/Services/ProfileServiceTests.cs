@@ -1,6 +1,5 @@
-﻿using Govor.Application.Services;
-using Govor.Core.Models.Users;
-using Govor.Core.Repositories.Users;
+﻿using Govor.Domain.Models.Users;
+using Govor.Domain.Repositories.Users;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;

@@ -1,7 +1,8 @@
 using Govor.Application.Interfaces.PushNotifications;
 using Govor.Application.Interfaces.PushNotifications.Models;
+using Govor.Application.PushNotifications;
 using Govor.Application.Services.PushNotifications;
-using Govor.Core.Repositories.PushTokens;
+using Govor.Domain.Repositories.PushTokens;
 using Microsoft.Extensions.Logging;
 using Moq;
 

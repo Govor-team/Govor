@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Govor.Application.Interfaces;
+using Govor.Application.Infrastructure.Extensions;
 
 namespace Govor.API.Hubs.Infrastructure;
 

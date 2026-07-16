@@ -1,9 +1,7 @@
 using AutoMapper;
-using Govor.Application.Exceptions.FriendsService;
-using Govor.Application.Interfaces.Friends;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Friends;
+using Govor.Application.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.Friends;

@@ -1,4 +1,4 @@
-using Govor.Core.Models.Messages;
+using Govor.Domain.Models.Messages;
 using System.ComponentModel.DataAnnotations;
 
 namespace Govor.Contracts.Requests.SignalR;

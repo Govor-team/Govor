@@ -1,19 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using Govor.Core.Infrastructure.Validators;
+using Govor.Domain.Common.Constants;
 
 namespace Govor.Contracts.Requests;
 
 public record RegistrationRequest
 {
     [Required]
-    [StringLength(UserValidator.MAX_LENGHT_OF_NAME,
-        MinimumLength = UserValidator.MIN_LENGHT_OF_NAME, 
+    [StringLength(UserConstants.MAX_LENGHT_OF_NAME,
+        MinimumLength = UserConstants.MIN_LENGHT_OF_NAME, 
         ErrorMessage = "Username must be between 4 and 44 characters.")]
     public string Name { get; init; }
     [Required]
     [MinLength(8)]
     public string Password { get; init; }
-    [MinLength(InvitationValidator.MIN_INVITATION_LENGTH)]
+    [MinLength(InvitationConstants.MIN_INVITATION_LENGTH)]
     public string InviteLink { get; init; }
     public string DeviceInfo { get; init; }
 }

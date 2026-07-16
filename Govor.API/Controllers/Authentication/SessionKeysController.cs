@@ -1,7 +1,6 @@
-using Govor.Application.Interfaces.Friends;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
-using Govor.Application.Interfaces.UserSession;
-using Govor.Application.Interfaces.UserSession.Crypto;
+using Govor.Application.Friends;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.Users.UserSessions.Crypto;
 using Govor.Contracts.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

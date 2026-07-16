@@ -1,8 +1,6 @@
-using Govor.Application.Interfaces;
+using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Requests;
-using Govor.Core.Repositories.Invaites;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.AdminStuff;
@@ -12,17 +10,17 @@ namespace Govor.API.Controllers.AdminStuff;
 //[Authorize(Roles = "Admin")]
 public class InviteUserController : Controller
 {
-    private readonly IInvitesRepository _repository;
+    private readonly IInvitationGetter _invitationGetter;
     private readonly IInvitationGenerator _invitationGenerator;
     private readonly ILogger<InviteUserController> _logger;
     
     public InviteUserController(IInvitationGenerator invitationGenerator,
-        IInvitesRepository repository, 
+        IInvitationGetter invitationGetter, 
         ILogger<InviteUserController> logger)
     {
         _invitationGenerator = invitationGenerator;
         _logger = logger;
-        _repository = repository;
+        _invitationGetter = invitationGetter;
     }
     
     [HttpPost("[action]")]
@@ -51,7 +49,7 @@ public class InviteUserController : Controller
         {
             _logger.LogInformation("Getting all active invitations by administrator");
 
-            var read = await _repository.GetAllAsync();
+            var read = await _invitationGetter.GetAllAsync();
             var result = read.Where(x => x.IsActive).ToList();
             
             List<InvitationResponses> dtos = new List<InvitationResponses>();
@@ -86,7 +84,7 @@ public class InviteUserController : Controller
         try
         {
             _logger.LogInformation("Getting all invitations by administrator");
-            var read = await _repository.GetAllAsync();
+            var read = await _invitationGetter.GetAllAsync();
 
             List<InvitationResponses> dtos = new List<InvitationResponses>();
             
@@ -120,18 +118,22 @@ public class InviteUserController : Controller
         try
         {
             _logger.LogInformation("Getting invitations {id} by administrator");
-            var read = await _repository.FindByIdAsync(id);
+            var read = await _invitationGetter.FindByIdAsync(id);
+            
+            if(read.IsFailure)
+                return NotFound(read.Error);
+            var dto = read.Value;
             
             var response = new InvitationResponses(){
-                Id = read.Id,
-                Description = read.Description,
-                IsAdmin = read.IsAdmin, 
-                MaxParticipants = read.MaxParticipants,
-                Code = read.Code, 
-                CreatedAt = read.DateCreated,
-                EndAt = read.EndDate,
-                IsActive = read.IsActive,
-                ParticipantCount = read.Users.Count,
+                Id = dto.Id,
+                Description = dto.Description,
+                IsAdmin = dto.IsAdmin, 
+                MaxParticipants = dto.MaxParticipants,
+                Code = dto.Code, 
+                CreatedAt = dto.DateCreated,
+                EndAt = dto.EndDate,
+                IsActive = dto.IsActive,
+                ParticipantCount = dto.Users.Count,
             };
             
             return Ok(response);

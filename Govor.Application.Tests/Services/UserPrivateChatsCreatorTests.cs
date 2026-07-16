@@ -1,8 +1,8 @@
 using AutoFixture;
 using Govor.Application.Interfaces;
-using Govor.Application.Services;
-using Govor.Core.Models;
-using Govor.Core.Repositories.PrivateChats;
+using Govor.Application.PrivateUserChats;
+using Govor.Domain.Models;
+using Govor.Domain.Repositories.PrivateChats;
 using Microsoft.Extensions.Logging;
 using Moq;
 

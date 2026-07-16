@@ -1,8 +1,8 @@
 using Govor.Application.Services.UserSessions;
-using Govor.Core.Models;
-using Govor.Core.Models.Users;
-using Govor.Core.Repositories.PushTokens;
-using Govor.Core.Repositories.UserSessionsRepository;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Users;
+using Govor.Domain.Repositories.PushTokens;
+using Govor.Domain.Repositories.UserSessionsRepository;
 using Govor.Data.Repositories.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;

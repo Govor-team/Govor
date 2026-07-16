@@ -1,8 +1,8 @@
-using Govor.Core.Models.Users;
-using Govor.Data.Repositories;
+using Govor.Domain.Models.Users;
+using Govor.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Govor.Data.Tests.Repositories;
+namespace Govor.Domain.Tests.Repositories;
 
 [TestFixture]
 public class PushTokenRepositoryTests

@@ -1,8 +1,7 @@
 using AutoMapper;
-using Govor.Application.Interfaces.UserOnlineStatus;
 using Govor.Application.Profiles;
+using Govor.Application.Users.UserOnlineStatus;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models.Users;
 
 namespace Govor.API.Common.Mapping;
 

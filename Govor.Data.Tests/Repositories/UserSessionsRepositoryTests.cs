@@ -1,11 +1,11 @@
 using AutoFixture;
-using Govor.Core.Models;
-using Govor.Core.Models.Users;
-using Govor.Data.Repositories;
-using Govor.Data.Repositories.Exceptions;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Users;
+using Govor.Domain.Repositories;
+using Govor.Domain.Repositories.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
-namespace Govor.Data.Tests.Repositories;
+namespace Govor.Domain.Tests.Repositories;
 
 [TestFixture]
 public class UserSessionsRepositoryTests

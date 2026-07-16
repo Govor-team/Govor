@@ -1,4 +1,4 @@
-using Govor.Core.Models;
+using Govor.Domain.Models;
 
 namespace Govor.Contracts.Requests.SignalR;
 

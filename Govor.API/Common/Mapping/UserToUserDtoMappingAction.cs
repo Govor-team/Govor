@@ -1,9 +1,9 @@
 using AutoMapper;
-using Govor.Application.Interfaces.UserOnlineStatus;
+using Govor.Application.Users.UserOnlineStatus;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models.Users;
+using Govor.Domain.Models.Users;
 
-namespace Govor.API.Extensions.Mapping;
+namespace Govor.API.Common.Mapping;
 
 public class UserToUserDtoMappingAction : IMappingAction<User, UserDto>
 {

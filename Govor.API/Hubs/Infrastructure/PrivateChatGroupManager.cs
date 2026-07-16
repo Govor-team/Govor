@@ -1,7 +1,9 @@
 using Govor.API.Hubs;
 using Govor.API.Hubs.Infrastructure;
+using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Interfaces;
-using Govor.Core.Models;
+using Govor.Application.PrivateUserChats;
+using Govor.Domain.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Govor.API.Hubs.Infrastructure;

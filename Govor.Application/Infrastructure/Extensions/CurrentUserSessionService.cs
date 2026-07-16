@@ -1,4 +1,3 @@
-using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Http;
 
 namespace Govor.Application.Infrastructure.Extensions;

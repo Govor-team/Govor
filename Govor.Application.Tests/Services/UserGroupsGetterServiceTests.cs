@@ -1,8 +1,8 @@
 using AutoFixture;
+using Govor.Application.Groups;
 using Govor.Application.Interfaces;
-using Govor.Application.Services;
-using Govor.Core.Models;
-using Govor.Core.Repositories.Groups;
+using Govor.Domain.Models;
+using Govor.Domain.Repositories.Groups;
 using Govor.Data.Repositories.Exceptions;
 using Moq;
 

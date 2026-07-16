@@ -1,10 +1,7 @@
-using Govor.Application.Interfaces;
+using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Contracts.Responses.Admins;
-using Govor.Core.Infrastructure.Extensions;
-using Govor.Core.Models.Users;
-using Govor.Data.Repositories.Exceptions;
+using Govor.Domain.Models.Users;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.AdminStuff;
@@ -53,11 +50,6 @@ public class UsersController : Controller
             _logger.LogInformation($"Getting user {id} by administrator");
             var read = await _users.GetUserById(id);
             return Ok(BuildUserDtos([read]).First());
-        }
-        catch (NotFoundByKeyException<Guid> ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound(ex.Message);
         }
         catch (Exception e)
         {

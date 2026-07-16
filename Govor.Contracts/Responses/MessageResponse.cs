@@ -1,4 +1,4 @@
-using Govor.Core.Models.Messages;
+using Govor.Domain.Models.Messages;
 
 namespace Govor.Contracts.Responses;
 

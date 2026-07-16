@@ -1,8 +1,3 @@
-using Govor.Contracts.DTOs;
-using Govor.Core.Models;
-using Govor.Core.Models.Users;
-using Govor.Core.Repositories.Friendships;
-using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,14 +9,8 @@ namespace Govor.API.Controllers.AdminStuff;
 public class FriendshipsController : Controller
 {
     private readonly ILogger<FriendshipsController> _logger;
-    private readonly IFriendshipsRepository _friendshipsRepository;
 
-    public FriendshipsController(ILogger<FriendshipsController> logger, IFriendshipsRepository friendshipsRepository)
-    {
-        _logger = logger;
-        _friendshipsRepository = friendshipsRepository;
-    }
-    
+    /*
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -88,5 +77,5 @@ public class FriendshipsController : Controller
             _logger.LogError(ex, ex.Message);
             return StatusCode(500, new { error = "Internal server error." }); 
         } 
-    }
+    }*/
 }

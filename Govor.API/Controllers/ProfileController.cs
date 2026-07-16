@@ -1,12 +1,11 @@
 ﻿using AutoMapper;
 using Govor.API.Hubs;
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
-using Govor.Application.Interfaces.Medias;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.Medias;
+using Govor.Application.Profiles;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Requests;
-using Govor.Core.Models;
-using Govor.Data.Repositories.Exceptions;
+using Govor.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -91,8 +90,12 @@ public class ProfileController : ControllerBase
         try
         {
             var userId = _currentUserService.GetCurrentUserId();
-            var user = await _profileService.GetUserProfileAsync(userId);
+            var result = await _profileService.GetUserProfileAsync(userId);
             
+            if(result.IsFailure)
+                return NotFound(result.Error);
+            
+            var user = result.Value;
             var dto = _mapper.Map<UserProfileDto>(user);
             return Ok(dto);
         }
@@ -100,11 +103,6 @@ public class ProfileController : ControllerBase
         {
             _logger.LogWarning(ex.Message);
             return Forbid(ex.Message);
-        }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound("Profile not found");
         }
         catch (Exception ex)
         {
@@ -127,11 +125,6 @@ public class ProfileController : ControllerBase
         {
             _logger.LogWarning(ex.Message);
             return Forbid(ex.Message);
-        }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound("Profile not found");
         }
         catch (Exception ex)
         {

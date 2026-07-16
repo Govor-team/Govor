@@ -1,6 +1,6 @@
 using Govor.Application.Services.Medias;
-using Govor.Core.Models;
-using Govor.Core.Models.Messages;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Messages;
 using Govor.Data;
 using Microsoft.EntityFrameworkCore;
 

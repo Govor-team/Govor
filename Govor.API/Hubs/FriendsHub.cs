@@ -1,7 +1,7 @@
 using AutoMapper;
 using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Exceptions.FriendsService;
-using Govor.Application.Interfaces.Friends;
+using Govor.Application.Friends;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses.SignalR;
 using Microsoft.AspNetCore.SignalR;
@@ -76,7 +76,12 @@ public class FriendsHub : Hub
         try
         {
             var userId = _userAccessor.GetUserId(Context);
-            var friendship = await _friendRequestService.SendAsync(userId, targetUserId);
+            var result = await _friendRequestService.SendAsync(userId, targetUserId);
+           
+            if(result.IsFailure)
+                return HubResult<object>.Error(result.Error.ToString());
+            
+            var friendship = result.Value;
             var dto =  _mapper.Map<FriendshipDto>(friendship);
             
             await Clients.Group(targetUserId.ToString())
@@ -115,7 +120,13 @@ public class FriendsHub : Hub
         try
         {
             var userId = _userAccessor.GetUserId(Context);
-            var friendship = await _friendRequestService.AcceptAsync(friendshipId, userId);
+            var result = await _friendRequestService.AcceptAsync(friendshipId, userId);
+            
+            if(result.IsFailure)
+                return HubResult<object>.BadRequest(result.Error.ToString());
+            
+            var friendship = result.Value;
+            
             var dto =  _mapper.Map<FriendshipDto>(friendship);
             
             await Clients.Group(userId.ToString())
@@ -149,7 +160,13 @@ public class FriendsHub : Hub
         try
         {
             var userId = _userAccessor.GetUserId(Context);
-            var friendship = await _friendRequestService.RejectAsync(friendshipId, userId);
+            var result = await _friendRequestService.RejectAsync(friendshipId, userId);
+            
+            if(result.IsFailure)
+                return HubResult<object>.BadRequest(result.Error.ToString());
+            
+            var friendship = result.Value;
+            
             var dto = _mapper.Map<FriendshipDto>(friendship);
 
             await Clients.Group(userId.ToString())

@@ -5,7 +5,7 @@ using Govor.Application.Exceptions.FriendsService;
 using Govor.Application.Interfaces.Friends;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models.Users;
+using Govor.Domain.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;

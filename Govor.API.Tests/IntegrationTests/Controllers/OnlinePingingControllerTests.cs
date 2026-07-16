@@ -1,6 +1,7 @@
 using Govor.API.Controllers;
 using Govor.Application.Interfaces;
 using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.PingHandler;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;

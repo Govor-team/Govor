@@ -1,12 +1,12 @@
 using AutoFixture;
 using Govor.API.Controllers.Authentication;
-using Govor.Application.Exceptions.AuthService;
+using Govor.Application.Authentication.Exceptions;
 using Govor.Application.Exceptions.InvitesService;
 using Govor.Application.Interfaces.Authentication;
 using Govor.Application.Interfaces.UserSession;
 using Govor.Contracts.Requests;
-using Govor.Core.Models;
-using Govor.Core.Models.Users;
+using Govor.Domain.Models;
+using Govor.Domain.Models.Users;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;

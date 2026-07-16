@@ -1,4 +1,4 @@
-using Govor.Application.Services.Authentication;
+using Govor.Application.Authentication.JWT;
 
 namespace Govor.API.Common.Extensions;
 

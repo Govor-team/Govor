@@ -1,6 +1,6 @@
 using Govor.Application.Services.UserSessions;
-using Govor.Core.Models.Users;
-using Govor.Core.Repositories.UserSessionsRepository;
+using Govor.Domain.Models.Users;
+using Govor.Domain.Repositories.UserSessionsRepository;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;

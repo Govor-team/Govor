@@ -1,10 +1,9 @@
-using Govor.Application.Interfaces;
-using Govor.Application.Interfaces.Infrastructure.Extensions;
+using Govor.Application.Exceptions.VerifyFriendship;
+using Govor.Application.Friends;
+using Govor.Application.Infrastructure.AdminsStuff;
+using Govor.Application.Infrastructure.Extensions;
+using Govor.Application.PrivateUserChats;
 using Govor.Contracts.DTOs;
-using Govor.Core.Models;
-using Govor.Core.Repositories.PrivateChats;
-using Govor.Core.Repositories.Users;
-using Govor.Data.Repositories.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +15,6 @@ namespace Govor.API.Controllers;
 public class PrivateChatController : Controller
 {
     private readonly ICurrentUserService _currentUser;
-    private readonly IUsersRepository _usersRepository; 
     private readonly IVerifyFriendship _verifyFriendship;
     private readonly IUserPrivateChatsCreator _userPrivateChatsCreator;
     private readonly IUserPrivateChatsGetterService _privateChatsGetter;
@@ -24,15 +22,12 @@ public class PrivateChatController : Controller
     
     public PrivateChatController(
         ICurrentUserService currentUser, 
-        IUsersRepository usersRepository,
         IVerifyFriendship verifyFriendship, 
-        IPrivateChatsRepository privateChats,
         IUserPrivateChatsCreator userPrivateChatsCreator,
         IUserPrivateChatsGetterService userPrivateChatsGetterService,
         ILogger<ChatLoadController> logger)
     {
         _currentUser = currentUser;
-        _usersRepository = usersRepository;
         _verifyFriendship = verifyFriendship;
         _userPrivateChatsCreator = userPrivateChatsCreator;
         _privateChatsGetter = userPrivateChatsGetterService;
@@ -46,14 +41,8 @@ public class PrivateChatController : Controller
         {
             var currentId = _currentUser.GetCurrentUserId();
 
-            if (!await _usersRepository.ExistsByIdAsync(friendId))
-            {
-                _logger.LogWarning("User not exist {0}", friendId);
-                return NotFound("User not exist.");
-            }
-
             await _verifyFriendship.VerifyAsync(currentId, friendId);
-            
+
             var chat = await _userPrivateChatsCreator.CreateAsync(currentId, friendId);
             return Ok(chat.Id);
         }
@@ -62,15 +51,15 @@ public class PrivateChatController : Controller
             _logger.LogWarning(ex.Message);
             return Forbid(ex.Message);
         }
-        catch (NotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
-        }
         catch (ArgumentException ex)
         {
             _logger.LogWarning(ex, ex.Message);
             return BadRequest(ex.Message);
+        }
+        catch (FriendshipException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {
