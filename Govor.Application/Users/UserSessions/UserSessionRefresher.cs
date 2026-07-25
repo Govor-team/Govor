@@ -34,7 +34,7 @@ public class UserSessionRefresher : IUserSessionRefresher
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return Result.Failure<RefreshResult>(Error.Failure("Auth.EmptyToken", "Refresh token cannot be empty."));
+            return Result.Failure<RefreshResult>(Error.Failure("Auth.EmptyToken", "Refresh token can't be empty."));
         }
         
         var hashedToken = _jwtTokenHasher.HashToken(refreshToken);

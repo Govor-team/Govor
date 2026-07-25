@@ -1,3 +1,4 @@
+using Govor.API.Common.Extensions;
 using Govor.Application.Users.UserSessions;
 using Govor.Contracts.Requests;
 using Govor.Contracts.Responses;
@@ -26,30 +27,13 @@ public class RefreshController : Controller
     [HttpPost("refresh")] // api/auth/token/refresh
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest refreshRequest)
     {
-        if (string.IsNullOrWhiteSpace(refreshRequest.RefreshToken))
-        {
-            _logger.LogWarning("Refresh request failed: token is empty.");
-            return BadRequest("Refresh token can't be empty.");
-        }
-        
         var result = await _userSession.RefreshTokenAsync(refreshRequest.RefreshToken);
 
         if (result.IsFailure)
         {
             _logger.LogWarning("Refresh token failed. Error Code: {Code}", result.Error.Code);
-            
-            return result.Error.Code switch
-            {
-                "Auth.EmptyToken" => BadRequest(result.Error.Message),
-                "Auth.InvalidToken" => Unauthorized(result.Error.Message),
-                _ => BadRequest($"Refresh failed: {result.Error.Message}")
-            };
         }
 
-        return Ok(new RefreshTokenResponse
-        {
-            AccessToken = result.Value.accessToken,
-            RefreshToken = result.Value.refreshToken
-        });
+        return result.ToActionResult();
     }
 }
