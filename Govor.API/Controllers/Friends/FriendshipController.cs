@@ -44,7 +44,7 @@ public class FriendshipController : Controller
         {
             _logger.LogWarning(ex, ex.Message);
             return Forbid(ex.Message);
-        }
+        } 
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);

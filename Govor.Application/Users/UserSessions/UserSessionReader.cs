@@ -3,6 +3,7 @@ using Govor.Domain.Common;
 using Govor.Domain.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SmartRes;
 
 namespace Govor.Application.Users.UserSessions;
 
@@ -17,13 +18,14 @@ public class UserSessionReader : IUserSessionReader
         _logger = logger;
     }
     
-    public async Task<Result<List<UserSession>>> GetAllSessionsAsync(Guid userId)
+    public async Task<Result<List<UserSession>, Error>> GetAllSessionsAsync(Guid userId)
     {
         if (userId == Guid.Empty)
         {
-            return Result<List<UserSession>>.Failure(new Error(
-                "UserSession.InvalidUserId", 
-                "Provided User ID cannot be empty."));
+            return Result.Failure<List<UserSession>>(Error.Conflict("UserSession.InvalidUserId",
+                "Provided User ID cannot be empty.")
+            );
+
         }
 
         _logger.LogInformation("Getting all active sessions for user {UserId}", userId);
@@ -40,7 +42,7 @@ public class UserSessionReader : IUserSessionReader
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch user sessions for user {UserId}", userId);
-            return Result<List<UserSession>>.Failure(ex);
+            return Result.Failure<List<UserSession>>(ex);
         }
     }
 }

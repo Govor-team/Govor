@@ -7,7 +7,7 @@ using Govor.Application.Authentication.JWT;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,28 +86,34 @@ builder.Services.AddGovorDbContext(configuration); // GovorDbContext init
 
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen(options =>
+services.AddSwaggerGen(options =>
 {
+    const string schemeId = "Bearer";
+    
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Govor API", Version = "v1" });
     
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    options.AddSecurityDefinition(schemeId, new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = "bearer"
+        In = ParameterLocation.Header,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
     });
     
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(document =>
     {
+        var requirement = new OpenApiSecurityRequirement
         {
-            new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            Array.Empty<string>()
-        }
+                new OpenApiSecuritySchemeReference(schemeId)
+                {
+                    Reference = new OpenApiReferenceWithDescription { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                },
+                []
+            }
+        };
+        return requirement;
     });
 });
 
@@ -121,7 +127,7 @@ if (!app.Environment.IsDevelopment())
 {
     //app.MapOpenApi();
     builder.WebHost.UseUrls("http://0.0.0.0:8080");
-    builder.WebHost.UseUrls("http://10.8.0.5:5000");
+    //builder.WebHost.UseUrls("http://10.8.0.5:5000");
     //builder.WebHost.UseUrls("http://192.168.1.107:8080");
 }
 

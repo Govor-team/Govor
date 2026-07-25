@@ -3,6 +3,7 @@ using Govor.Domain.Common;
 using Govor.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SmartRes;
 
 namespace Govor.Application.Infrastructure.AdminsStuff;
 
@@ -25,13 +26,13 @@ public class InvitationGetter : IInvitationGetter
             .ToListAsync();
     }
 
-    public async Task<Result<Invitation>> FindByIdAsync(Guid id)
+    public async Task<Result<Invitation, Error>> FindByIdAsync(Guid id)
     {
         var res = await _context.Invitations.AsNoTracking()
             .FirstOrDefaultAsync(iv => iv.Id == id);
         
         if (res is null)
-            return Result<Invitation>.Failure(new Error(
+            return Result.Failure<Invitation>(Error.NotFound(
                 nameof(InvalidOperationException),
                 "Invitation not found.")
             );

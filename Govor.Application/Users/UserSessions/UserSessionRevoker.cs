@@ -3,6 +3,7 @@ using Govor.Domain;
 using Govor.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SmartRes;
 
 namespace Govor.Application.Users.UserSessions;
 
@@ -22,7 +23,7 @@ public class UserSessionRevoker : IUserSessionRevoker
         _logger = logger;
     }
 
-    public async Task<Result> CloseSessionByIdAsync(Guid sessionId, Guid userId)
+    public async Task<Result<Unit, Error>>  CloseSessionByIdAsync(Guid sessionId, Guid userId)
     {
         _logger.LogInformation("Attempting to close session {SessionId} for user {UserId}", sessionId, userId);
 
@@ -34,9 +35,13 @@ public class UserSessionRevoker : IUserSessionRevoker
             if (session is null)
             {
                 _logger.LogWarning("Active session {SessionId} not found or doesn't belong to user {UserId}", sessionId, userId);
-                return Result.Failure(new Error(
-                    "UserSession.NotFoundOrUnauthorized", 
-                    $"Active session {sessionId} for user {userId} was not found."));
+               
+                return Result.Failure(
+                    Error.NotFound(
+                        "UserSession.NotFoundOrUnauthorized",
+                        $"Active session {sessionId} for user {userId} was not found."
+                    )
+                );
             }
 
             session.IsRevoked = true;
@@ -55,7 +60,7 @@ public class UserSessionRevoker : IUserSessionRevoker
         }
     }
 
-    public async Task<Result> CloseAllSessionsAsync(Guid userId)
+    public async Task<Result<Unit, Error>>  CloseAllSessionsAsync(Guid userId)
     {
         _logger.LogInformation("Attempting to close all active sessions for user {UserId}", userId);
 

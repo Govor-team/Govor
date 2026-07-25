@@ -1,9 +1,10 @@
+using Govor.API.Common.Extensions;
 using Govor.Application.Authentication;
-using Govor.Application.Authentication.Exceptions;
 using Govor.Application.Users.UserSessions;
 using Govor.Contracts.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartRes;
 
 namespace Govor.API.Controllers.Authentication;
 
@@ -30,82 +31,47 @@ public class AuthController : Controller
     }
 
     [HttpPost("register")] // api/auth/register
-    public async Task<IActionResult> Register([FromBody] RegistrationRequest registrationRequest)
+    public async Task<IActionResult> Register([FromBody] RegistrationRequest request)
     {
-       
-        var inviteResult = await _invitesService.ValidateAsync(registrationRequest.InviteLink);
-        if (!inviteResult.IsSuccess)
+        _logger.LogInformation("Processing registration request for: {Name}", request.Name);
+        
+        var result = await _invitesService.ValidateAsync(request.InviteLink)
+            .BindAsync(invite => _accountService.RegistrationAsync(request.Name, request.Password, invite))
+            .TapAsync(user => _logger.LogInformation("User {Username} ({Id}) registered successfully", user.Username, user.Id))
+            .BindAsync(user => _userSession.OpenSessionAsync(user, request.DeviceInfo));
+        
+        if (result.IsFailure)
         {
-            _logger.LogWarning("Invite link invalid: {InviteLink}. Error: {Error}", registrationRequest.InviteLink,
-                inviteResult.Error);
-            return BadRequest($"Invite link invalid: {inviteResult.Error.Message}");
+            _logger.LogWarning("Registration pipeline failed. Error: {Code} - {Message}", 
+                result.Error.Code, result.Error.Message);
+        }
+        else
+        {
+            _logger.LogInformation("Session opened successfully for the request.");
         }
         
-        var userResult = await _accountService.RegistrationAsync(
-            registrationRequest.Name,
-            registrationRequest.Password,
-            inviteResult.Value);
-
-        if (userResult.IsFailure)
-        {
-            _logger.LogWarning("Registration failed for user {Name}. Error: {Error}", registrationRequest.Name,
-                userResult.Error);
-            
-            return userResult.Error.Code switch
-            {
-                nameof(UserAlreadyExistException) => BadRequest($"Registration failed: {userResult.Error.Message}"),
-                nameof(InvalidUsernameException) => BadRequest($"Invalid username: {userResult.Error.Message}"),
-                _ => BadRequest($"Registration failed: {userResult.Error.Message}")
-            };
-        }
-
-        var user = userResult.Value;
-        _logger.LogInformation("Register request for {Username} with id {Id} processed successfully", user.Username,
-            user.Id);
-        
-        var sessionResult = await _userSession.OpenSessionAsync(user, registrationRequest.DeviceInfo);
-        if (sessionResult.IsFailure)
-        {
-            _logger.LogError("Failed to open session for user {Username}. Error: {Error}", user.Username,
-                sessionResult.Error.Message);
-            return StatusCode(500, "An error occurred while creating the session.");
-        }
-
-        _logger.LogInformation("Session for user {Username} with id {Id} has been opened", user.Username, user.Id);
-        return Ok(sessionResult.Value); 
+        return result.ToActionResult();
     }
-
     
     [HttpPost("login")] // api/auth/login
-    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var userResult = await _accountService.LoginAsync(loginRequest.Name, loginRequest.Password);
+        _logger.LogInformation("Processing registration request for: {Name}", request.Name);
+        
+        var result = await _accountService.LoginAsync(request.Name, request.Password)
+            .TapAsync(user => _logger.LogInformation("User {Username} ({Id}) logged in.", user.Username, user.Id))
+            .BindAsync(user => _userSession.OpenSessionAsync(user, request.DeviceInfo));
     
-        if (userResult.IsFailure)
+        if (result.IsFailure)
         {
-            _logger.LogWarning("Login failed for user {Name}. Error: {Code}", loginRequest.Name, userResult.Error);
-            
-            return userResult.Error.Code switch
-            {
-                nameof(UserNotRegisteredException) => BadRequest("Login failed: user does not exist."),
-                nameof(InvalidOperationException) => BadRequest("Login failed: username or password is incorrect."),
-                _ => BadRequest($"Login failed: {userResult.Error.Message}")
-            };
+            _logger.LogWarning("Login pipeline failed. Error: {Code} - {Message}", 
+                result.Error.Code, result.Error.Message);
+        }
+        else
+        {
+            _logger.LogInformation("Session opened successfully for the request.");
         }
         
-        var user = userResult.Value; 
-        _logger.LogInformation("Login request for {Username} with id {Id} processed successfully", user.Username, user.Id);
-        
-        var sessionResult = await _userSession.OpenSessionAsync(user, loginRequest.DeviceInfo);
-    
-        if (sessionResult.IsFailure)
-        {
-            _logger.LogError("Failed to open session for user {Username}. Error: {Error}", user.Username, sessionResult.Error);
-            return StatusCode(500, "An error occurred while creating the session.");
-        }
-    
-        _logger.LogInformation("Session for user {Username} with id {Id} has been opened", user.Username, user.Id);
-    
-        return Ok(sessionResult.Value);
+        return result.ToActionResult();
     }
 }

@@ -2,6 +2,7 @@ using Govor.Application.Interfaces.PushNotifications.Models;
 using Govor.Application.PushNotifications.Providers;
 using Govor.Domain.Common;
 using Microsoft.Extensions.Logging;
+using SmartRes;
 
 namespace Govor.Application.PushNotifications;
 
@@ -21,7 +22,7 @@ public class PushNotificationService : IPushNotificationService
         _logger = logger;
     }
 
-    public async Task<Result> SendToUserAsync(Guid userId, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
+    public async Task<Result<Unit, Error>>  SendToUserAsync(Guid userId, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
     {
         var resultTokens = await _tokenService.GetStringsActiveTokensAsync(userId);
         if (resultTokens.IsFailure)
@@ -37,10 +38,10 @@ public class PushNotificationService : IPushNotificationService
         return await SendMulticastInternalAsync(tokens, title, body, channelId, tag, data, userId.ToString());
     }
 
-    public async Task<Result> SendToUsersAsync(IEnumerable<Guid> userIds, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
+    public async Task<Result<Unit, Error>>  SendToUsersAsync(IEnumerable<Guid> userIds, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
     {
         if (userIds == null || !userIds.Any())
-            return Result.Failure(new Error("Push.InvalidArgs", "User IDs collection cannot be empty."));
+            return Result.Failure(Error.Failure("Push.InvalidArgs", "User IDs collection cannot be empty."));
 
         var tokensResult = await _tokenService.GetUsersStringsActiveTokensAsync(userIds);
         if (tokensResult.IsFailure)
@@ -53,7 +54,7 @@ public class PushNotificationService : IPushNotificationService
         return await SendMulticastInternalAsync(tokens, title, body, channelId, tag, data, "bulk_request");
     }
 
-    public async Task<Result> SendToSessionAsync(Guid sessionId, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
+    public async Task<Result<Unit, Error>>  SendToSessionAsync(Guid sessionId, string title, string body, string channelId, string tag = "", Dictionary<string, string>? data = null)
     {
         var tokenResult = await _tokenService.GetActiveTokenBySessionAsync(sessionId);
         if (tokenResult.IsFailure)
@@ -83,7 +84,7 @@ public class PushNotificationService : IPushNotificationService
         }
     }
     
-    private async Task<Result> SendMulticastInternalAsync(List<string> tokens, string title, string body, string channelId, string tag, Dictionary<string, string>? data, string targetInfo)
+    private async Task<Result<Unit, Error>> SendMulticastInternalAsync(List<string> tokens, string title, string body, string channelId, string tag, Dictionary<string, string>? data, string targetInfo)
     {
         try
         {

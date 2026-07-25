@@ -3,6 +3,7 @@ using Govor.Domain.Common;
 using Govor.Domain.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SmartRes;
 
 namespace Govor.Application.PushNotifications;
 
@@ -17,7 +18,7 @@ public class PushTokenService : IPushTokenService
         _logger = logger;
     }
 
-    public async Task<Result> DeactivateTokenBySessionAsync(Guid sessionId)
+    public async Task<Result<Unit, Error>> DeactivateTokenBySessionAsync(Guid sessionId)
     {
         try
         {
@@ -34,7 +35,7 @@ public class PushTokenService : IPushTokenService
         }
     }
 
-    public async Task<Result> DeactivateAllTokensByUserIdAsync(Guid userId)
+    public async Task<Result<Unit, Error>> DeactivateAllTokensByUserIdAsync(Guid userId)
     {
         try
         {
@@ -51,7 +52,7 @@ public class PushTokenService : IPushTokenService
         }
     }
 
-    public async Task<Result<List<string>>> GetStringsActiveTokensAsync(Guid userId)
+    public async Task<Result<List<string>, Error>> GetStringsActiveTokensAsync(Guid userId)
     {
         try
         {
@@ -66,11 +67,11 @@ public class PushTokenService : IPushTokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch active push tokens for user {UserId}", userId);
-            return Result<List<string>>.Failure(ex);
+            return Result.Failure<List<string>>(ex);
         }
     }
 
-    public async Task<Result<List<string>>> GetUsersStringsActiveTokensAsync(IEnumerable<Guid> userIds)
+    public async Task<Result<List<string>, Error>> GetUsersStringsActiveTokensAsync(IEnumerable<Guid> userIds)
     {
         try
         {
@@ -85,11 +86,11 @@ public class PushTokenService : IPushTokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch active push tokens for bulk users");
-            return Result<List<string>>.Failure(ex);
+            return Result.Failure<List<string>>(ex);
         }
     }
 
-    public async Task<Result<string?>> GetActiveTokenBySessionAsync(Guid sessionId)
+    public async Task<Result<string?, Error>> GetActiveTokenBySessionAsync(Guid sessionId)
     {
         try
         {
@@ -104,11 +105,11 @@ public class PushTokenService : IPushTokenService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch active push token for session {SessionId}", sessionId);
-            return Result<string?>.Failure(ex);
+            return Result.Failure<string?>(ex);
         }
     }
 
-    public async Task<Result> RemoveTokensAsync(IEnumerable<string> tokens)
+    public async Task<Result<Unit, Error>> RemoveTokensAsync(IEnumerable<string> tokens)
     {
         if (tokens is null || !tokens.Any()) 
             return Result.Success();
@@ -128,11 +129,11 @@ public class PushTokenService : IPushTokenService
         }
     }
 
-    public async Task<Result> AddOrUpdateTokenAsync(Guid userId, Guid sessionId, string token, string platform)
+    public async Task<Result<Unit, Error>> AddOrUpdateTokenAsync(Guid userId, Guid sessionId, string token, string platform)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
-            return new Error("PushToken.Empty", "Push token cannot be empty.");
+            return Result<Unit, Error>.Failure(Error.Failure("PushToken.Empty", "Push token cannot be empty."));
         }
         
         var existingToken = await _context.UserPushTokens

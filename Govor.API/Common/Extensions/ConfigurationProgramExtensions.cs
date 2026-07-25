@@ -98,7 +98,7 @@ public static class ConfigurationProgramExtensions
         
         
         // Auto Mapper 
-        services.AddAutoMapper(typeof(MappingProfile));
+        services.AddAutoMapper(op => { }, typeof(MappingProfile));
 
         services.AddScoped<IHubUserAccessor, HubUserAccessor>();
 
@@ -111,52 +111,26 @@ public static class ConfigurationProgramExtensions
         
         services.AddScoped<IProfileService, ProfileService>();
     }
-    
+
     public static void AddGovorDbContext(this IServiceCollection services, IConfiguration configuration)
     {
-        var useMySql = configuration.GetValue<bool>("UseMySql");
-
-        if (useMySql)
+        services.AddDbContext<GovorDbContext>(options =>
         {
-            services.AddDbContext<GovorDbContext>(options =>
-            {
-                var connectionString = configuration.GetConnectionString(nameof(GovorDbContext));
+            options.UseNpgsql(
+                configuration.GetConnectionString(nameof(GovorDbContext)),
+                npgsqlOptions =>
+                {
+                    // retry for transient failures
+                    npgsqlOptions.EnableRetryOnFailure(
+                        5,
+                        TimeSpan.FromSeconds(5),
+                        null);
+                });
 
-                options.UseMySql(
-                    connectionString,
-                    new MySqlServerVersion(new Version(8, 0, 21)),
-                    mySqlOptions =>
-                    {
-                        mySqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(5),
-                            errorNumbersToAdd: null);
-                    });
-                
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
-            });
-        }
-        else
-        {
-            services.AddDbContext<GovorDbContext>(options =>
-            {
-                options.UseNpgsql(
-                    configuration.GetConnectionString(nameof(GovorDbContext)),
-                    npgsqlOptions =>
-                    {
-                        // retry for transient failures
-                        npgsqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(5),
-                            errorCodesToAdd: null);
-                    });
-                
-                //options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-                
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
-            });
-        }
+            //options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+
+            options.EnableSensitiveDataLogging();
+            options.EnableDetailedErrors();
+        });
     }
 }

@@ -25,8 +25,4 @@
         <Using Include="NUnit.Framework" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Govor.ConsoleClient\Govor.ConsoleClient.csproj" />
-    </ItemGroup>
-
 </Project>

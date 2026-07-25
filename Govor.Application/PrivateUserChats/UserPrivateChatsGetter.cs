@@ -2,6 +2,7 @@ using Govor.Domain;
 using Govor.Domain.Common;
 using Govor.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using SmartRes;
 
 namespace Govor.Application.PrivateUserChats;
 
@@ -22,14 +23,16 @@ public class UserPrivateChatsGetter : IUserPrivateChatsGetterService
             .ToListAsync();
     }
 
-    public async Task<Result<PrivateChat>> GetPrivateChatAsync(Guid chatId)
+    public async Task<Result<PrivateChat, Error>> GetPrivateChatAsync(Guid chatId)
     {
         var res = await _context.PrivateChats.AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == chatId);
         
         if (res == null)
-            return Result<PrivateChat>.Failure(new Error(nameof(InvalidOperationException),
-                "PrivateChat not found.")
+            return Result.Failure<PrivateChat>( 
+                Error.Failure(
+                    nameof(InvalidOperationException),
+                    "PrivateChat not found.")
             );
         
         return res;

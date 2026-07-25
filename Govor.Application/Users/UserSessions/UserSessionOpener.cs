@@ -1,9 +1,10 @@
 using Govor.Application.Authentication.JWT;
 using Govor.Domain;
-using Govor.Domain.Common; // Путь к вашему Result и Error
+using Govor.Domain.Common; 
 using Govor.Domain.Models.Users;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SmartRes;
 
 namespace Govor.Application.Users.UserSessions;
 
@@ -32,7 +33,7 @@ public class UserSessionOpener : IUserSessionOpener
         _jwtService = jwtService;
     }
 
-    public async Task<Result<RefreshResult>> OpenSessionAsync(User user, string deviceInfo)
+    public async Task<Result<RefreshResult, Error>> OpenSessionAsync(User user, string deviceInfo)
     {
         _logger.LogInformation("Opening session for user {UserId} on device '{DeviceInfo}'", user.Id, deviceInfo);
         
@@ -41,7 +42,7 @@ public class UserSessionOpener : IUserSessionOpener
         if (result.IsFailure)
         {
             _logger.LogError("Failed to fetch sessions for user {UserId}: {Error}", user.Id, result.Error.Message);
-            return Result<RefreshResult>.Failure(result.Error);
+            return Result.Failure<RefreshResult>(result.Error);
         }
         
         var sessions = result.Value;
@@ -67,7 +68,7 @@ public class UserSessionOpener : IUserSessionOpener
         catch (Exception ex)
         {
             _logger.LogError(ex, "Database error while opening session for user {UserId}", user.Id);
-            return Result<RefreshResult>.Failure(ex);
+            return Result.Failure<RefreshResult>(ex);
         }
     }
     

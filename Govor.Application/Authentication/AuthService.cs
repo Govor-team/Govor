@@ -6,6 +6,7 @@ using Govor.Domain.Common;
 using Govor.Domain.Models;
 using Govor.Domain.Models.Users;
 using Microsoft.EntityFrameworkCore;
+using SmartRes;
 
 namespace Govor.Application.Authentication;
 
@@ -28,18 +29,18 @@ public class AuthService : IAccountService
         _usernameValidator = usernameValidator;
     }
     
-    public async Task<Result<User>> RegistrationAsync(string name, string password, Invitation invitation)
+    public async Task<Result<User, Error>> RegistrationAsync(string name, string password, Invitation invitation)
     {
       
         var validationResult = _usernameValidator.Validate(name);
         if (validationResult.IsFailure)
         {
-            return Result<User>.Failure(validationResult.Error);
+            return Result.Failure<User>(validationResult.Error);
         }
         
         if (await _userNameExistValidator.IsUsernameExistsAsync(name))
         {
-            return Result<User>.Failure(new Error(
+            return Result.Failure<User>(Error.Conflict(
                  nameof(UserAlreadyExistException), 
                 $"User with username '{name}' already exists."));
         }
@@ -63,12 +64,14 @@ public class AuthService : IAccountService
         
         await SetRoleAsync(user, invitation);
         
+        // TODO: inv.participantCount -= 1; db.save();
+        
         await _context.SaveChangesAsync();
         
         return user; // Success 
     }
 
-    public async Task<Result<User>> LoginAsync(string name, string password)
+    public async Task<Result<User, Error>> LoginAsync(string name, string password)
     {
         var user = await _context.Users
             .AsNoTracking()
@@ -76,14 +79,14 @@ public class AuthService : IAccountService
         
         if (user is null)
         {
-            return Result<User>.Failure(new Error(
+            return Result.Failure<User>(Error.NotFound(
                 nameof(UserNotRegisteredException), 
                 $"User '{name}' is not registered."));
         }
         
         if (!_passwordHasher.Verify(password, user.PasswordHash))
         {
-            return Result<User>.Failure(new Error(
+            return Result.Failure<User>(Error.Failure(
                 nameof(InvalidOperationException), 
                 "The password provided is incorrect."));
         }

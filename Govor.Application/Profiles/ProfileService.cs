@@ -2,6 +2,7 @@
 using Govor.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SmartRes;
 
 namespace Govor.Application.Profiles;
 
@@ -16,7 +17,7 @@ public class ProfileService : IProfileService
         _logger = logger;
     }
 
-    public async Task<Result<UserProfile>> GetUserProfileAsync(Guid userId)
+    public async Task<Result<UserProfile, Error>> GetUserProfileAsync(Guid userId)
     {
         _logger.LogInformation("Getting user {UserId} profile", userId);
      
@@ -34,13 +35,13 @@ public class ProfileService : IProfileService
 
         if (profile is null)
         {
-            return Result<UserProfile>.Failure(CreateNotFoundError(userId));
+            return Result.Failure<UserProfile>(CreateNotFoundError(userId));
         }
         
         return profile;
     }
 
-    public async Task<Result> SetDescription(string description, Guid userId)
+    public async Task<Result<Unit, Error>> SetDescription(string description, Guid userId)
     {
         _logger.LogInformation("Updating description for user {UserId}", userId);
         
@@ -56,7 +57,7 @@ public class ProfileService : IProfileService
         return Result.Success();
     }
 
-    public async Task<Result> SetNewIcon(Guid userId, Guid iconId)
+    public async Task<Result<Unit, Error>> SetNewIcon(Guid userId, Guid iconId)
     {
         _logger.LogInformation("Updating icon for user {UserId}", userId);
 
@@ -74,5 +75,5 @@ public class ProfileService : IProfileService
     }
     
     private static Error CreateNotFoundError(Guid userId) => 
-        new("Profile.UserNotFound", $"User with ID {userId} was not found.");
+        Error.NotFound("Profile.UserNotFound", $"User with ID {userId} was not found.");
 }

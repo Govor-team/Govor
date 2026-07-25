@@ -3,6 +3,7 @@ using Govor.Application.Authentication.Exceptions;
 using Govor.Domain.Common.Constants;
 using Govor.Domain.Common;
 using Microsoft.Extensions.Configuration;
+using SmartRes;
 
 namespace Govor.Application.Infrastructure.Validators;
 
@@ -39,52 +40,58 @@ public class UsernameValidator : IUsernameValidator
                     ?? throw new InvalidOperationException("Reserved not set");
     }
     
-    public Result Validate(string username)
+    public Result<Unit, Error> Validate(string username)
     {
         if (username.Length < UserConstants.MIN_LENGHT_OF_NAME || username.Length > UserConstants.MAX_LENGHT_OF_NAME)
         {
-            return new Error(
+            return Result.Failure(Error.Validation(
                 ErrorCode, 
-                $"Username must be between {UserConstants.MIN_LENGHT_OF_NAME} and {UserConstants.MAX_LENGHT_OF_NAME} characters.");
+                $"Username must be between {UserConstants.MIN_LENGHT_OF_NAME} and {UserConstants.MAX_LENGHT_OF_NAME} characters.")
+            );
         }
         
         if (!_usernameRegex.IsMatch(username))
         {
-            return new Error(
+            return Result.Failure(Error.Validation(
                 ErrorCode, 
-                "The username must be in Cyrillic and start with a letter.");
+                "The username must be in Cyrillic and start with a letter.")
+            );
         }
 
         if (Regex.IsMatch(username, @"(.)\1{4,}"))
         {
-            return new Error(
+            return Result.Failure(Error.Validation(
                 ErrorCode, 
-                "Too many repeating characters.");
+                "Too many repeating characters.")
+            );
         }
         
         var normalized = Normalize(username);
         
         if (_reserved.Contains(normalized))
         {
-            return new Error(
+            return Result.Failure(Error.Validation(
                 ErrorCode, 
-                "This username is reserved.");
+                "This username is reserved.")
+            );
         }
         
         if (_blockedExact.Contains(normalized))
         {
-            return new Error(
+            return Result.Failure(Error.Validation(
                 ErrorCode, 
-                "This username is not allowed.");
+                "This username is not allowed.")
+            );
         }
         
         foreach (var banned in _blockedContains)
         {
             if (normalized.Contains(banned))
             {
-                return new Error(
+                return Result.Failure(Error.Validation(
                     ErrorCode, 
-                    "Username contains prohibited content.");
+                    "Username contains prohibited content.")
+                );
             }
         }
         

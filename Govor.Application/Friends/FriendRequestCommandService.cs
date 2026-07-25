@@ -5,6 +5,7 @@ using Govor.Domain;
 using Govor.Domain.Common;
 using Govor.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using SmartRes;
 
 namespace Govor.Application.Friends;
 
@@ -21,10 +22,10 @@ public class FriendRequestCommandService : IFriendRequestCommandService
         _privateChatsCreator = privateChatsCreator;
     }
     
-    public async Task<Result<Friendship>> SendAsync(Guid fromUserId, Guid toUserId)
+    public async Task<Result<Friendship, Error>> SendAsync(Guid fromUserId, Guid toUserId)
     {
         if (fromUserId == toUserId)
-           return Result<Friendship>.Failure(new Error(
+           return Result.Failure<Friendship>(Error.Failure(
                "Friendship.Send", 
                "Cannot send a request to self user")
            );
@@ -50,7 +51,7 @@ public class FriendRequestCommandService : IFriendRequestCommandService
                 friendship.Status == FriendshipStatus.Accepted ||
                 friendship.Status == FriendshipStatus.Blocked)
             {
-                return Result<Friendship>.Failure(new Error(
+                return Result.Failure<Friendship>(Error.Conflict(
                     "Friendship.Send", 
                     $"The request is already {friendship.Status}")
                 );
@@ -65,24 +66,24 @@ public class FriendRequestCommandService : IFriendRequestCommandService
         return friendship;
     }
 
-    public async Task<Result<Friendship>> AcceptAsync(Guid requestId, Guid currentUserId)
+    public async Task<Result<Friendship, Error>> AcceptAsync(Guid requestId, Guid currentUserId)
     {
         var friendship = await _context.Friendships.FindAsync(requestId);
         
         if (friendship is null)
-            return Result<Friendship>.Failure(new Error(
+            return Result.Failure<Friendship>(Error.NotFound(
                 "Friendship.Accept",
                 "Friendship not found! You cant accept request!")
             );
             
         if (friendship.AddresseeId != currentUserId)
-            return Result<Friendship>.Failure(new Error(
+            return Result.Failure<Friendship>(Error.Forbidden(
                 "Friendship.Accept",
                 "You cannot accept this request!")
             );
 
         if (friendship.Status != FriendshipStatus.Pending)
-            return Result<Friendship>.Failure(new Error(
+            return Result.Failure<Friendship>(Error.Forbidden(
                 "Friendship.Accept",
                 "Request is already accepted!")
             );
@@ -96,24 +97,24 @@ public class FriendRequestCommandService : IFriendRequestCommandService
         return friendship;
     }
 
-    public async Task<Result<Friendship>> RejectAsync(Guid requestId, Guid currentUserId)
+    public async Task<Result<Friendship, Error>> RejectAsync(Guid requestId, Guid currentUserId)
     {
         var friendship = await _context.Friendships.FindAsync(requestId);
 
         if (friendship == null)
-            return Result<Friendship>.Failure(new Error(
+            return Result.Failure<Friendship>(Error.NotFound(
                 "Friendship.Reject",
                 "Friendship not found! You cant reject request!")
             );
 
         if (friendship.AddresseeId != currentUserId)
-            return Result<Friendship>.Failure(new Error(
+            return Result.Failure<Friendship>(Error.Forbidden(
                 "Friendship.Reject",
                 "You cannot reject this request!")
             );
 
         if (friendship.Status != FriendshipStatus.Pending && friendship.Status != FriendshipStatus.Rejected)
-            return Result<Friendship>.Failure(new Error(
+            return Result.Failure<Friendship>(Error.Conflict(
                 "Friendship.Reject",
                 $"Request is already {friendship.Status}")
             );

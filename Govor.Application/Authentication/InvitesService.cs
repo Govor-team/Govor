@@ -4,6 +4,7 @@ using Govor.Domain.Common;
 using Govor.Domain.Models;
 using Govor.Domain.Models.Users;
 using Microsoft.EntityFrameworkCore;
+using SmartRes;
 
 namespace Govor.Application.Authentication;
 
@@ -31,22 +32,24 @@ public class InvitesService : IInvitesService
         return invitation.IsAdmin ? "Admin" : "User";
     }
 
-    public async Task<Result<Invitation>> ValidateAsync(string inviteCode)
+    public async Task<Result<Invitation, Error>> ValidateAsync(string inviteCode)
     {
         var invite = await _context.Invitations
             .Include(s => s.Users)
             .FirstOrDefaultAsync(s => s.Code == inviteCode);
 
         if (invite == null)
-            return Result<Invitation>.Failure(Error.Null);
+            return Result.Failure<Invitation>(Error.NotFound("Auth.LinkNotFount","Invitation not found."));
 
         if (invite.EndDate < DateTime.Now || invite.MaxParticipants <= invite.Users.Count)
         {
             invite.IsActive = false;
             await _context.SaveChangesAsync();
 
-            return Result<Invitation>.Failure(new Error(
-                "Auth.InviteLinkInvalid", $"Invite link invalid: {inviteCode}")
+            return Result.Failure<Invitation>(
+                Error.Failure(
+                "Auth.InviteLinkInvalid", $"Invite link invalid: {inviteCode}"
+                )
             );
         }
 
