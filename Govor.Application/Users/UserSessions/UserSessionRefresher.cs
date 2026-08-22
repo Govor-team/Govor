@@ -42,7 +42,6 @@ public class UserSessionRefresher : IUserSessionRefresher
         try
         {
             var session = await _context.UserSessions
-                .AsNoTracking()
                 .Include(userSession => userSession.User)
                 .FirstOrDefaultAsync(s => s.RefreshTokenHash == hashedToken);
             

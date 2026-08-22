@@ -1,8 +1,10 @@
 using Govor.Application.Storage;
 using Govor.Domain.Models;
 using Govor.Domain;
+using Govor.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SmartRes;
 
 namespace Govor.Application.Medias;
 
@@ -19,7 +21,7 @@ public class MediaService : IMediaService
         _logger = logger;
     }
     
-    public async Task<MediaUploadResult> UploadMediaAsync(Media file)
+    public async Task<Result<MediaUploadResult, Error>> UploadMediaAsync(Media file)
     {
         try
         {
@@ -47,37 +49,56 @@ public class MediaService : IMediaService
         }
         catch (ArgumentException ex)
         {
-            throw new InvalidOperationException($"An error occured while uploading the media file: {ex.Message}");
+            return Result<MediaUploadResult, Error>.Failure(Error.Failure(
+                nameof(InvalidOperationException), 
+                $"An error occured while uploading the media file: {ex.Message}")
+            ); 
         }
     }
 
-    public async Task DeleteMediaAsync(Guid mediaId)
+    public async Task<Result<Unit, Error>> DeleteMediaAsync(Guid mediaId)
     {
         var mediaFile = await _dbContext.MediaFiles
-                            .FirstOrDefaultAsync(x => x.Id == mediaId)
-                        ?? throw new KeyNotFoundException($"No media found by given id {mediaId}");
-
+            .FirstOrDefaultAsync(x => x.Id == mediaId);
+        
+        if (mediaFile is null)
+        {
+            return Result<Unit, Error>.Failure(Error.NotFound(
+                "File.DeleteMedia", 
+                $"File with given id ({mediaId}) doesn't exist!")
+            );
+        }
+        
         await _storageService.RemoveAsync(mediaFile.Url);
         
         _dbContext.MediaFiles.Remove(mediaFile);
 
         await _dbContext.SaveChangesAsync();
+        
+        return new Unit();
     }
 
-    public Task<Media> GetMediaByUrlAsync(string url)
+    public Task<Result<Media, Error>> GetMediaByUrlAsync(string url)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<Media> GetMediaByIdAsync(Guid mediaId)
+    public async Task<Result<Media, Error>> GetMediaByIdAsync(Guid mediaId)
     {
         try
         {
             var mediaFile = await _dbContext.MediaFiles
-                                .AsNoTracking()
-                                .FirstOrDefaultAsync(x => x.Id == mediaId)
-                            ?? throw new KeyNotFoundException($"No media found by given id {mediaId}");
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == mediaId);
 
+            if (mediaFile is null)
+            {
+                return Result<Media, Error>.Failure(Error.NotFound(
+                    "File.GetMediaById", 
+                    $"File with given id ({mediaId}) doesn't exist!")
+                );
+            }
+            
             // Загрузить бинарные данные из хранилища
             Stream dataStream = await _storageService.LoadAsync(mediaFile.Url);
 
@@ -86,7 +107,8 @@ public class MediaService : IMediaService
             await dataStream.CopyToAsync(memoryStream);
             var contentBytes = memoryStream.ToArray();
             
-            _logger.LogInformation($"Media found: {mediaFile.MediaType} with id: {mediaFile.Id} and url: {mediaFile.Url}");
+            _logger.LogInformation("Media found: {mediaFile.MediaType} with id: {mediaFile.Id} and url: {mediaFile.Url}", 
+                mediaFile.MediaType, mediaFile.Id, mediaFile.Url);
             
             // Вернуть объект Media
             return new Media(
@@ -103,33 +125,43 @@ public class MediaService : IMediaService
         }
         catch (FileNotFoundException ex)
         {
-            _logger.LogWarning(ex, "Media file not found on storage.");
-            throw;
+            _logger.LogWarning(ex, "Media file ({0}) not found on storage.", mediaId);
+            return Result<Media, Error>.Failure(Error.ServerError("File.GetMediaById", $"Media file not found on storage!"));
         }
     }
 
     public async Task<bool> HasMediaAsync(Guid mediaId)
     {
         return await _dbContext.MediaFiles.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == mediaId) is not null;
+            .AnyAsync(x => x.Id == mediaId);
     }
 
     public async Task<bool> HasMediaByUrlAsync(string url)
     {
         return await _dbContext.MediaFiles.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Url == url) is not null;
+            .AnyAsync(x => x.Url == url);
     }
 
-    public async Task AttachToMessageAsync(Guid mediaId, Guid messageId)
+    public async Task<Result<Unit, Error>> AttachToMessageAsync(Guid mediaId, Guid messageId)
     {
         var mediaFile = await _dbContext.MediaFiles
-            .FirstOrDefaultAsync(x => x.Id == mediaId)
-            ?? throw new KeyNotFoundException($"No media found by given id {mediaId}");
+            .FirstOrDefaultAsync(x => x.Id == mediaId);
 
+        if (mediaFile is null)
+        {
+            return Result<Unit, Error>.Failure(Error.NotFound(
+                "File.AttachToMessage", 
+                $"File with given id ({mediaId}) doesn't exist!")
+            );
+        }
+        
         if (mediaFile.OwnerType != MediaOwnerType.Message)
         {
             _logger.LogWarning("Attempt to attach already owned media {MediaId}", mediaId);
-            throw new InvalidOperationException($"Media {mediaId} is already attached to {mediaFile.OwnerType}");
+            return Result<Unit, Error>.Failure(Error.Failure(
+                "File.AttachToMessage", 
+                $"Media {mediaId} is already attached to {mediaFile.OwnerType}")
+            );
         }
 
         mediaFile.OwnerType = MediaOwnerType.Message;
@@ -139,5 +171,7 @@ public class MediaService : IMediaService
         await _dbContext.SaveChangesAsync();
 
         _logger.LogInformation("Media {MediaId} successfully attached to message {MessageId}", mediaId, messageId);
+        
+        return new Unit();
     }
 }

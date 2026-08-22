@@ -1,3 +1,4 @@
+using Govor.API.Common.Extensions;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.PushNotifications;
 using Govor.Contracts.Requests;
@@ -39,13 +40,13 @@ public class PushTokensController : Controller
             var currentId = _currentUser.GetCurrentUserId();
             var currentSessionId = _currentSession.GetUserSessionId();
 
-            await _pushTokenService.AddOrUpdateTokenAsync(
+           var result = await _pushTokenService.AddOrUpdateTokenAsync(
                 userId: currentId,
                 sessionId: currentSessionId,
                 token: req.Token,
                 platform: req.Platform);
 
-            return Ok();
+           return result.ToActionResult();
         }
         catch (ArgumentException ex)
         {

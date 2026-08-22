@@ -38,7 +38,8 @@ namespace Govor.Domain.Migrations
                     Description = table.Column<string>(type: "text", nullable: false),
                     DateCreated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    MaxParticipants = table.Column<int>(type: "integer", nullable: false)
+                    MaxParticipants = table.Column<int>(type: "integer", nullable: false),
+                    Participants = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

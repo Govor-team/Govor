@@ -82,7 +82,7 @@ public class FriendsHub : Hub
                 return HubResult<object>.Error(result.Error.ToString());
             
             var friendship = result.Value;
-            var dto =  _mapper.Map<FriendshipDto>(friendship);
+            var dto = _mapper.Map<FriendshipDto>(friendship);
             
             await Clients.Group(targetUserId.ToString())
                 .SendAsync("FriendRequestReceived", dto);
@@ -127,7 +127,7 @@ public class FriendsHub : Hub
             
             var friendship = result.Value;
             
-            var dto =  _mapper.Map<FriendshipDto>(friendship);
+            var dto = _mapper.Map<FriendshipDto>(friendship);
             
             await Clients.Group(userId.ToString())
                 .SendAsync("FriendRequestAccepted", dto);

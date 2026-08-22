@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Medias;
@@ -9,6 +10,7 @@ using Govor.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using SmartRes;
 
 namespace Govor.API.Controllers;
 
@@ -43,10 +45,9 @@ public class ProfileController : ControllerBase
     [HttpPost("avatar")] // api/profile/avatar
     public async Task<IActionResult> UploadAvatar([FromForm] AvatarUploadRequest request)
     {
-       
         var userId = _currentUserService.GetCurrentUserId();
         
-        if (request.FromFile == null || request.FromFile.Length == 0)
+        if (request?.FromFile == null || request.FromFile.Length == 0)
         {
             return BadRequest("File is empty.");
         }
@@ -65,11 +66,13 @@ public class ProfileController : ControllerBase
                 String.Empty,
                 MediaOwnerType.Avatar,
                 userId);
-          
-            var mediaInfo = await _mediaService.UploadMediaAsync(media);
-            await _profileService.SetNewIcon(userId, mediaInfo.MediaId);
-            
-            return Ok(mediaInfo);
+
+            var mediaInfo = await _mediaService.UploadMediaAsync(media)
+                .TapAsync(m => _logger.LogInformation("Uploaded avatar file {filename} by user {id}.",
+                    request.FromFile.FileName, userId))
+                .TapAsync(mediaInfo => _profileService.SetNewIcon(userId, mediaInfo.MediaId));
+                
+            return mediaInfo.ToActionResult();
         }
         catch (System.Exception ex)
         {
@@ -92,12 +95,9 @@ public class ProfileController : ControllerBase
             var userId = _currentUserService.GetCurrentUserId();
             var result = await _profileService.GetUserProfileAsync(userId);
             
-            if(result.IsFailure)
-                return NotFound(result.Error);
-            
-            var user = result.Value;
-            var dto = _mapper.Map<UserProfileDto>(user);
-            return Ok(dto);
+            return result
+                .Map(user => _mapper.Map<UserProfileDto>(user))
+                .ToActionResult();
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -116,10 +116,10 @@ public class ProfileController : ControllerBase
     {
         try
         {
-            var user = await _profileService.GetUserProfileAsync(id);
+            var user = (await _profileService.GetUserProfileAsync(id))
+                .Map(user => _mapper.Map<UserProfileDto>(user));
             
-            var dto = _mapper.Map<UserProfileDto>(user);
-            return Ok(dto);
+          return user.ToActionResult();
         }
         catch (UnauthorizedAccessException ex)
         {

@@ -33,5 +33,9 @@
         <ProjectReference Include="..\Govor.Domain\Govor.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="uploads\2026.08\" />
+    </ItemGroup>
+
 </Project>
 

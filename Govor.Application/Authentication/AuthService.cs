@@ -31,7 +31,6 @@ public class AuthService : IAccountService
     
     public async Task<Result<User, Error>> RegistrationAsync(string name, string password, Invitation invitation)
     {
-      
         var validationResult = _usernameValidator.Validate(name);
         if (validationResult.IsFailure)
         {
@@ -63,8 +62,8 @@ public class AuthService : IAccountService
         await _context.Users.AddAsync(user);
         
         await SetRoleAsync(user, invitation);
-        
-        // TODO: inv.participantCount -= 1; db.save();
+
+        invitation.Participants += 1;
         
         await _context.SaveChangesAsync();
         

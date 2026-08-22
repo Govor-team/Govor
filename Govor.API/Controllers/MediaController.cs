@@ -1,3 +1,4 @@
+using Govor.API.Common.Extensions;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Medias;
 using Govor.Contracts.Requests;
@@ -70,18 +71,21 @@ public class MediaController : Controller
 
             _logger.LogInformation("Uploaded file {FileName} from user {UserId}",
                 media.FileName, media.UploaderId);
-
-            return Ok(result);
+            
+            if (result.IsFailure)
+            {
+                _logger.LogWarning("Uploaded file {FileName} from user {UserId} finished with error: {Error}",
+                    media.FileName, 
+                    media.UploaderId, 
+                    result.Error);
+            }
+            
+            return result.ToActionResult();
         }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
             return Forbid(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
@@ -101,26 +105,17 @@ public class MediaController : Controller
     [HttpGet("download/{id}")]
     public async Task<IActionResult> Download(Guid id)
     {
-        try
-        {
-            var userId = _currentUserService.GetCurrentUserId();
+        var userId = _currentUserService.GetCurrentUserId();
 
-            if (!await _accesser.HasAccessAsync(id, userId))
-                return Forbid();
+        if (!await _accesser.HasAccessAsync(id, userId))
+            return Forbid();
 
-            var media = await _mediaService.GetMediaByIdAsync(id);
-
-            return File(media.Data, media.MimeType, Path.GetFileName(media.FileName));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound("Media not found");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error downloading media");
-            return StatusCode(500, "Internal server error");
-        }
+        var mediaResult = await _mediaService.GetMediaByIdAsync(id);
+        
+        if (mediaResult.IsFailure)
+            return mediaResult.ToActionResult();
+        
+        var media = mediaResult.Value;
+        return File(media.Data, media.MimeType, Path.GetFileName(media.FileName));
     }
 }

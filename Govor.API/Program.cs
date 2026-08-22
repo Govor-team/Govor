@@ -16,7 +16,6 @@ var services = builder.Services;
 
 builder.AddLogger();// Serilog
 
-
 builder.Configuration.AddJsonFile("configs/ban_usernames.json", optional: false, reloadOnChange: true);
 
 #if DEBUG
@@ -65,7 +64,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/chats"))
+                
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
                 {
                     context.Token = accessToken;
                 }
@@ -101,19 +101,9 @@ services.AddSwaggerGen(options =>
         Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
     });
     
-    options.AddSecurityRequirement(document =>
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        var requirement = new OpenApiSecurityRequirement
-        {
-            {
-                new OpenApiSecuritySchemeReference(schemeId)
-                {
-                    Reference = new OpenApiReferenceWithDescription { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                },
-                []
-            }
-        };
-        return requirement;
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>(0)
     });
 });
 

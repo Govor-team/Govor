@@ -2,11 +2,14 @@ using AutoMapper;
 using Govor.Application.Friends;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Contracts.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.Friends;
 
+[Authorize]
 [Route("api/friends")]
+[ApiController]
 public class FriendshipController : Controller
 {
     private readonly ILogger<FriendshipController> _logger;
@@ -40,11 +43,6 @@ public class FriendshipController : Controller
             
             return Ok(response);
         }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
-        } 
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
@@ -62,16 +60,6 @@ public class FriendshipController : Controller
             var response = _mapper.Map<List<UserDto>>(result);
             
             return Ok(response);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return Ok(Array.Empty<UserDto>());
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
         }
         catch (Exception ex)
         {

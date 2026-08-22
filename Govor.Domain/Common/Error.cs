@@ -11,6 +11,6 @@ public record Error(string Code, string Message, ErrorType Type, Dictionary<stri
     public static Error Unauthorized(string code, string message) => new(code, message, ErrorType.Unauthorized);
     public static Error Forbidden(string code, string message) => new(code, message, ErrorType.Forbidden);
     public static Error Failure(string code, string message) => new(code, message, ErrorType.Failure);
-    
+    public static Error ServerError(string code, string message) => new(code, message, ErrorType.ServerError);
     public override string ToString() => $"{Code}: {Message}";
 }

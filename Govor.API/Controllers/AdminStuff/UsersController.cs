@@ -9,22 +9,21 @@ namespace Govor.API.Controllers.AdminStuff;
 
 [ApiController] 
 [Route("api/admin/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize]//(Roles = "Admin")
 public class UsersController : Controller
 {
     private readonly ILogger<UsersController> _logger;
     private readonly IUsersAdministration _users;
-
     
-    public UsersController(ILogger<UsersController> logger,
-        IUsersAdministration users,
-        IInvitationGenerator invitationGenerator)
+    public UsersController(
+        ILogger<UsersController> logger,
+        IUsersAdministration users)
     {
         _logger = logger;
         _users = users;
     }
    
-    [HttpGet]
+    [HttpGet("all")]
     public async Task<IActionResult> AllUsers()
     {
         try

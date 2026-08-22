@@ -1,10 +1,14 @@
 using AutoMapper;
+using Govor.API.Common.Extensions;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Messages;
 using Govor.Contracts.Requests;
 using Govor.Contracts.Responses;
+using Govor.Domain.Common;
+using Govor.Domain.Models.Messages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartRes;
 
 namespace Govor.API.Controllers;
 
@@ -40,21 +44,14 @@ public class ChatLoadController : Controller
             if (query.Before < 0 || query.After < 0 || query.After + query.Before > 100)
                 return BadRequest("Values must be non-negative and total must not exceed 100.");
 
-            var result = await _messagesLoader.LoadMessagesInChatGroup(
+            var result = (await _messagesLoader.LoadMessagesInChatGroup(
                 groupId,
                 _currentUser.GetCurrentUserId(),
                 query.StartMessageId,
                 query.Before,
-                query.After);
-
-            var response = _mapper.Map<List<MessageResponse>>(result);
-
-            return Ok(response);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
+                query.After)).Map(messages => _mapper.Map<List<MessageResponse>>(messages));
+            
+            return result.ToActionResult();
         }
         catch (Exception ex)
         {
@@ -73,21 +70,15 @@ public class ChatLoadController : Controller
             if (query.Before < 0 || query.After < 0 || query.After + query.Before > 100)
                 return BadRequest("Values must be non-negative and total must not exceed 100.");
             
-            var result = await _messagesLoader.LoadMessagesInUserChat(
-                userId,
-                _currentUser.GetCurrentUserId(),
-                query.StartMessageId,
-                query.Before,
-                query.After);
+            var result = (await _messagesLoader.LoadMessagesInUserChat(
+                    userId,
+                    _currentUser.GetCurrentUserId(),
+                    query.StartMessageId,
+                    query.Before,
+                    query.After)
+                ).Map(messages => _mapper.Map<List<MessageResponse>>(messages));
 
-            var response = _mapper.Map<List<MessageResponse>>(result);
-
-            return Ok(response);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(ex.Message);
+            return result.ToActionResult();
         }
         catch (Exception ex)
         {
@@ -95,5 +86,4 @@ public class ChatLoadController : Controller
             return StatusCode(500, "Unexpected Error! Please try again later.");
         }
     }
-
 }

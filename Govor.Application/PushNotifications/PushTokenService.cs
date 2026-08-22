@@ -119,7 +119,9 @@ public class PushTokenService : IPushTokenService
             await _context.UserPushTokens
                 .Where(t => tokens.Contains(t.Token))
                 .ExecuteDeleteAsync();
-
+            
+            await _context.SaveChangesAsync();
+            
             return Result.Success();
         }
         catch (Exception ex)

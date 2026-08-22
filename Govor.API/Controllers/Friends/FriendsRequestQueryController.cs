@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers.Friends;
 
-
 [Authorize]
 [Route("api/friends")]
 [ApiController]

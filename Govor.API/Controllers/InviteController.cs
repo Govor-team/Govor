@@ -21,11 +21,11 @@ public class InviteController : ControllerBase
     
     [Authorize]
     [HttpGet("{code}")]
-    public IActionResult JoinGroup(string code)
+    public async Task<IActionResult> JoinGroup(string code)
     {
         try
         {
-            _groupService.AddUserToGroupByInvitationAsync(_currentUser.GetCurrentUserId(), code);
+            var groupRes = await _groupService.AddUserToGroupByInvitationAsync(_currentUser.GetCurrentUserId(), code);
             
             var group = _groupService.GetGroupByInviteCode(code);
 

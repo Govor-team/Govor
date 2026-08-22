@@ -26,7 +26,8 @@ public class JwtService : IJwtService
         {
             new Claim("userId", user.Id.ToString()),
             new Claim("sid", sessionId.ToString()),
-            new Claim(ClaimTypes.Role, await _invitesService.GetRoleNameAsync(user), ClaimValueTypes.String)
+            new Claim(ClaimTypes.Role, await _invitesService.GetRoleNameAsync(user))
+            //new Claim(ClaimTypes.Role, await _invitesService.GetRoleNameAsync(user), ClaimValueTypes.String)
         };
         
         var singing = new SigningCredentials(

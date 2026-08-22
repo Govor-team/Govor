@@ -12,6 +12,7 @@ public class Invitation
     public DateTime DateCreated { get; set; }
     public DateTime EndDate { get; set; }
     public int MaxParticipants { get; set; }
+    public int Participants { get; set; } = 0;
     public List<User> Users { get; set; } = new List<User>();
 
     public override bool Equals(object? obj)

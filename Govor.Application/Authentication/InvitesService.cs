@@ -1,4 +1,3 @@
-using Govor.Application.Exceptions.InvitesService;
 using Govor.Domain;
 using Govor.Domain.Common;
 using Govor.Domain.Models;
@@ -24,7 +23,7 @@ public class InvitesService : IInvitesService
 
     public async Task<string> GetRoleNameAsync(Guid sessionId)
     {
-        var invitation = await _context.Invitations.FirstOrDefaultAsync(s => s.Id == sessionId);
+        var invitation = await _context.Invitations.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId);
         
         if (invitation == null)
             return "User";
@@ -41,7 +40,7 @@ public class InvitesService : IInvitesService
         if (invite == null)
             return Result.Failure<Invitation>(Error.NotFound("Auth.LinkNotFount","Invitation not found."));
 
-        if (invite.EndDate < DateTime.Now || invite.MaxParticipants <= invite.Users.Count)
+        if (invite.EndDate < DateTime.Now || invite.MaxParticipants <= invite.Users.Count || invite.MaxParticipants <= invite.Participants)
         {
             invite.IsActive = false;
             await _context.SaveChangesAsync();

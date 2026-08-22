@@ -91,17 +91,27 @@ public class ChatsHub : Hub
     {
         return await SafeExecute(async (userId) =>
         {
-            var result = await _messageRemovingService.DeleteMessageAsync(new DeleteMessage(userId, request.MessageId));
+            var result = await _messageRemovingService.DeleteMessageAsync(
+                new DeleteMessage(
+                    userId,
+                    request.MessageId,
+                    ForceRemove: request.RequestType switch
+                    {
+                        RemoveMessageRequestType.HideForMe => false,
+                        RemoveMessageRequestType.ForceRemove => true,
+                        _ => false
+                    })
+            );
 
-            if (!result.IsSuccess || result.OriginalMessage == null)
-                throw new InvalidOperationException("Message deletion failed");
+            if (!result.IsSuccess)
+                throw new InvalidOperationException(result.Error.ToString());
 
             var notification = new MessageRemovedResponse
             {
                 MessageId = request.MessageId,
-                SenderId = result.OriginalMessage.SenderId,
-                RecipientId = result.OriginalMessage.RecipientId,
-                RecipientType = result.OriginalMessage.RecipientType
+                SenderId = result.Value.SenderId,
+                RecipientId = result.Value.RecipientId,
+                RecipientType = result.Value.RecipientType
             };
 
             await _notifier.NotifyMessageRemovedAsync(notification);

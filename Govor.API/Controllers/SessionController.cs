@@ -1,4 +1,5 @@
 using AutoMapper;
+using Govor.API.Common.Extensions;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Users.UserSessions;
 using Govor.Contracts.DTOs;
@@ -40,12 +41,10 @@ public class SessionController : Controller
     {
         try
         {
-            var sessions = await _userSessionReader.GetAllSessionsAsync(_currentUserService.GetCurrentUserId());
-            
-            if(sessions.IsFailure)
-                return NotFound(sessions.Error);
-            
-            return Ok(_mapper.Map<List<SessionDto>>(sessions.Value));
+            var sessions = (await _userSessionReader.GetAllSessionsAsync(_currentUserService.GetCurrentUserId()))
+                .Map(sessions => _mapper.Map<List<SessionDto>>(sessions));
+
+            return sessions.ToActionResult();
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -70,15 +69,7 @@ public class SessionController : Controller
             var res = await _userSessionRevoker.CloseSessionByIdAsync(sessionId,
                 _currentUserService.GetCurrentUserId());
             
-            if (res.IsFailure)
-                return BadRequest(res.Error);
-            
-            return Ok();
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return BadRequest(ex.Message);
+            return res.ToActionResult();
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -97,19 +88,11 @@ public class SessionController : Controller
     {
         try
         {
-           var res =  await _userSessionRevoker.CloseSessionByIdAsync(
+            var res =  await _userSessionRevoker.CloseSessionByIdAsync(
                 _currentUserSessionService.GetUserSessionId(),
                 _currentUserService.GetCurrentUserId());
             
-           if(res.IsFailure)
-                return NotFound(res.Error);
-            
-           return Ok();
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return BadRequest(ex.Message);
+            return res.ToActionResult();
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -130,10 +113,7 @@ public class SessionController : Controller
         {
             var res = await _userSessionRevoker.CloseAllSessionsAsync(_currentUserService.GetCurrentUserId());
             
-            if(res.IsFailure)
-                return NotFound(res.Error);
-            
-            return Ok();
+           return res.ToActionResult();
         }
         catch (UnauthorizedAccessException ex)
         {

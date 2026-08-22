@@ -1,7 +1,9 @@
 using Govor.Application.Interfaces;
 using Govor.Domain.Models.Messages;
 using Govor.Domain;
+using Govor.Domain.Common;
 using Microsoft.EntityFrameworkCore;
+using SmartRes;
 
 namespace Govor.Application.Messages;
 
@@ -14,7 +16,7 @@ public class MessagesLoader : IMessagesLoader
         _dbContext = dbContext;
     }
     
-    public async Task<List<Message>> LoadMessagesInUserChat(
+    public async Task<Result<List<Message>,Error>> LoadMessagesInUserChat(
         Guid privateChatId,
         Guid currentUser,
         Guid? startMessageId,
@@ -22,11 +24,11 @@ public class MessagesLoader : IMessagesLoader
         int after = 2)
     {
         if (privateChatId == Guid.Empty)
-            throw new ArgumentException("PrivateChatId id cannot be empty", nameof(privateChatId));
+            return Result.Failure<List<Message>>(Error.Failure(nameof(ArgumentException),"PrivateChatId id cannot be empty."));
         
         var chatExists = await _dbContext.PrivateChats.AnyAsync(c => c.Id == privateChatId);
         if (!chatExists) 
-            return [];
+            return new List<Message>(0);
         
         var query = _dbContext.Messages
             .AsNoTracking()
@@ -37,7 +39,7 @@ public class MessagesLoader : IMessagesLoader
         return await FetchPaginatedMessagesAsync(query, startMessageId, before, after);
     }
 
-    public async Task<List<Message>> LoadMessagesInChatGroup(
+    public async Task<Result<List<Message>,Error>> LoadMessagesInChatGroup(
         Guid chatId,
         Guid currentUser,
         Guid? startMessageId,
@@ -45,13 +47,13 @@ public class MessagesLoader : IMessagesLoader
         int after = 2)
     {
         if (chatId == Guid.Empty)
-            throw new ArgumentException("Chat id cannot be empty", nameof(chatId));
+            return Result.Failure<List<Message>>(Error.Failure(nameof(ArgumentException),"Chat id cannot be empty."));
         
         var isMember = await _dbContext.GroupMemberships
             .AnyAsync(gm => gm.UserId == currentUser && gm.GroupId == chatId);
             
         if (!isMember) 
-            return [];
+            return new List<Message>(0);
         
         var query = _dbContext.Messages
             .AsNoTracking()

@@ -1,17 +1,19 @@
+using Govor.Domain.Common;
 using Govor.Domain.Models;
 using Govor.Domain.Models.Messages;
+using SmartRes;
 
 namespace Govor.Application.Medias;
 
 public interface IMediaService
 {
-    public Task<MediaUploadResult> UploadMediaAsync(Media file);
-    public Task DeleteMediaAsync(Guid fileId);
-    public Task<Media> GetMediaByUrlAsync(string url);
-    public Task<Media> GetMediaByIdAsync(Guid mediaId);
+    public Task<Result<MediaUploadResult, Error>> UploadMediaAsync(Media file);
+    public Task<Result<Unit, Error>> DeleteMediaAsync(Guid fileId);
+    public Task<Result<Media, Error>> GetMediaByUrlAsync(string url);
+    public Task<Result<Media, Error>> GetMediaByIdAsync(Guid mediaId);
     public Task<bool> HasMediaAsync(Guid mediaId);
     public Task<bool> HasMediaByUrlAsync(string url);
-    Task AttachToMessageAsync(Guid mediaId, Guid messageId);
+    public Task<Result<Unit, Error>> AttachToMessageAsync(Guid mediaId, Guid messageId);
 }
 
 public record Media(Guid UploaderId,

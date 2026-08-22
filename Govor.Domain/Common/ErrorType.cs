@@ -7,5 +7,6 @@ public enum ErrorType
     NotFound = 2,     // (404 Not Found)
     Conflict = 3,     // (409 Conflict)
     Unauthorized = 4, // (401 Unauthorized)
-    Forbidden = 5     // (403 Forbidden)
+    Forbidden = 5,    // (403 Forbidden)
+    ServerError = 6   // (500 Server Error)
 }
