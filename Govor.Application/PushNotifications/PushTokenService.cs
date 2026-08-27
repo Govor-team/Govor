@@ -1,3 +1,4 @@
+using Govor.Application.Infrastructure.Common;
 using Govor.Domain;
 using Govor.Domain.Common;
 using Govor.Domain.Models.Users;
@@ -11,9 +12,13 @@ public class PushTokenService : IPushTokenService
 {
     private readonly GovorDbContext _context;
     private readonly ILogger<PushTokenService> _logger;
+    private readonly INowDateTimeProvider _nowDateTimeProvider;
 
-    public PushTokenService(GovorDbContext context, ILogger<PushTokenService> logger)
+    public PushTokenService(GovorDbContext context,
+        INowDateTimeProvider nowDateTimeProvider,
+        ILogger<PushTokenService> logger)
     {
+        _nowDateTimeProvider = nowDateTimeProvider;
         _context = context;
         _logger = logger;
     }
@@ -139,7 +144,7 @@ public class PushTokenService : IPushTokenService
         }
         
         var existingToken = await _context.UserPushTokens
-            .FirstOrDefaultAsync(t => t.Token == token);
+            .FirstOrDefaultAsync(t => t.Platform == platform && t.UserId == userId && t.UserSessionId == sessionId);
 
         if (existingToken is null)
         {
@@ -150,18 +155,18 @@ public class PushTokenService : IPushTokenService
                 UserSessionId = sessionId,
                 Token = token,
                 Platform = platform,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = _nowDateTimeProvider.Now
             };
 
             await _context.UserPushTokens.AddAsync(newToken);
         }
         else
         {
-          
             existingToken.UserId = userId;
             existingToken.UserSessionId = sessionId;
             existingToken.Platform = platform;
-            existingToken.UpdatedAt = DateTime.UtcNow;
+            existingToken.Token = token;
+            existingToken.UpdatedAt = _nowDateTimeProvider.Now;
         }
         
         await _context.SaveChangesAsync();

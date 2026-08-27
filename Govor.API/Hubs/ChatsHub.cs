@@ -1,6 +1,7 @@
 using Govor.API.Common.SignalR.Helpers;
 using Govor.API.Hubs.Infrastructure;
 using Govor.Application.Exceptions.VerifyFriendship;
+using Govor.Application.Infrastructure.Common;
 using Govor.Application.Messages;
 using Govor.Application.Messages.Parameters;
 using Govor.Contracts.Requests.SignalR;
@@ -15,24 +16,31 @@ namespace Govor.API.Hubs;
 public class ChatsHub : Hub
 {
     private readonly ILogger<ChatsHub> _logger;
+    private readonly IMessageReadingService _messageReadingService;
     private readonly IMessageSendingService _messageSendingService;
     private readonly IMessageEditingService _messageEditingService;
     private readonly IMessageRemovingService _messageRemovingService;
     private readonly IHubUserAccessor _userAccessor;
     private readonly IChatNotificationService _notifier;
     private readonly IConnectionManager _connectionManager;
-
+    private readonly INowDateTimeProvider _nowDateTimeProvider;
 
     public ChatsHub(ILogger<ChatsHub> logger,
+        IMessageReadingService messageReadingService,
         IMessageSendingService messageSendingService, 
         IMessageEditingService messageEditingService, 
+        IMessageRemovingService messageRemovingService,
         IHubUserAccessor userAccessor,
         IChatNotificationService notifier,
+        INowDateTimeProvider nowDateTimeProvider,
         IConnectionManager connectionManager)
     {
         _logger = logger;
+        _nowDateTimeProvider = nowDateTimeProvider;
         _messageSendingService = messageSendingService;
         _messageEditingService = messageEditingService;
+        _messageRemovingService = messageRemovingService;
+        _messageReadingService = messageReadingService;
         _userAccessor = userAccessor;
         _notifier = notifier;
         _connectionManager = connectionManager;
@@ -85,14 +93,40 @@ public class ChatsHub : Hub
            return HubResult<UserMessageResponse>.Ok(response);
         }, request.RecipientId);
     } 
-
+    // --- Read ---
+    public async Task<HubResult<MessageReadResponse>> Read(ReadMessageRequest request)
+    {
+        return await SafeExecute(async (userId) =>
+        {
+           var result = await _messageReadingService.ReadMessageAsync(userId, request.MessageId);
+           if(!result.IsSuccess)
+               throw new InvalidOperationException(result.Error.ToString());
+           
+           var message = result.Value;
+           
+           var msgv = message.MessageViews.First(v => v.UserId == userId);
+           
+           var response = new MessageReadResponse()
+           {
+               ViewId = msgv.Id,
+               MessageId = request.MessageId,
+               ReaderId = userId,
+               WhenWas = msgv.ViewedAt,
+               RecipientId = message.RecipientId,
+               RecipientType = message.RecipientType,
+           };
+           
+           await _notifier.NotifyMessageWasReadAsync(response);
+           
+           return HubResult<MessageReadResponse>.Ok(response);
+        }, request.MessageId);
+    }
     // --- REMOVE ---
     public async Task<HubResult<MessageRemovedResponse>> Remove(RemoveMessageRequest request)
     {
         return await SafeExecute(async (userId) =>
         {
-            var result = await _messageRemovingService.DeleteMessageAsync(
-                new DeleteMessage(
+            var deletemessage = new DeleteMessage(
                     userId,
                     request.MessageId,
                     ForceRemove: request.RequestType switch
@@ -100,8 +134,10 @@ public class ChatsHub : Hub
                         RemoveMessageRequestType.HideForMe => false,
                         RemoveMessageRequestType.ForceRemove => true,
                         _ => false
-                    })
-            );
+                    }
+                );
+            
+            var result = await _messageRemovingService.DeleteMessageAsync(deletemessage);
 
             if (!result.IsSuccess)
                 throw new InvalidOperationException(result.Error.ToString());
@@ -110,7 +146,8 @@ public class ChatsHub : Hub
             {
                 MessageId = request.MessageId,
                 SenderId = result.Value.SenderId,
-                RecipientId = result.Value.RecipientId,
+                RecipientId = result.Value.RecipientId, // private chat id or group id 
+                RequestType = request.RequestType,
                 RecipientType = result.Value.RecipientType
             };
 
@@ -125,7 +162,12 @@ public class ChatsHub : Hub
     {
         return await SafeExecute(async (userId) =>
         {
-            var editParams = new EditMessage(userId, request.MessageId, request.NewEncryptedContent, DateTime.UtcNow);
+            var editParams = new EditMessage(
+                    userId, 
+                    request.MessageId,
+                    request.NewEncryptedContent, 
+                    _nowDateTimeProvider.Now);
+            
             var result = await _messageEditingService.EditMessageAsync(editParams);
 
             if (!result.IsSuccess || result.OriginalMessage == null)
@@ -199,7 +241,7 @@ public class ChatsHub : Hub
             FromUserId: senderId,
             RecipientId: request.RecipientId,
             RecipientType: request.RecipientType,
-            SendAt: DateTime.UtcNow,
+            SendAt: _nowDateTimeProvider.Now,
             Media: request.MediaAttachments?.Select(f => new SendMedia(f.MediaId, f.EncryptedKey)) 
                    ?? Array.Empty<SendMedia>()
         );

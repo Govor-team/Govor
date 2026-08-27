@@ -6,6 +6,7 @@ using Govor.Application.Authentication.JWT;
 using Govor.Application.Friends;
 using Govor.Application.Groups;
 using Govor.Application.Infrastructure.AdminsStuff;
+using Govor.Application.Infrastructure.Common;
 using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Infrastructure.Validators;
 using Govor.Application.Medias;
@@ -41,6 +42,8 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IInvitationGenerator, InvitationGenerator>();
         services.AddScoped<ISynchingService, SynchingService>();
         
+        services.AddScoped<INowDateTimeProvider, NowDateTimeProvider>();
+        
         // Friends services 
         services.AddScoped<IFriendshipService, FriendshipService>();
         services.AddScoped<IFriendRequestCommandService, FriendRequestCommandService>();
@@ -64,6 +67,7 @@ public static class ConfigurationProgramExtensions
         
         //services.AddScoped<IMessageCommandService, MessageCommandService>();
         services.AddScoped<IMessageSendingService, MessageSendingService>();
+        services.AddScoped<IMessageReadingService, MessageReadingService>();
         services.AddScoped<IMessageEditingService, MessageEditingService>();
         services.AddScoped<IMessageRemovingService, MessageRemovingService>();
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();

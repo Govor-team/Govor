@@ -64,7 +64,7 @@ public class MessageRemovingService : IMessageRemovingService
 
     private async Task<Result<Message,Error>> ValidateUserRecipientAsync(Message message, DeleteMessage deleteParams)
     {
-        if (deleteParams.DeleterId == message.RecipientId)
+        if (deleteParams.DeleterId == message.SenderId)
         {
            return await ForceRemoveAsync(message);
         }

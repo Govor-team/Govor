@@ -45,6 +45,16 @@ public class ChatNotificationService : IChatNotificationService
        //     .SendAsync(ChatHubConstants.MessageSent, message);
     }
 
+    public async Task NotifyMessageWasReadAsync(MessageReadResponse response)
+    {
+        await NotifyParticipantsAsync(
+            response.ReaderId, 
+            response.RecipientId, 
+            response.RecipientType, 
+            ChatHubConstants.MessageRead, 
+            response);
+    }
+
     private async Task NotifyMessageReceivedInPrivateChatAsync(UserMessageResponse message)
     {
         
