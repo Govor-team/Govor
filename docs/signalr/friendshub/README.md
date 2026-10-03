@@ -1,12 +1,19 @@
+---
+description: >-
+  Description: SignalR hub for managing real-time friend request operations,
+  including sending, accepting, and rejecting friend requests.
+icon: wifi
+---
+
 # FriendsHub — заявки
 
 Подключение: /hubs/friends с access token, содержащим userId. Атрибут Authorize у класса отсутствует; HubUserAccessor читает claim и бросает исключение при его отсутствии. Это не следует считать полноценной endpoint-политикой авторизации: её нужно добавить явно.
 
 ## Команды
 
-| Команда | Аргумент | Успех |
-| --- | --- | --- |
-| SendRequest | Guid targetUserId | status 201, result null |
+| Команда       | Аргумент          | Успех                   |
+| ------------- | ----------------- | ----------------------- |
+| SendRequest   | Guid targetUserId | status 201, result null |
 | AcceptRequest | Guid friendshipId | status 200, result null |
 | RejectRequest | Guid friendshipId | status 200, result null |
 
@@ -14,13 +21,13 @@ SendRequest запрещает заявку себе и повтор при Pend
 
 ## Все события
 
-| Событие | Кому |
-| --- | --- |
-| FriendRequestReceived | Адресату новой заявки |
-| YourFriendRequestReceived | Отправителю |
-| FriendRequestAccepted | Принимающему адресату |
+| Событие                   | Кому                        |
+| ------------------------- | --------------------------- |
+| FriendRequestReceived     | Адресату новой заявки       |
+| YourFriendRequestReceived | Отправителю                 |
+| FriendRequestAccepted     | Принимающему адресату       |
 | YourFriendRequestAccepted | Отправителю исходной заявки |
-| FriendRequestRejected | Отклоняющему адресату |
+| FriendRequestRejected     | Отклоняющему адресату       |
 | YourFriendRequestRejected | Отправителю исходной заявки |
 
 Каждое событие передаёт **FriendshipDto**, не строку Guid:
@@ -37,7 +44,8 @@ Status: Pending=0, Accepted=1, Rejected=2, Blocked=3.
 
 Дружба сохраняется до создания чата/рассылки; сбой может оставить частично завершённый сценарий. На reconnect перечитывайте /api/friends, /requests, /responses и /api/user/private-chats. Клиенту нужны дедупликация и обновление cache по id.
 
----
+***
+
 Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; сервер с БД и Firebase в рамках диагностики не запускался.
 
 Источник: [Govor.API/Hubs/FriendsHub.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.API/Hubs/FriendsHub.cs).
