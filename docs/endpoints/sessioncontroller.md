@@ -4,154 +4,39 @@ description: >-
   sessions.
 ---
 
-# SessionController
+# Сессии
 
-### Controller Description
+Все методы требуют Bearer access token с ролью User или Admin.
 
-* **Route**: `api/session`
-* **Authorize**: Requires authenticated user with roles "Admin" or "User" (`[Authorize(Roles = "Admin,User")]`).
+| Метод  | Маршрут                        | Успех                                |
+| ------ | ------------------------------ | ------------------------------------ |
+| GET    | /api/Session/all               | 200, SessionDto\[]                   |
+| DELETE | /api/Session/close/{sessionId} | 204, без тела                        |
+| DELETE | /api/Session/close             | 204, закрыть sid текущего токена     |
+| DELETE | /api/Session/close/all         | 204, закрыть все сессии пользователя |
 
-### Endpoints
+```json
+[{
+  "id":"11111111-1111-1111-1111-111111111111",
+  "deviceInfo":"Android test device",
+  "createdAt":"2026-10-03T00:00:00Z",
+  "expiresAt":"2026-10-10T00:00:00Z",
+  "isRevoked":false
+}]
+```
 
-#### <mark style="color:$info;">GetAllSessions</mark>
+Список фильтруется по UserId и !IsRevoked, но не по ExpiresAt; истекшие сессии могут присутствовать. CreatedAt меняется при refresh.
 
-* **Description**: Retrieves all active sessions for the authenticated user.
-* **Route**: `[GET] api/session/all`
-* **HTTP Method**: `GET`
-* **Request**: None
-* **Responses**:
-  *   <mark style="color:$success;">**200 OK**</mark>: Returns a list of user sessions.
+Закрытие чужой, неизвестной или уже отозванной сессии возвращает 404 с errorCode UserSession.NotFoundOrUnauthorized. Guid.Empty возвращает 400. CloseAll без активных сессий тоже успешен.
 
-      ```json
-      [
-        {
-          "id": "Guid",
-          "deviceInfo": "string",
-          "createdAt": "DateTime",
-          "expiresAt": "DateTime",
-          "isRevoked": "boolean"
-        }
-      ]
-      ```
-  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
+Отзыв деактивирует связанные push-токены. Успех Unit преобразуется в 204, а не в 200.
 
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
+## Ограничение logout
 
-      ```json
-      "Unexpected Error! Please try again later."
-      ```
+IsRevoked проверяется при refresh; bearer middleware не сверяет текущий sid с БД. Access token может работать до окончания срока, а существующее соединение SignalR не закрывается этим контроллером.
 
-#### <mark style="color:$info;">CloseSession</mark>
+***
 
-* **Description**: Closes a specific session for the authenticated user.
-* **Route**: `[DELETE] api/session/close/{sessionId}`
-* **HTTP Method**: `DELETE`
-* **Request**:
-  * **Path Parameter**: `sessionId` (Guid, required): ID of the session to close.
-* **Responses**:
-  * <mark style="color:$success;">**200 OK**</mark>: Indicates session was successfully closed.
-    * No body.
-  *   <mark style="color:$danger;">**400 Bad Request**</mark>: If `sessionId` is invalid or operation fails.
+Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; успешная сборка не означает проверку работающего сервера.
 
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$danger;">**404 Not Found**</mark>: If session is not found.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
-
-      ```json
-      "Unexpected Error! Please try again later."
-      ```
-
-#### <mark style="color:$info;">CloseSession</mark>
-
-* **Description**: Closes a current session for the authenticated user.
-* **Route**: `[DELETE] api/session/close/`
-* **HTTP Method**: `DELETE`
-* **Request**:
-  * No body.
-* **Responses**:
-  * <mark style="color:$success;">**200 OK**</mark>: Indicates session was successfully closed.
-    * No body.
-  *   <mark style="color:$danger;">**400 Bad Request**</mark>: If `sessionId` is invalid or operation fails.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$danger;">**404 Not Found**</mark>: If session is not found.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
-
-      ```json
-      "Unexpected Error! Please try again later."
-      ```
-
-#### <mark style="color:$info;">CloseAllSessions</mark>
-
-* **Description**: Closes all active sessions for the authenticated user.
-* **Route**: `[DELETE] api/session/close/all`
-* **HTTP Method**: `DELETE`
-* **Request**: None
-* **Responses**:
-  * <mark style="color:$success;">**200 OK**</mark>: Indicates all sessions were successfully closed.
-    * No body.
-  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
-
-      ```json
-      "Unexpected Error! Please try again later."
-      ```
-
-### Data Models
-
-#### SessionDto
-
-* **Description**: Data transfer object for session information.
-*   **Structure**:
-
-    ```json
-    {
-      "id": "Guid",
-      "deviceInfo": "string",
-      "createdAt": "DateTime",
-      "expiresAt": "DateTime",
-      "isRevoked": "boolean"
-    }
-    ```
-
-### Error Handling
-
-* **Invalid User ID**: Handled by `ICurrentUserService`, aborts if invalid.
-* **Invalid Operations**: Returns `400 Bad Request` for `InvalidOperationException`.
-* **Unauthorized Access**: Returns `403 Forbidden` for `UnauthorizedAccessException`.
-* **Resource Not Found**: Returns `404 Not Found` for `NotFoundException`.
-* **Unexpected Errors**: Caught and returned as `500 Internal Server Error`.
-
-### Logging
-
-* Logs warnings for `UnauthorizedAccessException` and `NotFoundException`.
-* Logs errors for `InvalidOperationException` and unexpected exceptions.
+Источник: [Govor.API/Controllers/SessionController.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.API/Controllers/SessionController.cs).

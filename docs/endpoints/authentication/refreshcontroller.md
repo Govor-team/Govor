@@ -4,87 +4,40 @@ description: >-
   their access tokens using a valid refresh token.
 ---
 
-# RefreshController
+# Обновление токенов
 
-### Controller Description
+## POST /api/auth/token/refresh
 
-* **Route**: `api/auth/token`
-* **Authorize**: Allows anonymous access (`[AllowAnonymous]`).
+Доступ анонимный. JSON:
 
-### Endpoints
+```json
+{"refreshToken":"<последний сохранённый refresh token>"}
+```
 
-#### <mark style="color:$info;">Refresh</mark>
+Сервис хеширует переданную строку и ищет UserSession по RefreshTokenHash. Проверяет IsRevoked и ExpiresAt, выпускает новую пару, заменяет хеш и продлевает ExpiresAt. CreatedAt также перезаписывается, поэтому после refresh это не исходная дата открытия сессии.
 
-* **Description**: Refreshes an access token using a provided refresh token and returns a new access token and refresh token pair.
-* **Route**: `[POST] api/auth/token/refresh`
-* **HTTP Method**: `POST`
-* **Request**:
-  * **Content-Type**: `application/json`
-  *   **Request Body**: `RefreshTokenRequest` object with the following structure:
+Успех 200:
 
-      ```json
-      {
-        "refreshToken": "string"
-      }
-      ```
-* **Responses**:
-  *   <mark style="color:$success;">**200 OK**</mark>: Returns a new access token and refresh token upon successful refresh.
+```json
+{"refreshToken":"<new token>","accessToken":"<new token>"}
+```
 
-      ```json
-      {
-        "accessToken": "string",
-        "refreshToken": "string"
-      }
-      ```
-  *   <mark style="color:$warning;">**400 Bad Request**</mark>: If model validation fails or the refresh token is empty.
+| Случай                     | Текущий ответ                    |
+| -------------------------- | -------------------------------- |
+| Пустая строка              | 400, errorCode Auth.EmptyToken   |
+| Хеш не найден              | 400, errorCode Auth.InvalidToken |
+| Истекшая/отозванная сессия | 400, errorCode Auth.InvalidToken |
 
-      ```json
-      "Refresh token cant be empty."
-      ```
-  *   <mark style="color:$warning;">**401 Unauthorized**</mark>: If the refresh token is invalid or authorization fails.
+Не документируйте неверный refresh как гарантированный 401: текущий Error.Failure преобразуется в 400.
 
-      ```json
-      "Invalid refresh token"
-      ```
-  *   <mark style="color:$danger;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
+## Клиент
 
-      ```json
-      "An unexpected error occurred."
-      ```
+Сохраните оба новых токена и сериализуйте refresh-запросы. Ошибка сети не должна автоматически удалять авторизацию пользователя. При подтверждённо недействительном refresh требуется повторный вход.
 
-### Data Models
+Ротация сейчас не имеет защиты от конкурентного использования и истории повторного применения. Детали — в разделе «Аутентификация».
 
-#### RefreshTokenRequest
+***
 
-* **Description**: Model for refresh token request data.
-*   **Structure**:
+Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; успешная сборка не означает проверку работающего сервера.
 
-    ```json
-    {
-      "refreshToken": "string"
-    }
-    ```
-
-#### RefreshTokenResponse
-
-* **Description**: Model for refresh token response data.
-*   **Structure**:
-
-    ```json
-    {
-      "accessToken": "string",
-      "refreshToken": "string"
-    }
-    ```
-
-### Error Handling
-
-* **Invalid User ID**: Not applicable (handled by session service).
-* **Invalid Operations**: Returns `400 Bad Request` if the refresh token is empty or invalid.
-* **Unauthorized Access**: Returns `401 Unauthorized` if the refresh token fails authorization.
-* **Unexpected Errors**: General exceptions are caught, logged, and returned as `500 Internal Server Error`.
-
-### Logging
-
-* Logs warnings for invalid or failed refresh token attempts.
-* Logs errors for unexpected exceptions during token refresh.
+Источник: [Govor.Application/Users/UserSessions/UserSessionRefresher.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.Application/Users/UserSessions/UserSessionRefresher.cs).

@@ -2,106 +2,46 @@
 description: Controller for uploading and downloading media files.
 ---
 
-# MediaController
+# Медиа
 
-### Controller Description
+Требуется роль User/Admin.
 
-* **Route**: `api/media`
-* **Authorize**: Requires authenticated user with roles "User" or "Admin" (`[Authorize(Roles = "User,Admin")]`).
+## POST /api/media/upload
 
-### Endpoints
+Content-Type: multipart/form-data. Поля:
 
-#### <mark style="color:$info;">Upload</mark>
+| Поле         | Тип         | Назначение                                                 |
+| ------------ | ----------- | ---------------------------------------------------------- |
+| FromFile     | файл        | Непустое содержимое                                        |
+| Type         | число       | Image=0, Video=1, Audio=2, File=3, Voice=4                 |
+| MimeType     | строка ≤255 | MIME типа файла                                            |
+| EncryptedKey | строка      | Обязательное поле запроса; сохранение ключа не реализовано |
+| OwnerType    | число       | Message=0, Avatar=1, GroupAvatar=2, System=3               |
 
-* **Description**: Uploads a media file with associated metadata.
-* **Route**: `[POST] api/media/upload`
-* **HTTP Method**: `POST`
-* **Request**:
-  * **Content-Type**: `multipart/form-data`
-  *   **Request Body**: `MediaUploadRequest` object with the following structure:
+Ограничение запроса — 20 000 000 байт, включая multipart; проверка файла также ≤20 000 000. Не следует обещать загрузку файла ровно этого размера: overhead тоже входит в лимит.
 
-      ```json
-      {
-        "fromFile": "IFormFile",
-        "type": "MediaType",
-        "mimeType": "string",
-        "encryptedKey": "string"
-      }
-      ```
-  * **Constraints**: File size limit of 20 MB.
-* **Responses**:
-  *   <mark style="color:$success;">**200 OK**</mark>: Returns the upload result.
+Успех 200:
 
-      ```json
-      "string" // Media ID or similar result
-      ```
-  * <mark style="color:$danger;">**400 Bad Request**</mark>:
-    * If model validation fails.
-    * If no file is uploaded: `"No file uploaded"`
-    * If file exceeds 20 MB: `"File is too large"`
-    * If MIME type is missing: `"Missing MIME type"`
-    * If operation is invalid: `"string"`
-  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
+```json
+{"mediaId":"11111111-1111-1111-1111-111111111111","url":"2026/10/<имя файла>"}
+```
 
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
+url — относительный путь хранилища, не публичный URL. Для скачивания используйте endpoint.
 
-      ```json
-      "Internal server error"
-      ```
+## GET /api/media/download/{id}
 
-#### <mark style="color:$info;">Download</mark>
+Проверяет HasAccessAsync, затем возвращает бинарный файл с MIME и Content-Disposition. Если доступа нет или запись не найдена — 403, потому что проверка доступа выполняется первой. Сервисные ошибки — через ResultExtensions.
 
-* **Description**: Downloads a media file by its ID.
-* **Route**: `[GET] api/media/download/{id}`
-* **HTTP Method**: `GET`
-* **Request**:
-  * **Path Parameter**: `id` (Guid, required): ID of the media file.
-* **Responses**:
-  * <mark style="color:$success;">**200 OK**</mark>: Returns the media file as a stream.
-    * **Content-Type**: Matches `MimeType` of the media.
-    * **Content-Disposition**: Includes `filename` from `FileName`.
-  * <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks access.
-    * No body.
-  *   <mark style="color:$danger;">**404 Not Found**</mark>: If media is not found.
+## Ограничения
 
-      ```json
-      "Media not found"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
+Для личного сообщения accesser сравнивает Message.RecipientId с userId, хотя там ID чата: получатель может получить 403. При Send принадлежность вложения загрузившему пользователю не проверяется. OwnerType задаёт клиент, включая публично доступный System, — нужна серверная политика владения.
 
-      ```json
-      "Internal server error"
-      ```
+EncryptedKey не хранится ни в MediaFile, ни в MediaAttachments. Нельзя обещать восстановление ключа из истории.
 
-### Data Models
+Файлы целиком буферизуются в памяти, MIME принимается от клиента. Запись файла и БД не атомарна: возможны файлы без записи. Очистка неиспользуемых загрузок и stream-based выдача требуют реализации.
 
-#### MediaUploadRequest
+***
 
-* **Description**: Model for media upload request data.
-*   **Structure**:
+Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; успешная сборка не означает проверку работающего сервера.
 
-    ```json
-    {
-      "fromFile": "IFormFile",
-      "type": "MediaType",
-      "mimeType": "string",
-      "encryptedKey": "string"
-    }
-    ```
-
-### Error Handling
-
-* **Invalid User ID**: Handled by `ICurrentUserService`, aborts if invalid.
-* **Invalid Operations**: Returns `400 Bad Request` for `InvalidOperationException`.
-* **Unauthorized Access**: Returns `403 Forbidden` for `UnauthorizedAccessException`.
-* **Resource Not Found**: Returns `404 Not Found` for `KeyNotFoundException`.
-* **Unexpected Errors**: Caught and returned as `500 Internal Server Error`.
-
-### Logging
-
-* Logs warnings for `UnauthorizedAccessException`, `InvalidOperationException`, and `KeyNotFoundException`.
-* Logs information for successful file uploads.
-* Logs errors for unexpected exceptions during upload and download.
+Источник: [Govor.API/Controllers/MediaController.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.API/Controllers/MediaController.cs).

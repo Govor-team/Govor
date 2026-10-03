@@ -4,47 +4,23 @@ description: >-
   ping requests.
 ---
 
-# OnlinePingingController(не работает)
+# HTTP-присутствие — ограничения
 
-**Route**: `api/online`\
-**Authorize**: Requires "User" or "Admin" role
+Требуется роль User/Admin.
 
-### <mark style="color:purple;">End Point {PATCH}</mark>
+| Метод | Маршрут                     | Текущее поведение                               |
+| ----- | --------------------------- | ----------------------------------------------- |
+| PATCH | /api/online/ping            | Вызывает PingHandlerService, успех 200 без тела |
+| GET   | /api/online/status/{userId} | Неработоспособен: 500                           |
 
-`[PATCH] api/online/ping`
+В конструкторе не присваиваются \_userOnlineStore и \_presenceReader. GetStatus обращается к null; catch возвращает 500 "Internal server error.".
 
-#### Description
+Задуманное тело status — { isOnline, lastSeen }, но сейчас его нельзя считать рабочим контрактом.
 
-Updates the online status of the current user by sending a ping request.
+Для событий online/offline подключайтесь к /hubs/presence. Ping и наличие SignalR-подключения — разные механизмы; требуется единая политика lastSeen/TTL. Не считайте HTTP ping подтверждением активного presence-соединения.
 
-**Request**
+***
 
-* **Content-Type**: `application/json`
-* **Request Body**: None
+Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; успешная сборка не означает проверку работающего сервера.
 
-**Responses**
-
-*   **200 OK**: Ping processed successfully.
-
-    ```json
-    {}
-    ```
-*   **400 Bad Request**: If the user cannot be found in the database.
-
-    ```json
-    "User can't be found in our database."
-    ```
-*   **403 Forbidden**: If the user is not authorized to perform the action.
-
-    ```json
-    {
-      "error": "Not authorized to perform this action."
-    }
-    ```
-*   **500 Internal Server Error**: Indicates an unexpected error.
-
-    ```json
-    {
-      "error": "Failed to send friend request."
-    }
-    ```
+Источник: [Govor.API/Controllers/OnlinePingingController.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.API/Controllers/OnlinePingingController.cs).
