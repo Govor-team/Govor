@@ -49,7 +49,7 @@ public class SessionController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {
@@ -74,7 +74,7 @@ public class SessionController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {
@@ -97,7 +97,7 @@ public class SessionController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex) 
         {
@@ -118,7 +118,7 @@ public class SessionController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {

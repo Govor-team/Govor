@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Govor.API/Govor.API.csproj" />
+  <Project Path="Govor.Application/Govor.Application.csproj" />
+  <Project Path="Govor.Contracts/Govor.Contracts.csproj" />
+  <Project Path="Govor.Domain/Govor.Domain.csproj" />
+  <Project Path="Govor.Server.Tests/Govor.Server.Tests.csproj" />
+</Solution>

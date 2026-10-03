@@ -5,9 +5,11 @@ using Govor.Application.Friends;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Responses.SignalR;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Govor.API.Hubs;
 
+[Authorize(Roles = "Admin,User")]
 public class FriendsHub : Hub
 {
     private readonly ILogger<FriendsHub> _logger;

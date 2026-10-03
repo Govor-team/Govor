@@ -19,11 +19,15 @@ public class OnlinePingingController : Controller
 
     public OnlinePingingController(ILogger<OnlinePingingController> logger, 
         IPingHandlerService ping,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IUserPresenceReader presenceReader,
+        IOnlineUserStore userOnlineStore)
     {
         _logger = logger;
         _ping = ping;
         _currentUserService = currentUserService;
+        _presenceReader = presenceReader;
+        _userOnlineStore = userOnlineStore;
     }
     
     

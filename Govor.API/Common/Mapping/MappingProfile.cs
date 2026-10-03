@@ -5,6 +5,10 @@ using Govor.Contracts.Responses;
 using Govor.Domain.Models;
 using Govor.Domain.Models.Messages;
 using Govor.Domain.Models.Users;
+using Govor.Application.Messages.Parameters;
+using Govor.Contracts.Responses.SignalR;
+using Govor.Application.Reactions;
+using Govor.Domain.Models.Reactions;
 
 namespace Govor.API.Common.Mapping;
 
@@ -12,6 +16,12 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
+        CreateMap<ChatReadResult, ChatReadResponse>();
+        CreateMap<ReactionPack, ReactionPackResponse>();
+        CreateMap<ReactionItem, ReactionItemResponse>();
+        CreateMap<ReactionCount, ReactionCountResponse>();
+        CreateMap<MessageReactionState, MessageReactionsChangedResponse>();
+        CreateMap<ChannelReactionPolicy, ChannelReactionPolicyResponse>();
         CreateMap<Message, MessageResponse>();
         CreateMap<MediaAttachments, MediaAttachmentResponse>();
         CreateMap<MessageReaction, MessageReactionResponse>();
@@ -27,6 +37,5 @@ public class MappingProfile : Profile
 
         CreateMap<UserSession, SessionDto>();
 
-        CreateMap<UserProfile, UserProfileDto>();
     }
 }

@@ -1,6 +1,7 @@
 using Govor.Domain.Models;
 using Govor.Domain;
 using Microsoft.EntityFrameworkCore;
+using Govor.Domain.Models.Messages;
 
 namespace Govor.Application.Medias;
 
@@ -28,19 +29,22 @@ public class AccesserToDownloadMediaService : IAccesserToDownloadMedia
         {
             MediaOwnerType.Avatar => true, // media.OwnerId == userId
             MediaOwnerType.GroupAvatar => await _dbContext.GroupMemberships
-                .AnyAsync(gm => gm.GroupId == media.OwnerId && gm.UserId == userId),
+                .AnyAsync(gm => gm.GroupId == media.OwnerId && gm.UserId == userId && !gm.IsBanned),
 
             MediaOwnerType.Message => await _dbContext.MediaAttachments
                 .AnyAsync(ma =>
                     ma.MediaFileId == mediaId &&
                     (
-                        ma.Message.SenderId == userId ||
-                        ma.Message.RecipientId == userId ||
-                        _dbContext.GroupMemberships.Any(gm =>
-                            gm.GroupId == ma.Message.RecipientId && gm.UserId == userId)
+                        (ma.Message.RecipientType == RecipientType.User &&
+                            _dbContext.PrivateChats.Any(c => c.Id == ma.Message.RecipientId &&
+                                (c.UserAId == userId || c.UserBId == userId))) ||
+                        (ma.Message.RecipientType == RecipientType.Group &&
+                            _dbContext.GroupMemberships.Any(gm =>
+                                gm.GroupId == ma.Message.RecipientId && gm.UserId == userId && !gm.IsBanned))
                     )),
 
             MediaOwnerType.System => true,
+            MediaOwnerType.Reaction => await _dbContext.ReactionItems.AnyAsync(r => r.MediaFileId == mediaId),
             _ => false
         };
     }

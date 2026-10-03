@@ -75,6 +75,8 @@ public class PushNotificationService : IPushNotificationService
                 _logger.LogWarning("Removed {Count} invalid FCM tokens for session {SessionId}", result.FailureCount, sessionId);
             }
 
+            if (result.FailureCount > result.FailedTokens.Count())
+                return Result.Failure(Error.ServerError("Push.DeliveryFailed", "Push delivery failed temporarily."));
             return Result.Success();
         }
         catch (Exception ex)
@@ -97,6 +99,8 @@ public class PushNotificationService : IPushNotificationService
                 _logger.LogWarning("Removed {Count} invalid FCM tokens for target: {Target}", result.FailureCount, targetInfo);
             }
 
+            if (result.FailureCount > result.FailedTokens.Count())
+                return Result.Failure(Error.ServerError("Push.DeliveryFailed", "Push delivery failed temporarily."));
             return Result.Success();
         }
         catch (Exception ex)

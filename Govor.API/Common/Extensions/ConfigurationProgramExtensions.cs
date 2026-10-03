@@ -11,6 +11,7 @@ using Govor.Application.Infrastructure.Extensions;
 using Govor.Application.Infrastructure.Validators;
 using Govor.Application.Medias;
 using Govor.Application.Messages;
+using Govor.Application.Reactions;
 using Govor.Application.PingHandler;
 using Govor.Application.PrivateUserChats;
 using Govor.Application.Profiles;
@@ -68,6 +69,9 @@ public static class ConfigurationProgramExtensions
         //services.AddScoped<IMessageCommandService, MessageCommandService>();
         services.AddScoped<IMessageSendingService, MessageSendingService>();
         services.AddScoped<IMessageReadingService, MessageReadingService>();
+        services.AddScoped<IMessageReactionService, MessageReactionService>();
+        services.AddScoped<IReactionPackService, ReactionPackService>();
+        services.AddSingleton<IReactionMediaProcessor, ReactionMediaProcessor>();
         services.AddScoped<IMessageEditingService, MessageEditingService>();
         services.AddScoped<IMessageRemovingService, MessageRemovingService>();
         services.AddScoped<IVerifyFriendship, VerifyFriendship>();
@@ -91,6 +95,8 @@ public static class ConfigurationProgramExtensions
         // Hubs Infrastructure
         services.AddScoped<IPrivateChatGroupManager, PrivateChatGroupManager>();
         services.AddScoped<IChatNotificationService, ChatNotificationService>();
+        services.AddScoped<ChatPushDispatcher>();
+        services.AddHostedService<ChatPushWorker>();
         services.AddScoped<IConnectionManager, ConnectionManager>();
         
         services.AddSingleton<IConnectionStore, ConnectionStore>();
@@ -98,7 +104,10 @@ public static class ConfigurationProgramExtensions
         // Pushs
         services.AddScoped<IPushTokenService, PushTokenService>();
         services.AddScoped<IPushNotificationService, PushNotificationService>();
-        services.AddSingleton<IPushNotificationProvider, FirebasePushProvider>();
+        services.AddSingleton<IPushNotificationProvider>(sp =>
+            sp.GetRequiredService<IConfiguration>().GetValue("Firebase:Enabled", true)
+                ? ActivatorUtilities.CreateInstance<FirebasePushProvider>(sp)
+                : new NullPushProvider());
         
         
         // Auto Mapper 
@@ -133,8 +142,8 @@ public static class ConfigurationProgramExtensions
 
             //options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 
-            options.EnableSensitiveDataLogging();
-            options.EnableDetailedErrors();
+            if (configuration.GetValue<bool>("Database:EnableDetailedErrors"))
+                options.EnableDetailedErrors();
         });
     }
 }

@@ -47,6 +47,12 @@ namespace Govor.Domain.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("ReactionMode")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("ReactionPolicyVersion")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.ToTable("ChatGroups");
@@ -243,6 +249,24 @@ namespace Govor.Domain.Migrations
                     b.ToTable("MediaFiles");
                 });
 
+            modelBuilder.Entity("Govor.Domain.Models.Messages.ChatPushNotification", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("MessageId");
+
+                    b.HasIndex("NextAttemptAt");
+
+                    b.ToTable("ChatPushNotifications");
+                });
+
             modelBuilder.Entity("Govor.Domain.Models.Messages.MediaAttachments", b =>
                 {
                     b.Property<Guid>("Id")
@@ -285,6 +309,9 @@ namespace Govor.Domain.Migrations
 
                     b.Property<Guid?>("PrivateChatId")
                         .HasColumnType("uuid");
+
+                    b.Property<long>("ReactionsVersion")
+                        .HasColumnType("bigint");
 
                     b.Property<Guid>("RecipientId")
                         .HasColumnType("uuid");
@@ -329,10 +356,15 @@ namespace Govor.Domain.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<Guid?>("ReactionId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ReactionId");
 
                     b.HasIndex("UserId");
 
@@ -380,6 +412,336 @@ namespace Govor.Domain.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PrivateChats");
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.ChannelAllowedReaction", b =>
+                {
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReactionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("GroupId", "ReactionId");
+
+                    b.HasIndex("ReactionId");
+
+                    b.ToTable("ChannelAllowedReactions");
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.ReactionItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DurationMilliseconds")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("MediaFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("PackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SizeBytes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("MediaFileId");
+
+                    b.HasIndex("PackId");
+
+                    b.ToTable("ReactionItems");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000001"),
+                            Code = "👍",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "👍",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "👍",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000002"),
+                            Code = "👎",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "👎",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "👎",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000003"),
+                            Code = "❤️",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "❤️",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "❤️",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000004"),
+                            Code = "🔥",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "🔥",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "🔥",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000005"),
+                            Code = "🥰",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "🥰",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "🥰",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000006"),
+                            Code = "👏",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "👏",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "👏",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000007"),
+                            Code = "😁",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "😁",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "😁",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000008"),
+                            Code = "🤔",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "🤔",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "🤔",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000009"),
+                            Code = "😢",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "😢",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "😢",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000010"),
+                            Code = "🎉",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "🎉",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "🎉",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000011"),
+                            Code = "🤯",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "🤯",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "🤯",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        },
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0001-000000000012"),
+                            Code = "🙏",
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DurationMilliseconds = 0,
+                            Emoji = "🙏",
+                            Height = 0,
+                            IsEnabled = true,
+                            Kind = 0,
+                            Name = "🙏",
+                            PackId = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            SizeBytes = 0,
+                            Width = 0
+                        });
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.ReactionPack", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ShareCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("IsDefault")
+                        .IsUnique()
+                        .HasFilter("\"IsDefault\" = TRUE");
+
+                    b.HasIndex("ShareCode")
+                        .IsUnique();
+
+                    b.ToTable("ReactionPacks");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b3000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Default public emoji reactions",
+                            IsDefault = true,
+                            IsEnabled = true,
+                            Name = "Emoji",
+                            ShareCode = "default"
+                        });
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.UserReactionPack", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PackId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "PackId");
+
+                    b.HasIndex("PackId");
+
+                    b.ToTable("UserReactionPacks");
                 });
 
             modelBuilder.Entity("Govor.Domain.Models.Users.Admin", b =>
@@ -668,6 +1030,15 @@ namespace Govor.Domain.Migrations
                     b.Navigation("ChatGroup");
                 });
 
+            modelBuilder.Entity("Govor.Domain.Models.Messages.ChatPushNotification", b =>
+                {
+                    b.HasOne("Govor.Domain.Models.Messages.Message", null)
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Govor.Domain.Models.Messages.MediaAttachments", b =>
                 {
                     b.HasOne("Govor.Domain.Models.MediaFile", "MediaFile")
@@ -706,6 +1077,11 @@ namespace Govor.Domain.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Govor.Domain.Models.Reactions.ReactionItem", null)
+                        .WithMany()
+                        .HasForeignKey("ReactionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Govor.Domain.Models.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -722,6 +1098,60 @@ namespace Govor.Domain.Migrations
                     b.HasOne("Govor.Domain.Models.Messages.Message", null)
                         .WithMany("MessageViews")
                         .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.ChannelAllowedReaction", b =>
+                {
+                    b.HasOne("Govor.Domain.Models.ChatGroup", null)
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Govor.Domain.Models.Reactions.ReactionItem", null)
+                        .WithMany()
+                        .HasForeignKey("ReactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.ReactionItem", b =>
+                {
+                    b.HasOne("Govor.Domain.Models.MediaFile", null)
+                        .WithMany()
+                        .HasForeignKey("MediaFileId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Govor.Domain.Models.Reactions.ReactionPack", "Pack")
+                        .WithMany("Reactions")
+                        .HasForeignKey("PackId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Pack");
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.ReactionPack", b =>
+                {
+                    b.HasOne("Govor.Domain.Models.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.UserReactionPack", b =>
+                {
+                    b.HasOne("Govor.Domain.Models.Reactions.ReactionPack", null)
+                        .WithMany()
+                        .HasForeignKey("PackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Govor.Domain.Models.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -820,6 +1250,11 @@ namespace Govor.Domain.Migrations
             modelBuilder.Entity("Govor.Domain.Models.PrivateChat", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Govor.Domain.Models.Reactions.ReactionPack", b =>
+                {
+                    b.Navigation("Reactions");
                 });
 
             modelBuilder.Entity("Govor.Domain.Models.Users.Crypto.UserCryptoSession", b =>

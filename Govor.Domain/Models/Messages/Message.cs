@@ -15,6 +15,7 @@ public class Message
     public List<MessageView> MessageViews { get; set; } = new List<MessageView>();
     
     public Guid? ReplyToMessageId { get; set; }
+    public long ReactionsVersion { get; set; }
     
     public override bool Equals(object? obj)
     {

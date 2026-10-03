@@ -4,6 +4,7 @@ using Govor.Application.Users.UserSessions.Crypto;
 using Govor.Contracts.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Govor.Contracts.DTOs;
 
 namespace Govor.API.Controllers.Authentication;
 
@@ -27,7 +28,8 @@ public class SessionKeysController : Controller
         ICurrentUserSessionService currentSession,
         ISessionKeyAttacher sessionKeyAttacher,
         ISessionKeysReader sessionKeysReader,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IOneTimePreKeysRotator oneTimePreKeysRotator)
     {
         _logger = logger;
         _friendshipService = friendshipService;
@@ -35,6 +37,7 @@ public class SessionKeysController : Controller
         _sessionKeyAttacher = sessionKeyAttacher;
         _sessionKeysReader = sessionKeysReader;
         _currentUser = currentUser;
+        _oneTimePreKeysRotator = oneTimePreKeysRotator;
     }
 
     [HttpPost("keys")]
@@ -63,11 +66,24 @@ public class SessionKeysController : Controller
         var requesterId = _currentUser.GetCurrentUserId();
 
         if (!(await _friendshipService.GetFriendsAsync(userId)).Select(u => u.Id).Contains(requesterId))
-            return Forbid("You can only access keys of your friends");
+            return Forbid();
 
         var keys = await _sessionKeysReader.GetAllActiveKeysAsync(userId);
 
-        return Ok(keys);
+        return Ok(keys.Select(k => new PublicSessionKeysDto
+        {
+            IdentityKey = Convert.ToBase64String(k.PublicIdentityKey),
+            SignedPreKey = k.SignedPreKey is null ? null : new SignedPreKeyDto
+            {
+                Id = k.SignedPreKey.Id,
+                Key = Convert.ToBase64String(k.SignedPreKey.PublicSignedPreKey),
+                Signature = Convert.ToBase64String(k.SignedPreKey.SignedPreKeySignature)
+            },
+            OneTimePreKeys = k.OneTimePreKeys.Where(p => !p.IsUsed).Select(p => new OneTimePreKeyDto
+            {
+                Id = p.Id, Key = Convert.ToBase64String(p.PublicKey)
+            }).ToList()
+        }));
     }
     
     [HttpPost("keys/rotate")]

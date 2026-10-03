@@ -49,6 +49,12 @@ public class HubResult<T>
         ErrorMessage = message,
     };
 
+    public static HubResult<T> Forbidden(string message) => new()
+    {
+        Status = HubResultStatus.Forbidden,
+        ErrorMessage = message
+    };
+
     public static HubResult<T> UnprocessableEntity(string message) => new()
     {
         Status = HubResultStatus.UnprocessableEntity,
@@ -69,6 +75,7 @@ public enum HubResultStatus : int
     NoContent = 204,
     BadRequest = 400,
     Unauthorized = 401,
+    Forbidden = 403,
     NotFound = 404,
     Conflict = 409,
     UnprocessableEntity = 422,

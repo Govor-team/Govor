@@ -2,130 +2,161 @@ using Govor.Application.PrivateUserChats;
 using Govor.Application.Profiles;
 using Govor.Application.PushNotifications;
 using Govor.Contracts.Responses.SignalR;
+using Govor.Domain;
+using Govor.Domain.Common;
 using Govor.Domain.Models.Messages;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Govor.API.Hubs.Infrastructure;
 
-public class ChatNotificationService : IChatNotificationService 
+public class ChatNotificationService : IChatNotificationService
 {
     private readonly IHubContext<ChatsHub> _hubContext;
     private readonly IPushNotificationService _notificationService;
-    private readonly IUserPrivateChatsGetterService _userPrivateChatsGetterService;
-    private readonly IProfileService _profileService;
+    private readonly IUserPrivateChatsGetterService _chats;
+    private readonly IProfileService _profiles;
+    private readonly GovorDbContext _context;
+    private readonly ILogger<ChatNotificationService> _logger;
 
-    public ChatNotificationService(
-        IHubContext<ChatsHub> hubContext,
-        IPushNotificationService notificationService,
-        IUserPrivateChatsGetterService userPrivateChatsGetterService, 
-        IProfileService profileService)
+    public ChatNotificationService(IHubContext<ChatsHub> hubContext,
+        IPushNotificationService notificationService, IUserPrivateChatsGetterService chats,
+        IProfileService profiles, GovorDbContext context, ILogger<ChatNotificationService> logger)
     {
         _hubContext = hubContext;
         _notificationService = notificationService;
-        _userPrivateChatsGetterService = userPrivateChatsGetterService;
-        _profileService = profileService;
+        _chats = chats;
+        _profiles = profiles;
+        _context = context;
+        _logger = logger;
     }
 
     public async Task NotifyMessageSentAsync(UserMessageResponse message)
     {
-        if (message.RecipientType == RecipientType.User)
+        await TryNotifyAsync(() => NotifyParticipantsAsync(message.RecipientId,
+            message.RecipientType, ChatHubConstants.ReceiveMessage, message));
+        await TryNotifyAsync(() => NotifyUsersAsync(new[] { message.SenderId }, ChatHubConstants.MessageSent, message));
+
+    }
+
+    public async Task<bool> DeliverPushAsync(UserMessageResponse message)
+    {
+        try
         {
-            await _hubContext.Clients.Group(ChatHubConstants.GetPrivateChat(message.RecipientId))
-                .SendAsync(ChatHubConstants.ReceiveMessage, message);
-            
-            await NotifyMessageReceivedInPrivateChatAsync(message);
+            List<Guid> recipients;
+            if (message.RecipientType == RecipientType.User)
+            {
+                var result = await _chats.GetPrivateChatAsync(message.RecipientId);
+                if (result.IsFailure)
+                    return result.Error.Type == ErrorType.NotFound;
+                recipients = new[] { result.Value.UserAId, result.Value.UserBId }
+                    .Where(id => id != message.SenderId).Distinct().ToList();
+            }
+            else
+                recipients = await _context.GroupMemberships.AsNoTracking()
+                    .Where(m => m.GroupId == message.RecipientId && m.UserId != message.SenderId && !m.IsBanned)
+                    .Select(m => m.UserId).Distinct().ToListAsync();
+
+            if (recipients.Count == 0)
+                return true;
+            var readers = await _context.MessageViews.AsNoTracking()
+                .Where(v => v.MessageId == message.MessageId).Select(v => v.UserId).ToListAsync();
+            recipients = recipients.Except(readers).ToList();
+            if (recipients.Count == 0)
+                return true;
+            var profile = await _profiles.GetUserProfileAsync(message.SenderId);
+            var title = profile.IsSuccess ? profile.Value.Username : "Govor";
+            var content = message.EncryptedContent ?? string.Empty;
+            var body = content.Length == 0 ? "Attachment" : content[..Math.Min(40, content.Length)];
+            var data = new Dictionary<string, string>
+            {
+                ["chatId"] = message.RecipientId.ToString(),
+                ["messageId"] = message.MessageId.ToString(),
+                ["isGroup"] = message.RecipientType == RecipientType.Group ? "true" : "false"
+            };
+            var push = await _notificationService.SendToUsersAsync(recipients, title, body,
+                "chat_messages", $"chat_{message.RecipientId}", data);
+            if (push.IsFailure)
+                _logger.LogWarning("Push failed for message {MessageId}: {Error}",
+                    message.MessageId, push.Error);
+            return push.IsSuccess;
         }
-        else
+        catch (Exception ex)
         {
-            await _hubContext.Clients.Group(ChatHubConstants.GetChatGroup(message.RecipientId))
-                .SendAsync(ChatHubConstants.ReceiveMessage, message);
+            _logger.LogError(ex, "Failed to deliver push for message {MessageId}", message.MessageId);
+            return false;
         }
-        
-       // await _hubContext.Clients.Group(ChatHubConstants.GetUserGroup(message.SenderId))
-       //     .SendAsync(ChatHubConstants.MessageSent, message);
     }
 
     public async Task NotifyMessageWasReadAsync(MessageReadResponse response)
     {
-        await NotifyParticipantsAsync(
-            response.ReaderId, 
-            response.RecipientId, 
-            response.RecipientType, 
-            ChatHubConstants.MessageRead, 
-            response);
+        // Keep the existing wire name for old clients; new clients can use MessageRead.
+        await TryNotifyAsync(() => NotifyParticipantsAsync(response.RecipientId,
+            response.RecipientType, ChatHubConstants.MessageRead, response));
+        await TryNotifyAsync(() => NotifyParticipantsAsync(response.RecipientId,
+            response.RecipientType, "MessageRead", response));
     }
 
-    private async Task NotifyMessageReceivedInPrivateChatAsync(UserMessageResponse message)
-    {
-        
-        var result = await _userPrivateChatsGetterService.GetPrivateChatAsync(message.RecipientId);
-        
-        if(result.IsFailure)
-           return;
-        var privateChat = result.Value;
-        
-        var text = message.EncryptedContent.Substring(0, Math.Min(40, message.EncryptedContent.Length));
-        var userId = message.SenderId == privateChat.UserAId ? privateChat.UserBId : privateChat.UserAId;
-       
-        var resultProf = await _profileService.GetUserProfileAsync(message.SenderId);
-        
-        if(resultProf.IsFailure)
-            return;
-        var profile = resultProf.Value;
-        
-        var title = profile.Username;
-        Dictionary<string, string> data = new Dictionary<string, string>();
-        
-        data["chatId"] = message.RecipientId.ToString();
-        data["isGroup"] = message.RecipientType == RecipientType.Group ? "true" : "false";
-        
-        await _notificationService.SendToUserAsync(
-            userId, 
-            title,
-            text,  
-            "chat_messages",
-            $"private_chat_{message.RecipientId}",
-            data);
-    }
-    
-    public async Task NotifyMessageRemovedAsync(MessageRemovedResponse response)
-    {
-        await NotifyParticipantsAsync(
-            response.SenderId, 
-            response.RecipientId, 
-            response.RecipientType, 
-            ChatHubConstants.MessageRemoved, 
-            response);
-    }
+    public Task NotifyChatReadAsync(ChatReadResponse response) =>
+        TryNotifyAsync(() => NotifyParticipantsAsync(response.ChatId,
+            response.RecipientType, ChatHubConstants.ChatRead, response));
 
-    public async Task NotifyMessageEditedAsync(MessageEditResponse response)
+    public Task NotifyMessageReactionsChangedAsync(MessageReactionsChangedResponse response) =>
+        TryNotifyAsync(() => NotifyParticipantsAsync(response.RecipientId,
+            response.RecipientType, ChatHubConstants.MessageReactionsChanged, response));
+
+    public Task NotifyChannelReactionPolicyChangedAsync(ChannelReactionPolicyResponse response) =>
+        TryNotifyAsync(() => NotifyParticipantsAsync(response.GroupId,
+            RecipientType.Group, ChatHubConstants.ChannelReactionPolicyChanged, response));
+
+    public Task NotifyMessageRemovedAsync(MessageRemovedResponse response) =>
+        TryNotifyAsync(() => NotifyParticipantsAsync(response.RecipientId,
+            response.RecipientType, ChatHubConstants.MessageRemoved, response));
+
+    public Task NotifyMessageEditedAsync(MessageEditResponse response) =>
+        TryNotifyAsync(() => NotifyParticipantsAsync(response.RecipientId,
+            response.RecipientType, ChatHubConstants.MessageEdited, response));
+
+    private async Task NotifyParticipantsAsync(Guid chatId, RecipientType type, string method, object payload)
     {
-        await NotifyParticipantsAsync(
-            response.EditorId, 
-            response.RecipientId, 
-            response.RecipientType, 
-            ChatHubConstants.MessageEdited, 
-            response);
-    }
-    
-    private async Task NotifyParticipantsAsync(Guid initiatorId, Guid targetId, RecipientType type, string method, object payload)
-    {
+        // Resolve current participants instead of treating a chat ID as a user ID.
+        // Deliver only to active sessions, including all of a participant's devices.
+        List<Guid> participants;
         if (type == RecipientType.User)
         {
-            await _hubContext.Clients.Group(ChatHubConstants.GetUserGroup(initiatorId))
-                .SendAsync(method, payload);
-            
-            if (initiatorId != targetId)
-            {
-                await _hubContext.Clients.Group(ChatHubConstants.GetUserGroup(targetId))
-                    .SendAsync(method, payload);
-            }
+            var result = await _chats.GetPrivateChatAsync(chatId);
+            if (result.IsFailure)
+                return;
+            participants = new[] { result.Value.UserAId, result.Value.UserBId }.Distinct().ToList();
         }
         else
-        {
-            // to groups 
-            await _hubContext.Clients.Group(ChatHubConstants.GetChatGroup(targetId))
+            participants = await _context.GroupMemberships.AsNoTracking()
+                .Where(m => m.GroupId == chatId && !m.IsBanned).Select(m => m.UserId).Distinct().ToListAsync();
+
+        if (participants.Count > 0)
+            await NotifyUsersAsync(participants, method, payload);
+    }
+
+    private async Task NotifyUsersAsync(IEnumerable<Guid> users, string method, object payload)
+    {
+        var now = DateTime.UtcNow;
+        var sessions = await _context.UserSessions.AsNoTracking()
+            .Where(s => users.Contains(s.UserId) && !s.IsRevoked && s.ExpiresAt > now)
+            .Select(s => s.Id).ToListAsync();
+        if (sessions.Count > 0)
+            await _hubContext.Clients.Groups(sessions.Select(ChatHubConstants.GetSessionGroup).ToList())
                 .SendAsync(method, payload);
+    }
+
+    private async Task TryNotifyAsync(Func<Task> notify)
+    {
+        try
+        {
+            await notify();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to deliver chat notification; clients can resync from history.");
         }
     }
 }

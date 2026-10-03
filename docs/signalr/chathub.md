@@ -1,162 +1,58 @@
----
-icon: wifi
----
+# ChatsHub — сообщения
 
-# ChatHub
+Подключение: `/hubs/chats`, Bearer access token и активная сессия. Команды возвращают `HubResult<T>` (status, result, errorMessage); события приходят независимо от ответа команды. Этот раздел описывает рабочую копию с исправлениями от 03.10.2026.
 
-**Route**: `hubs/chats`\
-**Authorize**: Requires authentication (user must be logged in)
+## Команды
 
-***
-
-### Hub Methods
-
-#### <mark style="color:$primary;">OnConnectedAsync</mark>
-
-**Description**: Automatically invoked when a client establishes a connection to the hub. Adds the user to their personal group for private messages and notifications.
-
-**Behavior**:
-
-* Retrieves the user's ID from the connection context.
-* If the user ID is invalid (`Guid.Empty`), logs a warning and aborts the connection.
-* Adds the user to a group named after their user ID (e.g., `userId.ToString()`).
-* Logs the connection event with the user ID and connection ID.
-
-**Notes**:
-
-* Future enhancements may include adding the user to their chat groups (currently a TODO in the code).
-
-***
-
-#### <mark style="color:$primary;">OnDisconnectedAsync</mark>
-
-**Description**: Automatically invoked when a client disconnects from the hub. Removes the user from their personal group.
-
-**Behavior**:
-
-* Retrieves the user's ID from the connection context, suppressing exceptions if the ID is unavailable (e.g., due to an early abort).
-* If the user ID is valid, removes the user from their personal group.
-* Logs the disconnection event with the user ID and connection ID.
-* If an exception occurs, logs it as a warning along with the connection ID.
-* If no exception occurs but the user ID is invalid, logs the disconnection with the connection ID.
-
-**Notes**:
-
-* Future enhancements may include removing the user from their chat groups (currently a TODO in the code).
-
-***
-
-#### <mark style="color:$info;">Send</mark>
-
-**Description**: Allows a client to send a message to a recipient, which can be either a user or a group.
-
-**Request**:
-
-* **Method Name**: `Send`
-* **Parameters**:
-  *   `request`: An object of type `MessageRequest` with the following structure:
-
-      ```json
-      {
-        "encryptedContent": "string",
-        "replyToMessageId": "Guid",
-        "recipientId": "Guid",
-        "recipientType": "string", // "User" or "Group"
-        "mediaAttachments": [
-          {
-            "mediaId": "Guid",
-            "encryptedKey": "string",
-            "type": "string",
-            "mimeType": "string"
-          }
-        ]
-      }
-      ```
-
-**Responses**:
-
-* <mark style="color:$success;">**Success**</mark>:
-  * Sends the message to the recipient (user or group) via the `ReceiveMessage` event.
-  * Notifies the sender with a confirmation via the `MessageSent` event.
-  * Logs the successful message send with the message ID, sender ID, recipient ID, and recipient type.
-* <mark style="color:$danger;">**Error**</mark>:
-  * If the message is empty (no `encryptedContent` and no `mediaAttachments`), logs a warning and throws an `ArgumentException`.
-  * If the message fails to send (e.g., due to an internal error), logs the error and throws a `HubException`.
-
-**Client-Side Events**:
-
-* <mark style="color:$primary;">**ReceiveMessage**</mark>: Triggered on the recipient's client(s) to deliver the message.
-  * Payload: `UserMessageResponse` object.
-* <mark style="color:$primary;">**MessageSent**</mark>: Triggered on the sender's client to confirm the message was sent.
-  * Payload: `UserMessageResponse` object.
-
-**Notes**:
-
-* The message must contain either `encryptedContent` or `mediaAttachments`; otherwise, it is invalid.
-* The recipient is determined by `recipientType`:
-  * `"User"`: Sends to the recipient’s personal group (e.g., `recipientId.ToString()`).
-  * `"Group"`: Sends to all members of the group (e.g., `group_{recipientId}`).
-
-***
-
-### Data Models
-
-#### MessageRequest
+| Имя | Аргументы | Успешный result |
+| --- | --- | --- |
+| Send | MessageRequest | UserMessageResponse |
+| Read | `{ messageId }` | MessageReadResponse |
+| ReadChat | chatId, ReadChatRequest | ChatReadResponse |
+| Edit | `{ messageId, newEncryptedContent }` | MessageEditResponse |
+| Remove | `{ messageId, requestType }` | MessageRemovedResponse |
+| React | messageId, `{ reactionId }` | MessageReactionsChangedResponse |
+| RemoveReaction | messageId | MessageReactionsChangedResponse |
 
 ```json
 {
-  "encryptedContent": "string",
-  "replyToMessageId": "Guid",
-  "recipientId": "Guid",
-  "recipientType": "string", // "User" or "Group"
-  "mediaAttachments": [
-    {
-      "mediaId": "Guid",
-      "encryptedKey": "string",
-      "type": "string",
-      "mimeType": "string"
-    }
-  ]
+  "recipientId": "11111111-1111-1111-1111-111111111111",
+  "recipientType": 0,
+  "encryptedContent": "<содержимое>",
+  "replyToMessageId": null,
+  "mediaAttachments": []
 }
 ```
 
-#### UserMessageResponse
+RecipientType.User=0 означает личный чат: recipientId — PrivateChat.Id. Group=1 означает ChatGroup.Id. Вложение: `{ mediaId, encryptedKey }`. Содержимое или вложение обязательно; Send ограничивает текст 50 000 символами. SignalR не выполняет MVC DataAnnotations автоматически. DTO проверки дополняются сервисами доступа.
 
-```json
-{
-  "messageId": "Guid",
-  "senderId": "Guid",
-  "recipientId": "Guid",
-  "recipientType": "string",
-  "encryptedContent": "string",
-  "sentAt": "DateTime",
-  "isEdited": "bool",
-  "mediaAttachments": [
-    {
-      "mediaId": "Guid",
-      "encryptedKey": "string",
-      "type": "string",
-      "mimeType": "string"
-    }
-  ],
-  "replyToMessageId": "Guid"
-}
-```
+Send/Read/React и чтение истории проверяют участие в конкретном чате. В группах заблокированный участник не имеет доступа. Reply и вложения не позволяют ссылаться на чужие закрытые чаты. Edit проверяет автора, доступ и временной лимит редактирования. Remove проверяет автора/права администратора группы; HideForMe пока не реализован и возвращает ошибку, ForceRemove удаляет сообщение.
 
-***
+[ReadChat и три сценария прочтения](../endpoints/message-read.md): видимые messageIds, граница upToMessageId либо весь чат. [React/RemoveReaction, паки и настройки канала](../endpoints/reactions.md) используют тот же сервис, что HTTP API.
 
-### Error Handling
+## События
 
-* **Invalid User ID**: If the user ID is `Guid.Empty` during connection, the connection is aborted with a logged warning.
-* **Empty Message**: If a message lacks both content and attachments, an `ArgumentException` is thrown with a logged warning.
-* **Message Send Failure**: If sending fails (e.g., due to a service error), a `HubException` is thrown with the error logged.
+| Имя события (точно) | Payload |
+| --- | --- |
+| ReceiveMessage | UserMessageResponse |
+| MessageSent | UserMessageResponse, подтверждение устройствам отправителя |
+| MessageEdited | MessageEditResponse |
+| MessageRemoved | MessageRemovedResponse |
+| MessageReaded | MessageReadResponse |
+| ChatRead | ChatReadResponse |
+| MessageReactionsChanged | MessageReactionsChangedResponse |
+| ChannelReactionPolicyChanged | ChannelReactionPolicyResponse |
 
-***
+Опечатка MessageReaded сохранена для совместимости. При подключении сервер автоматически добавляет соединение в группу его сессии. События чата направляются активным сессиям участников; заблокированные участники групп исключаются. Не требуется вручную подписываться на SignalR-группу чата. Отзыв сессии прекращает её участие в маршрутизации и проверяется для команд; истечение токена закрывает соединение.
 
-### Logging
+UserMessageResponse: messageId, senderId, recipientId, recipientType, encryptedContent, replyToMessageId, sentAt, isEdited, mediaAttachments. История через HTTP также содержит реакции и reactionsVersion. После получения сообщения загрузите снимок реакций при необходимости.
 
-* Logs connection events with user ID and connection ID.
-* Logs disconnection events, including exceptions if present.
-* Logs message send attempts, successes, and failures for monitoring and debugging.
+MessageEditResponse: messageId, editorId, recipientId, recipientType, newEncryptedContent, editedAt.
+MessageReadResponse: viewId, messageId, readerId, recipientId, whenWas, recipientType.
+MessageRemovedResponse: messageId, senderId, recipientId, requestType, recipientType.
 
-***
+## Доставка и восстановление
+
+Сохранение в БД и доставка события — разные этапы. После reconnect загрузите историю через HTTP; объединяйте ответ Send и ReceiveMessage по messageId. Для реакций принимайте более новую version и заменяйте counts целиком, затем восстанавливайте состояние видимых сообщений через GET.
+
+SignalR-события не имеют долговременной очереди. Push сообщений использует серверную очередь и повторные попытки; для реакций и политик каналов push не отправляется. Реальный push требует корректной конфигурации Firebase и зарегистрированного FCM-токена активной сессии. Повтор Send после неоднозначного сетевого сбоя всё ещё может создать дубликат: clientMessageId/idempotency-key для сообщений не реализован.

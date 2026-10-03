@@ -1,114 +1,30 @@
+# Друзья и поиск
+
+Bearer token обязателен; отдельная роль в атрибуте не задана.
+
+| Метод | Маршрут | Результат |
+| --- | --- | --- |
+| GET | /api/friends | UserDto[] друзей |
+| GET | /api/friends/search?query=Арт | UserDto[] результатов поиска |
+
+```json
+[{
+  "id":"11111111-1111-1111-1111-111111111111",
+  "username":"Артём",
+  "description":"",
+  "wasOnline":"2026-10-03T00:00:00Z",
+  "iconId":"00000000-0000-0000-0000-000000000000",
+  "isOnline":false
+}]
+```
+
+Пустой/пробельный query возвращает 400 строкой "Query cannot be empty". Успех — 200; серверные ошибки — 500 с объектом error. Не смешивайте UserDto и UserProfileDto: у второго нет wasOnline.
+
+Изменение заявок выполняется через FriendsHub. HTTP-контроллер не содержит команды отправки, принятия и отклонения.
+
+Статус isOnline зависит от состояния процесса и подключения к presence. Он не является гарантией доставки сообщений или фоновой доступности устройства.
+
 ---
-description: >-
-  Description: Controller for managing friendship-related operations, including
-  searching for users and retrieving the list of friends for the current user.
----
+Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; успешная сборка не означает проверку работающего сервера.
 
-# FriendshipController
-
-### Controller Description
-
-* **Route**: `api/friends`
-* **Authorize**: Requires authenticated user (`[Authorize]`).
-
-### Endpoints
-
-#### <mark style="color:$info;">Search</mark>
-
-* **Description**: Searches for users based on a query string.
-* **Route**: `[GET] api/friends/search?query=`
-* **HTTP Method**: `GET`
-* **Request**:
-  * **Query Parameter**: `query` (string, required)
-* **Responses**:
-  *   <mark style="color:$success;">**200 OK**</mark>: Returns a list of matching users.
-
-      ```json
-      [
-        {
-          "id": "Guid",
-          "username": "string",
-          "description": "string",
-          "wasOnline": "DateTime",
-          "iconId": "Guid"
-        }
-      ]
-      ```
-  *   <mark style="color:$danger;">**400 Bad Request**</mark>: If the query is empty.
-
-      ```json
-      "Query cannot be empty"
-      ```
-  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
-
-      ```json
-      {
-        "error": "Internal error during user search."
-      }
-      ```
-
-#### <mark style="color:$info;">GetFriends</mark>
-
-* **Description**: Retrieves the list of friends for the authenticated user.
-* **Route**: `[GET] api/friends`
-* **HTTP Method**: `GET`
-* **Request**: None
-* **Responses**:
-  *   <mark style="color:$success;">**200 OK**</mark>: Returns a list of the user's friends or an empty list if none.
-
-      ```json
-      [
-        {
-          "id": "Guid",
-          "username": "string",
-          "description": "string",
-          "wasOnline": "DateTime",
-          "iconId": "Guid"
-        }
-      ]
-      ```
-  *   <mark style="color:$danger;">**403 Forbidden**</mark>: If user lacks authorization.
-
-      ```json
-      "string"
-      ```
-  *   <mark style="color:$warning;">**500 Internal Server Error**</mark>: Indicates an unexpected error.
-
-      ```json
-      {
-        "error": "Internal server error."
-      }
-      ```
-
-### Data Models
-
-#### UserDto
-
-* **Description**: Data transfer object for user information.
-*   **Structure**:
-
-    ```json
-    {
-      "id": "Guid",
-      "username": "string",
-      "description": "string",
-      "wasOnline": "DateTime",
-      "iconId": "Guid"
-    }
-    ```
-
-### Error Handling
-
-* **Invalid User ID**: Handled by `ICurrentUserService`, aborts if invalid.
-* **Invalid Operations**: Returns `400 Bad Request` for empty query.
-* **Unexpected Errors**: Caught and returned as `500 Internal Server Error`.
-
-### Logging
-
-* Logs warnings for `SearchUsersException`.
-* Logs errors for unexpected exceptions and `InvalidOperationException`.
+Источник: [Govor.API/Controllers/Friends/FriendshipController.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.API/Controllers/Friends/FriendshipController.cs).

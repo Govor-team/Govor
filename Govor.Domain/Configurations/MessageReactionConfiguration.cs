@@ -9,6 +9,8 @@ public class MessageReactionConfiguration : IEntityTypeConfiguration<MessageReac
     public void Configure(EntityTypeBuilder<MessageReaction> builder)
     {
         builder.HasKey(r => r.Id);
+        builder.HasOne<Govor.Domain.Models.Reactions.ReactionItem>().WithMany()
+            .HasForeignKey(r => r.ReactionId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(r => new { r.MessageId, r.UserId }).IsUnique(); // Одна реакция от одного юзера
 

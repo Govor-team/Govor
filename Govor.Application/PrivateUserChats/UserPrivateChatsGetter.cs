@@ -30,8 +30,8 @@ public class UserPrivateChatsGetter : IUserPrivateChatsGetterService
         
         if (res == null)
             return Result.Failure<PrivateChat>( 
-                Error.Failure(
-                    nameof(InvalidOperationException),
+                Error.NotFound(
+                    "PrivateChat.NotFound",
                     "PrivateChat not found.")
             );
         

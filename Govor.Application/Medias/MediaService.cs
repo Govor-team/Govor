@@ -100,7 +100,7 @@ public class MediaService : IMediaService
             }
             
             // Загрузить бинарные данные из хранилища
-            Stream dataStream = await _storageService.LoadAsync(mediaFile.Url);
+            await using Stream dataStream = await _storageService.LoadAsync(mediaFile.Url);
 
             // Считать поток в byte[]
             using var memoryStream = new MemoryStream();

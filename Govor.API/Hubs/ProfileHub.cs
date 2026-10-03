@@ -1,5 +1,6 @@
 ﻿using Govor.API.Common.SignalR.Helpers;
 using Govor.Application.Friends;
+using Govor.API.Common.Extensions;
 using Govor.Application.Medias;
 using Govor.Application.Profiles;
 using Govor.Application.Synching;
@@ -101,9 +102,11 @@ public sealed class ProfileHub : Hub
 
         try
         {
-            await _profileService.SetDescription(
+            var result = await _profileService.SetDescription(
                 description,
                 userId);
+            if (result.IsFailure)
+                return result.Error.ToHubResult<bool>();
 
             var payload = new DescriptionUpdatePayload
             {
@@ -146,9 +149,11 @@ public sealed class ProfileHub : Hub
                 return HubResult<bool>.BadRequest(
                     "Invalid icon id.");
 
-            await _profileService.SetNewIcon(
+            var result = await _profileService.SetNewIcon(
                 userId,
                 iconId);
+            if (result.IsFailure)
+                return result.Error.ToHubResult<bool>();
 
             var payload = new AvatarUpdatePayload
             {

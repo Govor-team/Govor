@@ -20,5 +20,6 @@ public enum MediaOwnerType
     Message = 0,   
     Avatar = 1,    
     GroupAvatar = 2, 
-    System = 3     // (Emoge, icons � e.t.c)
+    System = 3,    // (Emoge, icons and other system assets)
+    Reaction = 4
 }

@@ -1,50 +1,19 @@
+# HTTP-присутствие — ограничения
+
+Требуется роль User/Admin.
+
+| Метод | Маршрут | Текущее поведение |
+| --- | --- | --- |
+| PATCH | /api/online/ping | Вызывает PingHandlerService, успех 200 без тела |
+| GET | /api/online/status/{userId} | Неработоспособен: 500 |
+
+В конструкторе не присваиваются _userOnlineStore и _presenceReader. GetStatus обращается к null; catch возвращает 500 "Internal server error.".
+
+Задуманное тело status — { isOnline, lastSeen }, но сейчас его нельзя считать рабочим контрактом.
+
+Для событий online/offline подключайтесь к /hubs/presence. Ping и наличие SignalR-подключения — разные механизмы; требуется единая политика lastSeen/TTL. Не считайте HTTP ping подтверждением активного presence-соединения.
+
 ---
-description: >-
-  Description: Controller for handling user online status updates by processing
-  ping requests.
----
+Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; успешная сборка не означает проверку работающего сервера.
 
-# OnlinePingingController(не работает)
-
-**Route**: `api/online`\
-**Authorize**: Requires "User" or "Admin" role
-
-### <mark style="color:purple;">End Point {PATCH}</mark>
-
-`[PATCH] api/online/ping`
-
-#### Description
-
-Updates the online status of the current user by sending a ping request.
-
-**Request**
-
-* **Content-Type**: `application/json`
-* **Request Body**: None
-
-**Responses**
-
-*   **200 OK**: Ping processed successfully.
-
-    ```json
-    {}
-    ```
-*   **400 Bad Request**: If the user cannot be found in the database.
-
-    ```json
-    "User can't be found in our database."
-    ```
-*   **403 Forbidden**: If the user is not authorized to perform the action.
-
-    ```json
-    {
-      "error": "Not authorized to perform this action."
-    }
-    ```
-*   **500 Internal Server Error**: Indicates an unexpected error.
-
-    ```json
-    {
-      "error": "Failed to send friend request."
-    }
-    ```
+Источник: [Govor.API/Controllers/OnlinePingingController.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.API/Controllers/OnlinePingingController.cs).

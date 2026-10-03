@@ -30,7 +30,7 @@ public class SessionKeysReader : ISessionKeysReader
         return await _context.UserCryptoSessions
             .AsNoTracking()
             .Include(c => c.OneTimePreKeys)
-            .Include(c => c.UserSession)
+            .Include(c => c.SignedPreKey)
             .Where(c => c.UserSession.UserId == userId
                         && !c.UserSession.IsRevoked
                         && c.UserSession.ExpiresAt > now)
@@ -44,7 +44,7 @@ public class SessionKeysReader : ISessionKeysReader
         return await _context.OneTimePreKeys
             .AsNoTracking()
             .Include(f => f.UserCryptoSession)
-            .CountAsync(f => f.UserCryptoSession.UserSessionId == sessionId);
+            .CountAsync(f => f.UserCryptoSession.UserSessionId == sessionId && !f.IsUsed);
     }
 
     public async Task<UserCryptoSession?> GetKeysBySessionIdAsync(Guid sessionId)

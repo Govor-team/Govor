@@ -1,15 +1,19 @@
 using Govor.Contracts.Responses.SignalR;
 using Microsoft.AspNetCore.SignalR;
+using Govor.API.Common.Extensions;
+using Govor.Domain;
 
 namespace Govor.API.Filters;
 
 public class HubExceptionFilter : IHubFilter
 {
     private readonly ILogger<HubExceptionFilter> _logger;
+    private readonly GovorDbContext _context;
 
-    public HubExceptionFilter(ILogger<HubExceptionFilter> logger)
+    public HubExceptionFilter(ILogger<HubExceptionFilter> logger, GovorDbContext context)
     {
         _logger = logger;
+        _context = context;
     }
     
      public async ValueTask<object?> InvokeMethodAsync(
@@ -18,6 +22,11 @@ public class HubExceptionFilter : IHubFilter
     {
         try
         {
+            if (!await _context.HasActiveSessionAsync(context.Context.User))
+            {
+                context.Context.Abort();
+                return CreateHubErrorResult(context, HubResultStatus.Unauthorized, "Session revoked or expired.");
+            }
             return await next(context);
         }
         catch (ArgumentException ex)
@@ -66,7 +75,7 @@ public class HubExceptionFilter : IHubFilter
                 hubResultType.GetProperty(nameof(HubResult<object>.ErrorMessage))!
                     .SetValue(errorResult, message);
 
-                return Task.FromResult(errorResult);
+                return errorResult;
             }
         }
 

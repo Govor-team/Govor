@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Govor.API.Common.Extensions;
 using Govor.API.Hubs;
 using Govor.Application.Infrastructure.Extensions;
@@ -102,7 +102,7 @@ public class ProfileController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {
@@ -124,7 +124,7 @@ public class ProfileController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {

@@ -61,11 +61,15 @@ public class UserSessionRefresher : IUserSessionRefresher
             var newRefreshToken = await _jwtService.GenerateRefreshTokenAsync(session.User);
             var newRefreshTokenHash = _jwtTokenHasher.HashToken(newRefreshToken);
             
-            session.RefreshTokenHash = newRefreshTokenHash;
-            session.CreatedAt = DateTime.UtcNow;
-            session.ExpiresAt = DateTime.UtcNow.AddDays(_options.RefreshTokenLifetimeDays);
-            
-            await _context.SaveChangesAsync();
+            var now = DateTime.UtcNow;
+            var updated = await _context.UserSessions.Where(s => s.Id == session.Id &&
+                s.RefreshTokenHash == hashedToken && !s.IsRevoked && s.ExpiresAt > now)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(s => s.RefreshTokenHash, newRefreshTokenHash)
+                    .SetProperty(s => s.ExpiresAt, now.AddDays(_options.RefreshTokenLifetimeDays)));
+            if (updated == 0)
+                return Result.Failure<RefreshResult>(Error.Unauthorized("Auth.InvalidToken",
+                    "Refresh token was already used or the session was revoked."));
 
             _logger.LogInformation("Successfully refreshed session {SessionId} for user {UserId}", session.Id, session.UserId);
 

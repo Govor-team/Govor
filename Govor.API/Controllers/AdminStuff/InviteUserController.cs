@@ -2,12 +2,13 @@ using Govor.Application.Infrastructure.AdminsStuff;
 using Govor.Contracts.DTOs;
 using Govor.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Govor.API.Controllers.AdminStuff;
 
 [Route("api/admin/[controller]")]
 [ApiController]
-//[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 public class InviteUserController : Controller
 {
     private readonly IInvitationGetter _invitationGetter;

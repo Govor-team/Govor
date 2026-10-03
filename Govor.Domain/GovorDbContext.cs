@@ -3,6 +3,7 @@ using Govor.Domain.Models.Messages;
 using Govor.Domain.Models.Users;
 using Govor.Domain.Models.Users.Crypto;
 using Govor.Domain.Configurations;
+using Govor.Domain.Models.Reactions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Govor.Domain;
@@ -22,6 +23,11 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
     public virtual DbSet<Invitation> Invitations { get; set; }
     
     public virtual DbSet<Message> Messages { get; set; }
+    public virtual DbSet<ReactionPack> ReactionPacks { get; set; }
+    public virtual DbSet<ReactionItem> ReactionItems { get; set; }
+    public virtual DbSet<UserReactionPack> UserReactionPacks { get; set; }
+    public virtual DbSet<ChannelAllowedReaction> ChannelAllowedReactions { get; set; }
+    public virtual DbSet<ChatPushNotification> ChatPushNotifications { get; set; }
     public virtual DbSet<MessageView> MessageViews { get; set; }
     public virtual DbSet<MessageReaction> MessageReactions { get; set; }
     public virtual DbSet<MediaAttachments> MediaAttachments { get; set; }
@@ -40,7 +46,12 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new InvitationConfiguration());
         modelBuilder.ApplyConfiguration(new AdminConfiguration());
         modelBuilder.ApplyConfiguration(new MessagesConfiguration());
+        modelBuilder.ApplyConfiguration(new ChatPushNotificationConfiguration());
         modelBuilder.ApplyConfiguration(new MessageReactionConfiguration());
+        modelBuilder.ApplyConfiguration(new ReactionPackConfiguration());
+        modelBuilder.ApplyConfiguration(new ReactionItemConfiguration());
+        modelBuilder.ApplyConfiguration(new UserReactionPackConfiguration());
+        modelBuilder.ApplyConfiguration(new ChannelAllowedReactionConfiguration());
         modelBuilder.ApplyConfiguration(new MediaAttachmentsConfiguration());
         modelBuilder.ApplyConfiguration(new MessageViewConfiguration());
         modelBuilder.ApplyConfiguration(new MediaFileConfiguration());

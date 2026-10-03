@@ -3,13 +3,14 @@ using Govor.Contracts.Responses.Admins;
 using Govor.Domain.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Govor.Contracts.Requests;
 
 namespace Govor.API.Controllers.AdminStuff;
 
 
 [ApiController] 
 [Route("api/admin/[controller]")]
-[Authorize]//(Roles = "Admin")
+[Authorize(Roles = "Admin")]
 public class UsersController : Controller
 {
     private readonly ILogger<UsersController> _logger;
@@ -48,6 +49,8 @@ public class UsersController : Controller
         {
             _logger.LogInformation($"Getting user {id} by administrator");
             var read = await _users.GetUserById(id);
+            if (read is null)
+                return NotFound();
             return Ok(BuildUserDtos([read]).First());
         }
         catch (Exception e)
@@ -57,13 +60,15 @@ public class UsersController : Controller
         }
     }
 
-    [HttpGet("user/{id:guid}/setpassword/{password}")]
-    public async Task<IActionResult> SetNewPassword(Guid id, string password)
+    [HttpPost("user/{id:guid}/password")]
+    public async Task<IActionResult> SetNewPassword(Guid id, [FromBody] SetPasswordRequest request)
     {
         try
         {
-            await _users.SetPasswordAsync(id, password);
-            return Ok();
+            if (await _users.GetUserById(id) is null)
+                return NotFound();
+            await _users.SetPasswordAsync(id, request.Password);
+            return NoContent();
         }
         catch (Exception ex)
         {
@@ -78,7 +83,6 @@ public class UsersController : Controller
         Description = user.Description,
         WasOnline = user.WasOnline,
         IconId = user.IconId,
-        PasswordHash = user.PasswordHash,
         InviteId = user.InviteId,
         CreatedOn = user.CreatedOn,
         IsAdmin = user.Invite?.IsAdmin ?? false,

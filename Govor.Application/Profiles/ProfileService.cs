@@ -1,5 +1,6 @@
 ﻿using Govor.Domain;
 using Govor.Domain.Common;
+using Govor.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SmartRes;
@@ -60,6 +61,10 @@ public class ProfileService : IProfileService
     public async Task<Result<Unit, Error>> SetNewIcon(Guid userId, Guid iconId)
     {
         _logger.LogInformation("Updating icon for user {UserId}", userId);
+
+        if (!await _context.MediaFiles.AnyAsync(f => f.Id == iconId && f.UploaderId == userId &&
+                f.OwnerType == MediaOwnerType.Avatar))
+            return Result<Unit, Error>.Failure(Error.Forbidden("Profile.IconAccess", "Only your uploaded avatar can be used."));
 
        
         var updatedRows = await _context.Users

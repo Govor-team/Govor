@@ -63,8 +63,10 @@ public class PushTokenService : IPushTokenService
         {
             var tokens = await _context.UserPushTokens
                 .AsNoTracking()
-                .Where(t => t.UserId == userId && t.IsActive)
+                .Where(t => t.UserId == userId && t.IsActive && _context.UserSessions.Any(s =>
+                    s.Id == t.UserSessionId && s.UserId == t.UserId && !s.IsRevoked && s.ExpiresAt > _nowDateTimeProvider.Now))
                 .Select(t => t.Token)
+                .Distinct()
                 .ToListAsync();
 
             return tokens;
@@ -82,8 +84,10 @@ public class PushTokenService : IPushTokenService
         {
             var tokens = await _context.UserPushTokens
                 .AsNoTracking()
-                .Where(t => userIds.Contains(t.UserId) && t.IsActive)
+                .Where(t => userIds.Contains(t.UserId) && t.IsActive && _context.UserSessions.Any(s =>
+                    s.Id == t.UserSessionId && s.UserId == t.UserId && !s.IsRevoked && s.ExpiresAt > _nowDateTimeProvider.Now))
                 .Select(t => t.Token)
+                .Distinct()
                 .ToListAsync();
 
             return tokens;
@@ -101,7 +105,8 @@ public class PushTokenService : IPushTokenService
         {
             var token = await _context.UserPushTokens
                 .AsNoTracking()
-                .Where(t => t.UserSessionId == sessionId && t.IsActive)
+                .Where(t => t.UserSessionId == sessionId && t.IsActive && _context.UserSessions.Any(s =>
+                    s.Id == t.UserSessionId && s.UserId == t.UserId && !s.IsRevoked && s.ExpiresAt > _nowDateTimeProvider.Now))
                 .Select(t => t.Token)
                 .FirstOrDefaultAsync();
 
@@ -138,13 +143,22 @@ public class PushTokenService : IPushTokenService
 
     public async Task<Result<Unit, Error>> AddOrUpdateTokenAsync(Guid userId, Guid sessionId, string token, string platform)
     {
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(token) || token.Length > 512 || string.IsNullOrWhiteSpace(platform) || platform.Length > 50)
         {
             return Result<Unit, Error>.Failure(Error.Failure("PushToken.Empty", "Push token cannot be empty."));
         }
         
-        var existingToken = await _context.UserPushTokens
-            .FirstOrDefaultAsync(t => t.Platform == platform && t.UserId == userId && t.UserSessionId == sessionId);
+        if (!await _context.UserSessions.AnyAsync(s => s.Id == sessionId && s.UserId == userId &&
+                !s.IsRevoked && s.ExpiresAt > _nowDateTimeProvider.Now))
+            return Result<Unit, Error>.Failure(Error.Forbidden("PushToken.Session", "An active own session is required."));
+
+        // Token and session both have unique indexes. Reassign the device row when an
+        // account changes, instead of inserting a duplicate or retaining the old owner.
+        var sessionToken = await _context.UserPushTokens.FirstOrDefaultAsync(t => t.UserSessionId == sessionId);
+        var deviceToken = await _context.UserPushTokens.FirstOrDefaultAsync(t => t.Token == token);
+        if (sessionToken is not null && deviceToken is not null && sessionToken.Id != deviceToken.Id)
+            _context.UserPushTokens.Remove(sessionToken);
+        var existingToken = deviceToken ?? sessionToken;
 
         if (existingToken is null)
         {
@@ -167,6 +181,8 @@ public class PushTokenService : IPushTokenService
             existingToken.Platform = platform;
             existingToken.Token = token;
             existingToken.UpdatedAt = _nowDateTimeProvider.Now;
+            existingToken.IsActive = true;
+            _context.Entry(existingToken).Property(t => t.IsActive).IsModified = true;
         }
         
         await _context.SaveChangesAsync();

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Govor.API.Common.Extensions;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Govor.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,23 +19,23 @@ builder.AddLogger();// Serilog
 
 builder.Configuration.AddJsonFile("configs/ban_usernames.json", optional: false, reloadOnChange: true);
 
-#if DEBUG
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-//builder.Configuration.AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true);
-#else
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-#endif
 
-FirebaseApp.Create(new AppOptions()
+if (configuration.GetValue("Firebase:Enabled", true))
 {
-    Credential = GoogleCredential.FromFile("secrets/firebase-adminsdk.json")
-});
+    FirebaseApp.Create(new AppOptions()
+    {
+        Credential = GoogleCredential.FromFile("secrets/firebase-adminsdk.json")
+    });
+}
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true)
+        var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        if (origins.Length > 0)
+            policy.WithOrigins(origins);
+        policy
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -60,6 +61,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
         options.Events = new JwtBearerEvents
         {
+            OnTokenValidated = async context =>
+            {
+                var db = context.HttpContext.RequestServices.GetRequiredService<GovorDbContext>();
+                if (!await db.HasActiveSessionAsync(context.Principal))
+                    context.Fail("The access session is invalid or revoked.");
+            },
             OnMessageReceived = context =>
             {
                 var accessToken = context.Request.Query["access_token"];
@@ -110,25 +117,24 @@ services.AddSwaggerGen(options =>
 
 //builder.Services.AddOpenApi();
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(configuration["urls"]) &&
+    string.IsNullOrWhiteSpace(configuration["HTTP_PORTS"]))
 {
-    //app.MapOpenApi();
     builder.WebHost.UseUrls("http://0.0.0.0:8080");
-    //builder.WebHost.UseUrls("http://10.8.0.5:5000");
-    //builder.WebHost.UseUrls("http://192.168.1.107:8080");
 }
 
-app.UseSwagger();
-app.UseSwaggerUI();
+var app = builder.Build();
 
-app.UseCors("AllowFrontend");
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 //app.UseHttpsRedirection();
 
 app.UseRouting();
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -136,12 +142,12 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapGet("/server/ping",
-    () => new OkResult());
+    () => Results.Ok());
 
-app.MapHub<ChatsHub>("/hubs/chats"); 
-app.MapHub<FriendsHub>("/hubs/friends");
-app.MapHub<ProfileHub>("/hubs/profiles");
-app.MapHub<PresenceHub>("/hubs/presence");
+app.MapHub<ChatsHub>("/hubs/chats", options => options.CloseOnAuthenticationExpiration = true);
+app.MapHub<FriendsHub>("/hubs/friends", options => options.CloseOnAuthenticationExpiration = true);
+app.MapHub<ProfileHub>("/hubs/profiles", options => options.CloseOnAuthenticationExpiration = true);
+app.MapHub<PresenceHub>("/hubs/presence", options => options.CloseOnAuthenticationExpiration = true);
 
 app.MapSwagger()
     .RequireAuthorization();
@@ -149,3 +155,5 @@ app.MapSwagger()
 app.Map("/", () => "Not for browsers");
 
 app.Run();
+
+public partial class Program { }

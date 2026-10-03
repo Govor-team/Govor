@@ -45,21 +45,10 @@ public class UserSessionOpener : IUserSessionOpener
             return Result.Failure<RefreshResult>(result.Error);
         }
         
-        var sessions = result.Value;
-        var existingSession = sessions.FirstOrDefault(s => s.DeviceInfo == deviceInfo);
-
         try
         {
-            RefreshResult refreshResult;
-
-            if (existingSession is not null)
-            {
-                refreshResult = await UpdateExistingSessionAsync(user, deviceInfo, existingSession);
-            }
-            else
-            {
-                refreshResult = await CreateNewSessionAsync(user, deviceInfo);
-            }
+            // DeviceInfo is a display label, not a device identity. Never reuse another sid.
+            var refreshResult = await CreateNewSessionAsync(user, deviceInfo ?? string.Empty);
             
             await _context.SaveChangesAsync();
             

@@ -13,5 +13,6 @@ public class MessageReaction
     public User User { get; set; } 
     
     public string ReactionCode { get; set; } // "❤️", "🔥", "👍", ":custom_emoji:" 
+    public Guid? ReactionId { get; set; }
     public DateTime ReactedAt { get; set; } = DateTime.UtcNow;
 }

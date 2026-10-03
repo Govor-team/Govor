@@ -41,7 +41,7 @@ public class ChatLoadController : Controller
     {
         try
         {
-            if (query.Before < 0 || query.After < 0 || query.After + query.Before > 100)
+            if (query.Before < 0 || query.After < 0 || query.Before > 100 || query.After > 100 || query.After + query.Before > 100)
                 return BadRequest("Values must be non-negative and total must not exceed 100.");
 
             var result = (await _messagesLoader.LoadMessagesInChatGroup(
@@ -67,7 +67,7 @@ public class ChatLoadController : Controller
     {
         try
         {
-            if (query.Before < 0 || query.After < 0 || query.After + query.Before > 100)
+            if (query.Before < 0 || query.After < 0 || query.Before > 100 || query.After > 100 || query.After + query.Before > 100)
                 return BadRequest("Values must be non-negative and total must not exceed 100.");
             
             var result = (await _messagesLoader.LoadMessagesInUserChat(

@@ -1,0 +1,10 @@
+.git
+.codex
+.agents
+**/bin
+**/obj
+**/logs
+**/uploads
+**/secrets
+**/appsettings.Development.json
+artifacts

@@ -34,6 +34,13 @@ public class UsersService : IUsersAdministration
 
         user.PasswordHash = _passwordHasher.Hash(password);
 
+        var sessions = await _context.UserSessions.Where(s => s.UserId == userId && !s.IsRevoked).ToListAsync();
+        foreach (var session in sessions)
+            session.IsRevoked = true;
+        var pushTokens = await _context.UserPushTokens.Where(t => t.UserId == userId).ToListAsync();
+        foreach (var token in pushTokens)
+            token.IsActive = false;
+
         await _context.SaveChangesAsync();
     }
     

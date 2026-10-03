@@ -2,6 +2,7 @@ using Govor.Application.Messages.Parameters;
 using Microsoft.EntityFrameworkCore;
 using Govor.Domain;
 using Govor.Domain.Models.Messages;
+using Govor.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Govor.Application.Messages;
@@ -19,9 +20,14 @@ public class MessageSendingService : IMessageSendingService
     
     public async Task<SendMessageResult> SendMessageAsync(SendMessage sendParams)
     {
+        var media = sendParams.Media?.ToArray() ?? [];
+        if ((string.IsNullOrWhiteSpace(sendParams.EncryptContent) && media.Length == 0) ||
+            (sendParams.EncryptContent?.Length ?? 0) > 50_000 || media.Length > 100)
+            return new SendMessageResult(false, new ArgumentException("Invalid message content or attachment count."), default);
+
         var validationResult = sendParams.RecipientType switch
         {
-            RecipientType.User => await ValidateUserRecipientAsync(sendParams.RecipientId),
+            RecipientType.User => await ValidateUserRecipientAsync(sendParams.FromUserId, sendParams.RecipientId),
             RecipientType.Group => await ValidateGroupRecipientAsync(sendParams.FromUserId, sendParams.RecipientId),
             _ => (Success: false, Error: "Invalid recipient type.")
         };
@@ -29,9 +35,20 @@ public class MessageSendingService : IMessageSendingService
         if (!validationResult.Success)
         {
             _logger.LogWarning("Message send failed: {Error}", validationResult.Error);
-            return new SendMessageResult(false, new InvalidOperationException(validationResult.Error), default);
+            return new SendMessageResult(false, new UnauthorizedAccessException(validationResult.Error), default);
         }
         
+        var mediaIds = media.Select(m => m.MediaId).Distinct().ToArray();
+        var files = await _dbContext.MediaFiles.Where(m => mediaIds.Contains(m.Id) &&
+            m.UploaderId == sendParams.FromUserId && m.OwnerType == MediaOwnerType.Message).ToListAsync();
+        if (files.Count != mediaIds.Length)
+            return new SendMessageResult(false, new UnauthorizedAccessException("Invalid media ownership."), default);
+
+        if (sendParams.ReplyToMessageId.HasValue && !await _dbContext.Messages.AnyAsync(m =>
+            m.Id == sendParams.ReplyToMessageId && m.RecipientId == sendParams.RecipientId &&
+            m.RecipientType == sendParams.RecipientType))
+            return new SendMessageResult(false, new ArgumentException("Reply must belong to the same chat."), default);
+
         var messageId = Guid.NewGuid();
         var message = new Message
         {
@@ -39,38 +56,51 @@ public class MessageSendingService : IMessageSendingService
             SenderId = sendParams.FromUserId,
             RecipientId = sendParams.RecipientId,
             RecipientType = sendParams.RecipientType,
-            EncryptedContent = sendParams.EncryptContent,
+            EncryptedContent = sendParams.EncryptContent ?? string.Empty,
             SentAt = sendParams.SendAt,
             IsEdited = false,
             ReplyToMessageId = sendParams.ReplyToMessageId,
-            MediaAttachments = sendParams.Media?.Select(m => new MediaAttachments
+            MediaAttachments = files.Select(file => new MediaAttachments
             {
                 Id = Guid.NewGuid(),
                 MessageId = messageId,
-                MediaFileId = m.MediaId
-            }).ToList() ?? []
+                MediaFileId = file.Id,
+                MediaFile = file
+            }).ToList()
         };
         
         await _dbContext.Messages.AddAsync(message);
+        // Save message and pending push atomically so a restart/provider outage cannot lose the push.
+        _dbContext.ChatPushNotifications.Add(new ChatPushNotification
+        { MessageId = messageId, NextAttemptAt = DateTime.UtcNow });
         await _dbContext.SaveChangesAsync();
 
         _logger.LogInformation("Message {MessageId} sent successfully.", messageId);
         return new SendMessageResult(true, null, message);
     }
 
-    private async Task<(bool Success, string Error)> ValidateUserRecipientAsync(Guid chatId)
+    private async Task<(bool Success, string Error)> ValidateUserRecipientAsync(Guid userId, Guid chatId)
     {
-        var chatExists = await _dbContext.PrivateChats.AnyAsync(c => c.Id == chatId);
-        return chatExists ? (true, null) : (false, $"Private chat {chatId} not found.");
+        var chat = await _dbContext.PrivateChats.AsNoTracking().FirstOrDefaultAsync(c => c.Id == chatId &&
+            (c.UserAId == userId || c.UserBId == userId));
+        if (chat is null)
+            return (false, "You are not a member of this chat.");
+        var blocked = await _dbContext.Friendships.AnyAsync(f => f.Status == FriendshipStatus.Blocked &&
+            ((f.RequesterId == chat.UserAId && f.AddresseeId == chat.UserBId) ||
+             (f.RequesterId == chat.UserBId && f.AddresseeId == chat.UserAId)));
+        return blocked ? (false, "This conversation is blocked.") : (true, null);
     }
 
     private async Task<(bool Success, string Error)> ValidateGroupRecipientAsync(Guid userId, Guid groupId)
     {
-        var groupExists = await _dbContext.ChatGroups.AnyAsync(g => g.Id == groupId);
-        if (!groupExists) return (false, $"Group {groupId} not found.");
+        var group = await _dbContext.ChatGroups.AsNoTracking().FirstOrDefaultAsync(g => g.Id == groupId);
+        if (group is null) return (false, "Group not found.");
         
-        var isMember = await _dbContext.GroupMemberships.AnyAsync(gm => gm.UserId == userId && gm.GroupId == groupId);
+        var isMember = await _dbContext.GroupMemberships.AnyAsync(gm => gm.UserId == userId && gm.GroupId == groupId && !gm.IsBanned);
         if (!isMember) return (false, "Sender is not a member of the group.");
+        if (group.IsChannel && !await _dbContext.GroupAdmins.AnyAsync(a =>
+            a.GroupId == groupId && a.UserId == userId))
+            return (false, "Only channel administrators can send messages.");
 
         return (true, null);
     }

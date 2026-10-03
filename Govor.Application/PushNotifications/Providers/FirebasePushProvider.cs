@@ -40,6 +40,21 @@ public class FirebasePushProvider : IPushNotificationProvider
     {
         if (tokens.Count == 0)
             return new SendPushResult(0, 0, []);
+
+        if (tokens.Count > 500)
+        {
+            var success = 0;
+            var failure = 0;
+            var invalid = new List<string>();
+            foreach (var batch in tokens.Distinct().Chunk(500))
+            {
+                var result = await SendMulticastAsync(batch, message);
+                success += result.SuccessCount;
+                failure += result.FailureCount;
+                invalid.AddRange(result.FailedTokens);
+            }
+            return new SendPushResult(success, failure, invalid);
+        }
         
         var multicastMsg = new MulticastMessage
         {
@@ -89,7 +104,7 @@ public class FirebasePushProvider : IPushNotificationProvider
         catch (Exception ex)
         {
             _logger.LogError(ex, "FCM multicast failed");
-            return new SendPushResult(0, tokens.Count, tokens.ToList());
+            throw; // A provider outage does not invalidate device tokens.
         }
     }
 
@@ -124,8 +139,6 @@ public class FirebasePushProvider : IPushNotificationProvider
 
     private static bool IsInvalidTokenError(FirebaseMessagingException ex)
     {
-        return ex.MessagingErrorCode is MessagingErrorCode.Unregistered
-                                       or MessagingErrorCode.InvalidArgument
-                                       or MessagingErrorCode.SenderIdMismatch;
+        return ex.MessagingErrorCode is MessagingErrorCode.Unregistered;
     }
 }

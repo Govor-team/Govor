@@ -12,6 +12,25 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: [sqlite, postgres]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: govor
+          POSTGRES_PASSWORD: tests-only
+          POSTGRES_DB: govor_tests
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_POSTGRES_CONNECTION: ${{ matrix.database == 'postgres' && 'Host=localhost;Port=5432;Database=govor_tests;Username=govor;Password=tests-only' || '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,15 +38,15 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Govor.Server.slnx
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build Govor.Server.slnx --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test Govor.API.Tests/Govor.API.Tests.csproj
+        run: dotnet test Govor.Server.Tests/Govor.Server.Tests.csproj --no-build --configuration Release
 
     

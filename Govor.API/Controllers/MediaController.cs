@@ -37,6 +37,9 @@ public class MediaController : Controller
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+        if (request.OwnerType != MediaOwnerType.Message && request.OwnerType != MediaOwnerType.Avatar)
+            return BadRequest("Only message and personal avatar uploads are supported.");
+
         if (request?.FromFile is null || request.FromFile.Length == 0)
             return BadRequest("No file uploaded");
 
@@ -85,7 +88,7 @@ public class MediaController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {

@@ -28,6 +28,7 @@ public static class ResultExtensions
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
             ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+            ErrorType.ServerError => StatusCodes.Status500InternalServerError,
             _ => StatusCodes.Status400BadRequest
         };
 
@@ -55,6 +56,7 @@ public static class ResultExtensions
         ErrorType.Conflict => "Conflict",
         ErrorType.Unauthorized => "Unauthorized",
         ErrorType.Forbidden => "Forbidden",
+        ErrorType.ServerError => "Internal Server Error",
         _ => "Bad Request"
     };
 }

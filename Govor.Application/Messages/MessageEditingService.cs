@@ -37,7 +37,8 @@ public class MessageEditingService : IMessageEditingService
                 null);
         }
 
-        if (message.SenderId != editParams.EditorId)
+        if (message.SenderId != editParams.EditorId || !await _dbContext.HasChatAccessAsync(
+            editParams.EditorId, message.RecipientId, message.RecipientType))
         {
             _logger.LogWarning(
                 "User {EditorId} unauthorized to edit message {MessageId}",
@@ -52,7 +53,7 @@ public class MessageEditingService : IMessageEditingService
         }
 
         // Проверяем время, прошедшее с момента отправки
-        var now = DateTime.UtcNow;
+        var now = editParams.EditedAt;
         var editDeadline = message.SentAt.AddMinutes(
             _options.MaxEditTimeMinutes);
 
@@ -82,6 +83,10 @@ public class MessageEditingService : IMessageEditingService
             ReplyToMessageId = message.ReplyToMessageId,
             MediaAttachments = message.MediaAttachments?.ToList() ?? []
         };
+
+        if (editParams.NewContent is null || editParams.NewContent.Length > 50_000 ||
+            (string.IsNullOrWhiteSpace(editParams.NewContent) && message.MediaAttachments.Count == 0))
+            return new EditMessageResult(false, new ArgumentException("Invalid message content."), null);
 
         message.EncryptedContent = editParams.NewContent;
         message.IsEdited = true;

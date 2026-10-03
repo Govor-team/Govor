@@ -1,26 +1,18 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-
-# Копируем только .sln и .csproj
-COPY *.sln ./
+COPY global.json ./
 COPY Govor.API/*.csproj ./Govor.API/
 COPY Govor.Application/*.csproj ./Govor.Application/
-COPY Govor.Core/*.csproj ./Govor.Core/
-COPY Govor.Data/*.csproj ./Govor.Data/
+COPY Govor.Domain/*.csproj ./Govor.Domain/
 COPY Govor.Contracts/*.csproj ./Govor.Contracts/
-
+COPY libs/ ./libs/
 RUN dotnet restore Govor.API/Govor.API.csproj
-
-# Копируем весь код
 COPY . .
-WORKDIR /src/Govor.API
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish Govor.API/Govor.API.csproj -c Release --no-restore -o /app/publish
 
-# Runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-
+ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
-
 ENTRYPOINT ["dotnet", "Govor.API.dll"]

@@ -9,11 +9,11 @@ public class NullPushProvider : IPushNotificationProvider
     
     public Task<SendPushResult> SendToTokenAsync(string token, PushMessage message)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(new SendPushResult(0, 0, []));
     }
 
     public Task<SendPushResult> SendMulticastAsync(IReadOnlyList<string> tokens, PushMessage message)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(new SendPushResult(0, 0, []));
     }
 }

@@ -49,7 +49,7 @@ public class PrivateChatController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (ArgumentException ex)
         {
@@ -59,7 +59,7 @@ public class PrivateChatController : Controller
         catch (FriendshipException ex)
         {
             _logger.LogWarning(ex, ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {
@@ -87,7 +87,7 @@ public class PrivateChatController : Controller
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex.Message);
-            return Forbid(ex.Message);
+            return Forbid();
         }
         catch (Exception ex)
         {

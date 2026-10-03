@@ -9,6 +9,8 @@ public class ChatGroup
     public string Description { get; set; }
     public Guid ImageId { get; set; }
     public bool IsChannel { get; set; }
+    public Govor.Domain.Models.Reactions.ChannelReactionMode ReactionMode { get; set; }
+    public long ReactionPolicyVersion { get; set; }
     public bool IsPrivate { get; set; }
     public List<GroupAdmins> Admins { get; set; } = new();
     public List<GroupMembership> Members { get; set; } = new();
