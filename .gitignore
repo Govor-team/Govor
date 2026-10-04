@@ -46,6 +46,7 @@ appsettings.*.json
 *.log
 logs/
 uploads/
+secrets/
 
 ## Папки для публикации
 publish/

@@ -9,8 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Govor.Domain;
+using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
+var migrateOnly = args.Contains("--migrate-only", StringComparer.Ordinal);
+var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--migrate-only").ToArray());
 
 var configuration = builder.Configuration;
 var services = builder.Services;
@@ -20,11 +22,19 @@ builder.AddLogger();// Serilog
 builder.Configuration.AddJsonFile("configs/ban_usernames.json", optional: false, reloadOnChange: true);
 
 
-if (configuration.GetValue("Firebase:Enabled", true))
+if (!migrateOnly && configuration.GetValue("Firebase:Enabled", true))
 {
+    var credentialsJson = configuration["Firebase:CredentialsJson"];
+    var credentialsPath = configuration["Firebase:CredentialsPath"]
+        ?? Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS")
+        ?? "secrets/firebase-adminsdk.json";
+    var credential = !string.IsNullOrWhiteSpace(credentialsJson)
+        ? CredentialFactory.FromJson<ServiceAccountCredential>(credentialsJson).ToGoogleCredential()
+        : CredentialFactory.FromFile<ServiceAccountCredential>(
+            Path.GetFullPath(credentialsPath, builder.Environment.ContentRootPath)).ToGoogleCredential();
     FirebaseApp.Create(new AppOptions()
     {
-        Credential = GoogleCredential.FromFile("secrets/firebase-adminsdk.json")
+        Credential = credential
     });
 }
 
@@ -124,6 +134,21 @@ if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(configurat
 }
 
 var app = builder.Build();
+
+if (migrateOnly)
+{
+    await using (var scope = app.Services.CreateAsyncScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<GovorDbContext>();
+        var pending = (await db.Database.GetPendingMigrationsAsync()).ToArray();
+        app.Logger.LogInformation("Applying {Count} pending database migrations: {Migrations}",
+            pending.Length, string.Join(", ", pending));
+        await db.Database.MigrateAsync();
+        app.Logger.LogInformation("Database migrations completed.");
+    }
+    await app.DisposeAsync();
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {
