@@ -14,13 +14,15 @@ public class InviteUserController : Controller
     private readonly IInvitationGetter _invitationGetter;
     private readonly IInvitationGenerator _invitationGenerator;
     private readonly ILogger<InviteUserController> _logger;
-    
+    private readonly IConfiguration _configuration;
     public InviteUserController(IInvitationGenerator invitationGenerator,
         IInvitationGetter invitationGetter, 
+        IConfiguration configuration,
         ILogger<InviteUserController> logger)
     {
         _invitationGenerator = invitationGenerator;
         _logger = logger;
+        _configuration = configuration;
         _invitationGetter = invitationGetter;
     }
     
@@ -34,6 +36,42 @@ public class InviteUserController : Controller
                 createInvitation.IsAdmin,
                 createInvitation.Description);
        
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, e.Message);
+            return BadRequest($"An error occured: {e.Message}");
+        }
+    }
+    
+    [HttpPost("InvitationWithKey")]
+    [AllowAnonymous]
+    public async Task<IActionResult> InvitationWithKey([FromBody] CreateInvitationWithKeyRequest request)
+    {
+        try
+        {
+            var expectedKey = _configuration["InvitationAdmin:Key"];
+
+            if (string.IsNullOrWhiteSpace(expectedKey))
+            {
+                _logger.LogWarning("InvitationAdmin:Key is not configured");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, "Admin key is not configured");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.AdminKey) ||
+                !string.Equals(request.AdminKey, expectedKey, StringComparison.Ordinal))
+            {
+                _logger.LogWarning("Invalid admin key attempt for invitation creation");
+                return Unauthorized("Invalid admin key");
+            }
+
+            var result = await _invitationGenerator.GenerateInvitationCode(
+                request.EndDate,
+                request.MaxParticipants,
+                request.IsAdmin,
+                request.Description);
+
             return Ok(result);
         }
         catch (Exception e)
