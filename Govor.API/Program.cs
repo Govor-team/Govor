@@ -21,6 +21,20 @@ builder.AddLogger();// Serilog
 
 builder.Configuration.AddJsonFile("configs/ban_usernames.json", optional: false, reloadOnChange: true);
 
+if (!builder.Environment.IsDevelopment())
+{
+    if (string.IsNullOrWhiteSpace(configuration.GetConnectionString(nameof(GovorDbContext))))
+        throw new InvalidOperationException("Set ConnectionStrings__GovorDbContext in the application runtime environment.");
+
+    if (!migrateOnly)
+    {
+        if (Encoding.UTF8.GetByteCount(configuration["JwtAccessOption:SecretKey"] ?? "") < 32)
+            throw new InvalidOperationException("Set JwtAccessOption__SecretKey to a private key of at least 32 bytes.");
+        if (string.IsNullOrWhiteSpace(configuration["EncryptionOption:Secret"]))
+            throw new InvalidOperationException("Set EncryptionOption__Secret in the application runtime environment.");
+    }
+}
+
 
 if (!migrateOnly && configuration.GetValue("Firebase:Enabled", true))
 {
@@ -168,6 +182,21 @@ app.MapControllers();
 
 app.MapGet("/server/ping",
     () => Results.Ok());
+
+app.MapGet("/server/ready", async (GovorDbContext db, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        if (!await db.Database.CanConnectAsync(cancellationToken) ||
+            (await db.Database.GetPendingMigrationsAsync(cancellationToken)).Any())
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+        return Results.Ok();
+    }
+    catch (Exception) when (!cancellationToken.IsCancellationRequested)
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+});
 
 app.MapHub<ChatsHub>("/hubs/chats", options => options.CloseOnAuthenticationExpiration = true);
 app.MapHub<FriendsHub>("/hubs/friends", options => options.CloseOnAuthenticationExpiration = true);

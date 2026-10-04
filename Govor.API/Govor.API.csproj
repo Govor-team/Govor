@@ -4,6 +4,7 @@
         <Nullable>disable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <TargetFramework>net10.0</TargetFramework>
+        <UserSecretsId>govor-api-742b3993-52cf-4b70-81db-df98b99374ce</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -37,6 +38,7 @@
       <Folder Include="logs\" />
       <Folder Include="uploads\" />
       <Content Remove="secrets/**" />
+      <Content Include="certs/postgres-ca.crt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
       <None Update="secrets/**" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
     </ItemGroup>
 

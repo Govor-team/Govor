@@ -1,61 +1,77 @@
-# Deployment to Timeweb App Platform
+# Развёртывание Govor в Timeweb App Platform
 
-Use the repository root as the build context and select the **Dockerfile** framework.
-The Dockerfile publishes the API and starts `dotnet Govor.API.dll`, listening on port 8080.
-Set the health check path to `/server/ping` and use the technical HTTPS domain from the dashboard.
+## Настройки и секреты
 
-## Runtime variables
+appsettings.json содержит общие параметры без паролей. launchSettings.json действует
+только локально: HTTP localhost:7155, HTTPS localhost:7156. Timeweb собирает Dockerfile
+из корня репозитория. Контейнер слушает HTTP 8080; HTTPS клиентов обеспечивает Timeweb.
 
-- `ASPNETCORE_ENVIRONMENT=Production`
-- `ASPNETCORE_HTTP_PORTS=8080`
-- `ConnectionStrings__GovorDbContext=Host=<database-host>;Port=5432;Database=<database-name>;Username=<database-user>;Password=<database-password>`
-- `JwtAccessOption__SecretKey=<random-private-signing-key>`
-- `EncryptionOption__Secret=<private-encryption-secret>`
-- `Firebase__Enabled=true`
-- `Firebase__CredentialsJson=<complete-service-account-JSON>` (a secret runtime variable)
+Локальные секреты находятся в .NET User Secrets проекта Govor.API вне Git и
+автоматически загружаются в Development. Это локальный JSON, а не зашифрованное
+хранилище. Управлять им можно через Rider → Manage User Secrets.
 
-Alternatively, mount the service-account file and set `Firebase__CredentialsPath` or
-`GOOGLE_APPLICATION_CREDENTIALS` to its container path. Relative paths are resolved
-against the API content root. Never put credentials into the image or Git repository.
-Replace any Firebase private key that was previously committed to a public repository.
+В Timeweb задайте переменные окружения только этого приложения, без флажка
+«Сохранить как глобальную». Имена есть в .env.example:
 
-Use the database private address only if the application is connected to the same
-Timeweb private network. Use the database TLS settings supplied by Timeweb; do not
-disable certificate validation. Keep existing encryption secrets when migrating
-an existing database, because changing them can make existing encrypted values unreadable.
+- ASPNETCORE_ENVIRONMENT=Production
+- ASPNETCORE_HTTP_PORTS=8080
+- Firebase__Enabled=false
+- ConnectionStrings__GovorDbContext — строка подключения с новым паролем
+- JwtAccessOption__SecretKey — случайный закрытый ключ не короче 32 байт
+- EncryptionOption__Secret — закрытый HMAC-ключ для refresh-токенов
 
-## Apply migrations
+Переменные окружения переопределяют appsettings. Двойное подчёркивание обозначает
+вложенный параметр: ConnectionStrings__GovorDbContext → ConnectionStrings:GovorDbContext.
+Не помещайте секреты в Dockerfile, аргументы сборки или Git. Пустые обязательные
+секреты в Production останавливают сервер с указанием имени настройки.
 
-First check the target database and back up existing data. The latest group migration
-removes a legacy column, consolidates duplicate memberships and removes orphan rows.
+## PostgreSQL и TLS
 
-Run this command **inside the deployed container/network**, with the same database
-runtime variable as the API:
+Используйте домен из GovorDB → Подключение и сертификат Timeweb:
+
+```text
+Host=<домен-БД>;Port=5432;Database=default_db;Username=gen_user;Password=<новый-пароль>;SSL Mode=VerifyFull;Root Certificate=/app/certs/postgres-ca.crt
+```
+
+Публичный CA находится в Govor.API/certs/postgres-ca.crt и включён в образ.
+Локально укажите абсолютный путь к этому файлу. После включения TLS дождитесь
+доступности домена в DNS; не отключайте проверку сертификата.
+
+Приватный IP работает при общей приватной сети приложения и БД — публичный IP
+БД тогда не нужен. Для приложения без этой сети используйте публичное подключение
+с TLS и firewall с учётом адресов приложения и разработчика. Мобильный клиент
+обращается к API по HTTPS, а не непосредственно к PostgreSQL.
+
+## Миграции
+
+Перед обновлением существующей БД проверьте назначение подключения и сделайте бэкап.
+Миграция групп удаляет старую колонку и очищает дубли/осиротевшие записи.
+Запускайте из контейнера с теми же переменными окружения:
 
 ```sh
 dotnet Govor.API.dll --migrate-only
 ```
 
-This applies pending EF Core migrations and exits without starting the HTTP server
-or push worker. Firebase credentials are not required for this command. A failure
-returns a nonzero exit status; do not start the deployment until it succeeds.
-The normal API startup does not automatically modify the database schema.
+Команда применяет только отсутствующие миграции и завершает процесс. HTTP и push
+не запускаются; Firebase не нужен. Ошибка возвращает ненулевой код. Обычный запуск
+не меняет схему. При запуске опубликованного сервера на компьютере передайте
+настройки через окружение: User Secrets в Production не загружаются.
 
-If using EF tooling from the source checkout instead, use version 10.x:
+## Проверка
 
-```sh
-dotnet ef database update --project Govor.Domain --startup-project Govor.API
-```
+- Путь проверки Timeweb: /server/ping. HTTP 200 означает, что API запущен.
+- /server/ready возвращает 200, когда доступна БД и нет неприменённых миграций,
+  либо 503 без реквизитов подключения при проблемах БД/схемы.
+- Затем проверьте вход и SignalR по HTTPS/WSS.
+- Для uploads требуется постоянное хранилище: пересоздание контейнера может удалить файлы.
 
-For EF tooling, set `Firebase__Enabled=false` in the tooling process only, or supply
-valid Firebase credentials. The database must be reachable from that process.
+## Ранее опубликованные ключи
 
-## Verify
+Удаление значения из файла не удаляет его из истории Git. Смените опубликованные
+пароль PostgreSQL и JWT-ключ. Смена EncryptionOption:Secret делает старые refresh-токены
+недействительными и требует повторного входа; этот параметр не шифрует сообщения.
+Отзовите опубликованный ключ Firebase в Google Cloud, даже если Firebase отключён.
 
-Confirm that the app log reports `Now listening on: http://[::]:8080` (or an equivalent
-8080 listener) and has no database errors. Request `https://<domain>/server/ping` and
-expect HTTP 200. Then check an authenticated API request and SignalR connections.
-An HTTP ping alone does not verify database schema or Firebase delivery.
-
-The API stores media under `uploads` on disk. Configure persistent storage before
-relying on uploads surviving container replacement.
+Чтобы вернуть push позже, выпустите новый ключ вне репозитория и задайте
+Firebase__Enabled=true вместе с Firebase__CredentialsJson либо Firebase__CredentialsPath
+к смонтированному файлу. Старый ключ использовать нельзя.

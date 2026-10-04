@@ -47,6 +47,9 @@ appsettings.*.json
 logs/
 uploads/
 secrets/
+.env
+.env.*
+!.env.example
 
 ## Папки для публикации
 publish/
