@@ -4,15 +4,15 @@
 
 ## Команды
 
-| Имя | Аргументы | Успешный result |
-| --- | --- | --- |
-| Send | MessageRequest | UserMessageResponse |
-| Read | `{ messageId }` | MessageReadResponse |
-| ReadChat | chatId, ReadChatRequest | ChatReadResponse |
-| Edit | `{ messageId, newEncryptedContent }` | MessageEditResponse |
-| Remove | `{ messageId, requestType }` | MessageRemovedResponse |
-| React | messageId, `{ reactionId }` | MessageReactionsChangedResponse |
-| RemoveReaction | messageId | MessageReactionsChangedResponse |
+| Имя            | Аргументы                            | Успешный result                 |
+| -------------- | ------------------------------------ | ------------------------------- |
+| Send           | MessageRequest                       | UserMessageResponse             |
+| Read           | `{ messageId }`                      | MessageReadResponse             |
+| ReadChat       | chatId, ReadChatRequest              | ChatReadResponse                |
+| Edit           | `{ messageId, newEncryptedContent }` | MessageEditResponse             |
+| Remove         | `{ messageId, requestType }`         | MessageRemovedResponse          |
+| React          | messageId, `{ reactionId }`          | MessageReactionsChangedResponse |
+| RemoveReaction | messageId                            | MessageReactionsChangedResponse |
 
 ```json
 {
@@ -32,32 +32,30 @@ Send/Read/React и чтение истории проверяют участие
 
 ## События
 
-| Имя события (точно) | Payload |
-| --- | --- |
-| ReceiveMessage | UserMessageResponse |
-| MessageSent | UserMessageResponse, подтверждение устройствам отправителя |
-| MessageEdited | MessageEditResponse |
-| MessageRemoved | MessageRemovedResponse |
-| MessageReaded | MessageReadResponse |
-| ChatRead | ChatReadResponse |
-| MessageReactionsChanged | MessageReactionsChangedResponse |
-| ChannelReactionPolicyChanged | ChannelReactionPolicyResponse |
-| GroupProfileChanged | GroupProfileChangedResponse: `{ groupId }` |
-| GroupMemberChanged | GroupMemberChangedResponse: `{ groupId, userId, status, role }` |
+| Имя события (точно)          | Payload                                                         |
+| ---------------------------- | --------------------------------------------------------------- |
+| ReceiveMessage               | UserMessageResponse                                             |
+| MessageSent                  | UserMessageResponse, подтверждение устройствам отправителя      |
+| MessageEdited                | MessageEditResponse                                             |
+| MessageRemoved               | MessageRemovedResponse                                          |
+| MessageReaded                | MessageReadResponse                                             |
+| ChatRead                     | ChatReadResponse                                                |
+| MessageReactionsChanged      | MessageReactionsChangedResponse                                 |
+| ChannelReactionPolicyChanged | ChannelReactionPolicyResponse                                   |
+| GroupProfileChanged          | GroupProfileChangedResponse: `{ groupId }`                      |
+| GroupMemberChanged           | GroupMemberChangedResponse: `{ groupId, userId, status, role }` |
 
 Опечатка MessageReaded сохранена для совместимости. При подключении сервер автоматически добавляет соединение в группу его сессии. События чата направляются активным сессиям участников; заблокированные участники групп исключаются. Не требуется вручную подписываться на SignalR-группу чата. Отзыв сессии прекращает её участие в маршрутизации и проверяется для команд; истечение токена закрывает соединение.
 
 UserMessageResponse: messageId, senderId, recipientId, recipientType, encryptedContent, replyToMessageId, sentAt, isEdited, mediaAttachments. История через HTTP также содержит реакции и reactionsVersion. После получения сообщения загрузите снимок реакций при необходимости.
 
-MessageEditResponse: messageId, editorId, recipientId, recipientType, newEncryptedContent, editedAt.
-MessageReadResponse: viewId, messageId, readerId, recipientId, whenWas, recipientType.
-MessageRemovedResponse: messageId, senderId, recipientId, requestType, recipientType.
+MessageEditResponse: messageId, editorId, recipientId, recipientType, newEncryptedContent, editedAt. MessageReadResponse: viewId, messageId, readerId, recipientId, whenWas, recipientType. MessageRemovedResponse: messageId, senderId, recipientId, requestType, recipientType.
 
 ## Доставка и восстановление
 
 GroupProfileChanged сообщает об изменении имени, описания, приватности, аватара, владельца и настроек обязательного канала. Загрузите GET `/api/groups/{groupId}`: myRole и canLeave индивидуальны, поэтому событие содержит только groupId. GroupMemberChanged сообщает о вступлении/выходе, бане/разбане и роли участника. status: Active=0, Banned=1, Left=2; role: Member=0, Admin=1, Owner=2, null без активного членства. Перечитайте профиль и видимых участников; при потере доступа удалите сообщество из локального списка. Передача владения обновляет профиль и роли обоих пользователей.
 
-Эти события доставляются после успешного HTTP сохранения. Заблокированный/вышедший пользователь получает только изменение собственного членства; последующие события сообщества ему не отправляются. Ошибочные команды не создают событий. Повтор успешной команды может повторить уведомление. [Группы и каналы](../endpoints/groups.md) описывают все причины событий и клиентское восстановление. Порядок параллельных уведомлений не гарантирован; HTTP состояние определяет актуальные права. После reconnect обновите mine, профиль открытой группы и список участников.
+Эти события доставляются после успешного HTTP сохранения. Заблокированный/вышедший пользователь получает только изменение собственного членства; последующие события сообщества ему не отправляются. Ошибочные команды не создают событий. Повтор успешной команды может повторить уведомление. [Группы и каналы](../groups.md) описывают все причины событий и клиентское восстановление. Порядок параллельных уведомлений не гарантирован; HTTP состояние определяет актуальные права. После reconnect обновите mine, профиль открытой группы и список участников.
 
 Сохранение в БД и доставка события — разные этапы. После reconnect загрузите историю через HTTP; объединяйте ответ Send и ReceiveMessage по messageId. Для реакций принимайте более новую version и заменяйте counts целиком, затем восстанавливайте состояние видимых сообщений через GET.
 

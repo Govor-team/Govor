@@ -1,7 +1,7 @@
-# Оглавление
+# Table of contents
 
 * [Govor.API — обзор](README.md)
-* [Исправления серверной части](server-fixes.md)
+* [Исправления серверной части — 03.10.2026](server-fixes.md)
 * [Запуск и конфигурация](getting-started.md)
 * [Архитектура и границы](architecture.md)
 * [Аутентификация](endpoints/authentication/README.md)
@@ -14,7 +14,7 @@
 * [История сообщений](endpoints/chatloadcontroller.md)
 * [Прочтение сообщений и счётчики](endpoints/message-read.md)
 * [Реакции, паки и настройки каналов](endpoints/reactions.md)
-* [Группы и каналы](endpoints/groups.md)
+* [Группы и каналы](groups.md)
 * [Медиа](endpoints/mediacontroller.md)
 * [Профиль и аватар](endpoints/profile.md)
 * [Push-уведомления](endpoints/push.md)
@@ -23,8 +23,8 @@
 * [Администрирование сервера](endpoints/admin-and-groups.md)
 * [ChatsHub — сообщения](signalr/chathub.md)
 * [PresenceHub — online и offline](signalr/presencehub.md)
-* [FriendsHub — заявки](friendshub/README.md)
-* [Клиент SignalR на C# для MAUI](friendshub/friendshub-client-java.md)
+* [FriendsHub — заявки](friendshub-zayavki.md)
+* [Клиент SignalR на C# для MAUI](klient-signalr-na-c-dlya-maui.md)
 * [ProfileHub — изменения профиля](signalr/profilehub.md)
 * [Ответы, ошибки и сериализация](code-docs/hubresult-less-than-t-greater-than.md)
 * [Диагностика и порядок исправлений](diagnostics.md)
