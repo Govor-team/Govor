@@ -1,45 +1,33 @@
+using AutoMapper;
+using Govor.API.Common.Extensions;
+using Govor.API.Hubs.Infrastructure;
 using Govor.Application.Groups;
 using Govor.Application.Infrastructure.Extensions;
+using Govor.Contracts.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Govor.API.Controllers;
 
 [ApiController]
-[Route("invite")]
-public class InviteController : ControllerBase
+[Authorize(Roles = "Admin,User")]
+[Route("api/group-invites")]
+public class InviteController(IGroupManagementService groups, ICurrentUserService currentUser, IMapper mapper,
+    IChatNotificationService notifier) : ControllerBase
 {
-    private readonly IGroupService _groupService;
-    private readonly ILogger<InviteController> _logger;
-    private readonly ICurrentUserService _currentUser;
-    public InviteController(IGroupService groupService, 
-        ILogger<InviteController> logger)
-    {
-        _groupService = groupService;
-        _logger = logger;
-    }
-    
-    [Authorize]
+    // GET only previews: link scanners/prefetch must not join an account to a group.
     [HttpGet("{code}")]
-    public async Task<IActionResult> JoinGroup(string code)
-    {
-        try
-        {
-            var groupRes = await _groupService.AddUserToGroupByInvitationAsync(_currentUser.GetCurrentUserId(), code);
-            
-            var group = _groupService.GetGroupByInviteCode(code);
+    [HttpGet("/invite/{code}")]
+    public async Task<IActionResult> Preview(string code) => (await groups.PreviewInvitationAsync(currentUser.GetCurrentUserId(), code))
+        .Map(g => mapper.Map<GroupResponse>(g)).ToActionResult();
 
-            return Ok(new
-            {
-                groupId = group.Id,
-                name = group.Name,
-                isChannel = group.IsChannel
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return StatusCode(500, ex.Message);
-        }
+    [HttpPost("{code}/join")]
+    [HttpPost("/invite/{code}/join")]
+    public async Task<IActionResult> Join(string code)
+    {
+        var actorId = currentUser.GetCurrentUserId();
+        var result = await groups.JoinByInvitationAsync(actorId, code);
+        if (result.IsSuccess) await notifier.NotifyGroupMemberChangedAsync(result.Value.Group.Id, actorId);
+        return result.Map(g => mapper.Map<GroupResponse>(g)).ToActionResult();
     }
 }

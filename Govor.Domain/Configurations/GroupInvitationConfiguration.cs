@@ -11,6 +11,7 @@ public class GroupInvitationConfiguration : IEntityTypeConfiguration<GroupInvita
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.InvitationCode).IsRequired().HasMaxLength(200);
+        builder.HasIndex(e => e.InvitationCode).IsUnique();
         builder.Property(e => e.Description).HasMaxLength(500);
         builder.Property(e => e.EndDate).IsRequired();
         builder.Property(e => e.CreatedAt).IsRequired();

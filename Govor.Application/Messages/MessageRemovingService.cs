@@ -1,6 +1,7 @@
 using DeleteMessage = Govor.Application.Messages.Parameters.DeleteMessage;
 using Govor.Domain;
 using Govor.Domain.Common;
+using Govor.Application.Groups;
 using Govor.Domain.Models.Messages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -21,6 +22,25 @@ public class MessageRemovingService : IMessageRemovingService
 
     public async Task<Result<Message, Error>> DeleteMessageAsync(DeleteMessage deleteParams)
     {
+        var target = await _govorDbContext.Messages.AsNoTracking().FirstOrDefaultAsync(m => m.Id == deleteParams.MessageId);
+        if (target?.RecipientType != RecipientType.Group) return await DeleteCoreAsync(deleteParams);
+        return await _govorDbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transaction = await _govorDbContext.Database.BeginTransactionAsync();
+            try
+            {
+                await _govorDbContext.ChatGroups.Where(g => g.Id == target.RecipientId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(g => g.Name, g => g.Name));
+                var result = await DeleteCoreAsync(deleteParams);
+                if (result.IsSuccess) await transaction.CommitAsync();
+                return result;
+            }
+            catch { _govorDbContext.ChangeTracker.Clear(); throw; }
+        });
+    }
+
+    private async Task<Result<Message, Error>> DeleteCoreAsync(DeleteMessage deleteParams)
+    {
         var message = await _govorDbContext.Messages.FirstOrDefaultAsync(m => m.Id == deleteParams.MessageId);
         if (message is null)
             return Result.Failure<Message>(Error.NotFound("Message.NotFound", "Message not found."));
@@ -36,8 +56,7 @@ public class MessageRemovingService : IMessageRemovingService
 
         var canDelete = message.SenderId == deleteParams.DeleterId ||
             (message.RecipientType == RecipientType.Group &&
-             await _govorDbContext.GroupAdmins.AnyAsync(a =>
-                 a.GroupId == message.RecipientId && a.UserId == deleteParams.DeleterId));
+             await _govorDbContext.IsGroupAdministratorAsync(message.RecipientId, deleteParams.DeleterId));
         if (!canDelete)
             return Result.Failure<Message>(Error.Forbidden("Message.Remove.AccessDenied",
                 "Only the author or a group administrator can delete this message."));

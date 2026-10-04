@@ -1,5 +1,6 @@
 using Govor.Application.Authentication.Exceptions;
 using Govor.Application.Infrastructure.Validators;
+using Govor.Application.Infrastructure.Common;
 using Govor.Application.Users;
 using Govor.Domain;
 using Govor.Domain.Common;
@@ -16,17 +17,20 @@ public class AuthService : IAccountService
     private readonly IPasswordHasher _passwordHasher;
     private readonly IUserNameExistValidator _userNameExistValidator;
     private readonly IUsernameValidator _usernameValidator;
+    private readonly INowDateTimeProvider _clock;
     
     public AuthService(
         GovorDbContext context,
         IUserNameExistValidator existValidator,
         IPasswordHasher passwordHasher,
-        IUsernameValidator usernameValidator)
+        IUsernameValidator usernameValidator,
+        INowDateTimeProvider clock)
     {
         _context = context;
         _userNameExistValidator = existValidator;
         _passwordHasher = passwordHasher;
         _usernameValidator = usernameValidator;
+        _clock = clock;
     }
     
     public async Task<Result<User, Error>> RegistrationAsync(string name, string password, Invitation invitation)
@@ -46,30 +50,63 @@ public class AuthService : IAccountService
         
         var passwordHash = _passwordHasher.Hash(password);
         
-        var user = new User
+        var operationId = Guid.NewGuid();
+        return await _context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            Id = Guid.NewGuid(),
-            Username = name,
-            PasswordHash = passwordHash,
-            Description = string.Empty,
-            CreatedOn = DateOnly.FromDateTime(DateTime.UtcNow),
-            IconId = Guid.Empty,
-            WasOnline = DateTime.UtcNow,
-            InviteId = invitation.Id
-        };
-        
-       
-        await _context.Users.AddAsync(user);
-        
-        await SetRoleAsync(user, invitation);
-
-        invitation.Participants += 1;
-        
-        await _context.SaveChangesAsync();
-        
-        return user; // Success 
+            var completed = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == operationId);
+            if (completed is not null) return Result.Success(completed);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Serialize configuration changes with registration: account and membership commit together.
+                await _context.ServerCommunitySettings.Where(s => s.Id == 1)
+                    .ExecuteUpdateAsync(s => s.SetProperty(s => s.AllowLeave, s => s.AllowLeave));
+                
+                var settings = await _context.ServerCommunitySettings.AsNoTracking().SingleAsync(s => s.Id == 1);
+                
+                if (settings.RequiredChannelId.HasValue &&
+                    !await _context.ChatGroups.AnyAsync(g => g.Id == settings.RequiredChannelId && g.IsChannel))
+                    return Result.Failure<User>(Error.Validation("Auth.RequiredChannelUnavailable", "The required channel is unavailable."));
+                
+                var now = _clock.Now;
+                
+                var reserved = await _context.Invitations.Where(i => i.Id == invitation.Id &&
+                    i.IsActive && i.EndDate > now && i.Participants < i.MaxParticipants &&
+                    _context.Users.Count(u => u.InviteId == i.Id) < i.MaxParticipants)
+                    .ExecuteUpdateAsync(s => s.SetProperty(i => i.Participants, i => i.Participants + 1));
+                
+                if (reserved == 0)
+                    return Result.Failure<User>(Error.Validation("Auth.InvitationUnavailable", "Registration invitation is expired or full."));
+                
+                var user = new User
+                {
+                    Id = operationId, Username = name, PasswordHash = passwordHash, Description = string.Empty,
+                    CreatedOn = DateOnly.FromDateTime(now), IconId = Guid.Empty, WasOnline = now, InviteId = invitation.Id
+                };
+                
+                await _context.Users.AddAsync(user);
+                await SetRoleAsync(user, invitation);
+                
+                if (settings.RequiredChannelId.HasValue)
+                {
+                    _context.GroupMemberships.Add(new GroupMembership
+                    {
+                        Id = Guid.NewGuid(), GroupId = settings.RequiredChannelId.Value, UserId = user.Id, MemberSince = now
+                    });
+                }
+                
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                
+                return Result.Success(user);
+            }
+            catch
+            {
+                _context.ChangeTracker.Clear();
+                throw;
+            }
+        });
     }
-
     public async Task<Result<User, Error>> LoginAsync(string name, string password)
     {
         var user = await _context.Users

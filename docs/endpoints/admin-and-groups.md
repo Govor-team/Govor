@@ -1,35 +1,20 @@
-# Администрирование и незавершённые группы
+# Администрирование сервера
 
-## Административные маршруты
+Серверные административные маршруты требуют роль Admin и активную access-сессию. Администратор сервера и админ группы — разные права: роль в группе не открывает маршруты `/api/admin`.
 
-Следующая таблица показывает фактические атрибуты, а не требуемую безопасную политику.
-
-| Метод | Маршрут | Защита сейчас |
+| Метод | Маршрут | Назначение |
 | --- | --- | --- |
-| POST | /api/admin/InviteUser/Invitation | Без Authorize |
-| GET | /api/admin/InviteUser | Без Authorize |
-| GET | /api/admin/InviteUser/GetAllActiveInvitations | Без Authorize |
-| GET | /api/admin/InviteUser/{id} | Без Authorize |
-| GET | /api/admin/Users/all | Любой аутентифицированный пользователь |
-| GET | /api/admin/Users/{id} | Любой аутентифицированный пользователь |
-| GET | /api/admin/Users/user/{id}/setpassword/{password} | Любой аутентифицированный пользователь |
+| POST | `/api/admin/InviteUser/Invitation` | Приглашение регистрации: endDate, maxParticipants, isAdmin, description |
+| GET | `/api/admin/InviteUser` | Список приглашений |
+| GET | `/api/admin/InviteUser/GetAllActiveInvitations` | Активные приглашения |
+| GET | `/api/admin/InviteUser/{id}` | Приглашение по ID |
+| GET | `/api/admin/Users/all` | До 50 пользователей |
+| GET | `/api/admin/Users/{id}` | Пользователь по ID |
+| POST | `/api/admin/Users/user/{id}/password` | `{ "password": "..." }`; 204, отзыв сессий и push-токенов |
+| GET / PUT | `/api/admin/required-channel` | Канал для всех новых пользователей, право выхода |
 
-CreateInvitationRequest: endDate, maxParticipants, isAdmin, description. Генератор возвращает строковый код в JSON (200). Списки приглашений возвращают id, description, isAdmin, maxParticipants, code, createdAt, endAt, isActive, participantCount.
+UserResponse не содержит passwordHash. Старый GET смены пароля с паролем в URL удалён. JWT роль Admin формируется по Invitation.IsAdmin пользователя. Настройки обязательного канала и изменения паков реакций дополнительно проверяют это право в БД.
 
-Users/all фактически ограничен 50 записями без стабильной пагинации. Ответ UserResponse включает passwordHash, что недопустимо для клиентского контракта. Смена пароля выполняется GET и кладёт пароль в URL.
+Паки: [административный API реакций](reactions.md). Обязательный канал, владелец/админы, приглашения и модерация: [группы и каналы](groups.md).
 
-Эти маршруты нужно закрыть ролью Admin до публичного использования. Создание административного приглашения вместе с регистрацией позволяет получить роль Admin. Не подключайте их к пользовательскому интерфейсу.
-
-## Группы
-
-GET /invite/{code} задуман как вход в группу и требует Authorize. IGroupService не зарегистрирован в AddServices, а _currentUser не присваивается. Маршрут не является рабочим сценарием вступления.
-
-GroupsHub пуст и не подключён MapHub. Административный FriendshipsController содержит только закомментированные действия, поэтому рабочих endpoints у него нет.
-
-Наличие моделей ChatGroup/GroupMembership/GroupInvitation и проверки участия в групповом Send не подтверждает готовый продуктовый сценарий групп и каналов.
-
----
-Проверено по исходникам на 03.10.2026, commit `4603be9`. Описано текущее поведение; успешная сборка не означает проверку работающего сервера.
-
-Источник: [Govor.API/Controllers/AdminStuff/UsersController.cs](https://github.com/Govor-team/Govor/blob/4603be9f714135e0af72d505d17f3d1709834bea/Govor.API/Controllers/AdminStuff/UsersController.cs).
-
+Создание административных приглашений выдаёт возможность зарегистрировать серверного администратора, поэтому этот API предназначен только для доверенных администраторов сервера. Административный FriendshipsController и пустой GroupsHub остаются неиспользуемыми заготовками.

@@ -2,6 +2,7 @@ using Govor.Application.Messages.Parameters;
 using Microsoft.EntityFrameworkCore;
 using Govor.Domain;
 using Govor.Domain.Models.Messages;
+using Govor.Application.Groups;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -25,6 +26,25 @@ public class MessageEditingService : IMessageEditingService
 
     public async Task<EditMessageResult> EditMessageAsync(EditMessage editParams)
     {
+        var target = await _dbContext.Messages.AsNoTracking().FirstOrDefaultAsync(m => m.Id == editParams.MessageId);
+        if (target?.RecipientType != RecipientType.Group) return await EditCoreAsync(editParams);
+        return await _dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                await _dbContext.ChatGroups.Where(g => g.Id == target.RecipientId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(g => g.Name, g => g.Name));
+                var result = await EditCoreAsync(editParams);
+                if (result.IsSuccess) await transaction.CommitAsync();
+                return result;
+            }
+            catch { _dbContext.ChangeTracker.Clear(); throw; }
+        });
+    }
+
+    private async Task<EditMessageResult> EditCoreAsync(EditMessage editParams)
+    {
         var message = await _dbContext.Messages
             .Include(m => m.MediaAttachments)
             .FirstOrDefaultAsync(m => m.Id == editParams.MessageId);
@@ -38,7 +58,10 @@ public class MessageEditingService : IMessageEditingService
         }
 
         if (message.SenderId != editParams.EditorId || !await _dbContext.HasChatAccessAsync(
-            editParams.EditorId, message.RecipientId, message.RecipientType))
+            editParams.EditorId, message.RecipientId, message.RecipientType) ||
+            (message.RecipientType == RecipientType.Group &&
+             await _dbContext.ChatGroups.AnyAsync(g => g.Id == message.RecipientId && g.IsChannel) &&
+             !await _dbContext.IsGroupAdministratorAsync(message.RecipientId, editParams.EditorId)))
         {
             _logger.LogWarning(
                 "User {EditorId} unauthorized to edit message {MessageId}",

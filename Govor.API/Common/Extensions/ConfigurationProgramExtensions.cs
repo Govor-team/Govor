@@ -65,6 +65,8 @@ public static class ConfigurationProgramExtensions
         services.AddScoped<IPingHandlerService, PingHandlerService>();
         
         services.AddScoped<IUserGroupsGetterService, UserGroupsGetterService>();
+        services.AddScoped<IGroupManagementService, GroupManagementService>();
+        services.AddScoped<IGroupAvatarService, GroupAvatarService>();
         
         //services.AddScoped<IMessageCommandService, MessageCommandService>();
         services.AddScoped<IMessageSendingService, MessageSendingService>();

@@ -12,4 +12,7 @@ public interface IChatNotificationService
     Task NotifyChannelReactionPolicyChangedAsync(ChannelReactionPolicyResponse response);
     Task NotifyMessageRemovedAsync(MessageRemovedResponse response);
     Task NotifyMessageEditedAsync(MessageEditResponse response);
+    Task NotifyGroupProfileChangedAsync(Guid groupId);
+    Task NotifyGroupMemberChangedAsync(Guid groupId, Guid userId);
+    Task NotifyUserJoinedGroupsAsync(Guid userId);
 }

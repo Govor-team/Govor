@@ -5,6 +5,7 @@ using Govor.Contracts.Responses.SignalR;
 using Govor.Domain;
 using Govor.Domain.Common;
 using Govor.Domain.Models.Messages;
+using Govor.Domain.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -117,7 +118,40 @@ public class ChatNotificationService : IChatNotificationService
         TryNotifyAsync(() => NotifyParticipantsAsync(response.RecipientId,
             response.RecipientType, ChatHubConstants.MessageEdited, response));
 
-    private async Task NotifyParticipantsAsync(Guid chatId, RecipientType type, string method, object payload)
+    public Task NotifyGroupProfileChangedAsync(Guid groupId) =>
+        TryNotifyAsync(() => NotifyParticipantsAsync(groupId, RecipientType.Group,
+            ChatHubConstants.GroupProfileChanged, new GroupProfileChangedResponse { GroupId = groupId }));
+
+    public Task NotifyGroupMemberChangedAsync(Guid groupId, Guid userId) => TryNotifyAsync(async () =>
+    {
+        var member = await _context.GroupMemberships.AsNoTracking()
+            .Where(m => m.GroupId == groupId && m.UserId == userId)
+            .Select(m => new
+            {
+                m.IsBanned,
+                IsOwner = _context.ChatGroups.Any(g => g.Id == groupId && g.OwnerUserId == userId),
+                IsAdmin = _context.GroupAdmins.Any(a => a.GroupId == groupId && a.UserId == userId)
+            }).FirstOrDefaultAsync();
+        var response = new GroupMemberChangedResponse
+        {
+            GroupId = groupId, UserId = userId,
+            Status = member is null ? GroupMemberStatus.Left : member.IsBanned ? GroupMemberStatus.Banned : GroupMemberStatus.Active,
+            Role = member is null || member.IsBanned ? null : member.IsOwner ? GroupRole.Owner : member.IsAdmin ? GroupRole.Admin : GroupRole.Member
+        };
+        // The affected user must learn about a ban/leave even after losing membership.
+        // Only this membership event includes them; profile and chat events do not.
+        await NotifyParticipantsAsync(groupId, RecipientType.Group, ChatHubConstants.GroupMemberChanged, response, userId);
+    });
+
+    public Task NotifyUserJoinedGroupsAsync(Guid userId) => TryNotifyAsync(async () =>
+    {
+        var groupIds = await _context.GroupMemberships.AsNoTracking()
+            .Where(m => m.UserId == userId && !m.IsBanned).Select(m => m.GroupId).ToListAsync();
+        foreach (var groupId in groupIds)
+            await NotifyGroupMemberChangedAsync(groupId, userId);
+    });
+
+    private async Task NotifyParticipantsAsync(Guid chatId, RecipientType type, string method, object payload, Guid? affectedUserId = null)
     {
         // Resolve current participants instead of treating a chat ID as a user ID.
         // Deliver only to active sessions, including all of a participant's devices.
@@ -133,6 +167,8 @@ public class ChatNotificationService : IChatNotificationService
             participants = await _context.GroupMemberships.AsNoTracking()
                 .Where(m => m.GroupId == chatId && !m.IsBanned).Select(m => m.UserId).Distinct().ToListAsync();
 
+        if (affectedUserId.HasValue)
+            participants.Add(affectedUserId.Value);
         if (participants.Count > 0)
             await NotifyUsersAsync(participants, method, payload);
     }
@@ -142,7 +178,7 @@ public class ChatNotificationService : IChatNotificationService
         var now = DateTime.UtcNow;
         var sessions = await _context.UserSessions.AsNoTracking()
             .Where(s => users.Contains(s.UserId) && !s.IsRevoked && s.ExpiresAt > now)
-            .Select(s => s.Id).ToListAsync();
+            .Select(s => s.Id).Distinct().ToListAsync();
         if (sessions.Count > 0)
             await _hubContext.Clients.Groups(sessions.Select(ChatHubConstants.GetSessionGroup).ToList())
                 .SendAsync(method, payload);
@@ -156,7 +192,7 @@ public class ChatNotificationService : IChatNotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to deliver chat notification; clients can resync from history.");
+            _logger.LogError(ex, "Failed to deliver chat notification; clients can resync through HTTP.");
         }
     }
 }

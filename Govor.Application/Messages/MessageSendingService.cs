@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Govor.Domain;
 using Govor.Domain.Models.Messages;
 using Govor.Domain.Models;
+using Govor.Application.Groups;
 using Microsoft.Extensions.Logging;
 
 namespace Govor.Application.Messages;
@@ -19,6 +20,30 @@ public class MessageSendingService : IMessageSendingService
     }
     
     public async Task<SendMessageResult> SendMessageAsync(SendMessage sendParams)
+    {
+        var operationId = Guid.NewGuid();
+        if (sendParams.RecipientType != RecipientType.Group)
+            return await SendCoreAsync(sendParams, operationId);
+        return await _dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                // Same group lock as moderation: bans/demotion cannot race a channel post.
+                await _dbContext.ChatGroups.Where(g => g.Id == sendParams.RecipientId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(g => g.Name, g => g.Name));
+                var completed = await _dbContext.Messages.AsNoTracking().Include(m => m.MediaAttachments)
+                    .FirstOrDefaultAsync(m => m.Id == operationId);
+                if (completed is not null) return new SendMessageResult(true, null, completed);
+                var result = await SendCoreAsync(sendParams, operationId);
+                if (result.IsSuccess) await transaction.CommitAsync();
+                return result;
+            }
+            catch { _dbContext.ChangeTracker.Clear(); throw; }
+        });
+    }
+
+    private async Task<SendMessageResult> SendCoreAsync(SendMessage sendParams, Guid operationId)
     {
         var media = sendParams.Media?.ToArray() ?? [];
         if ((string.IsNullOrWhiteSpace(sendParams.EncryptContent) && media.Length == 0) ||
@@ -49,7 +74,7 @@ public class MessageSendingService : IMessageSendingService
             m.RecipientType == sendParams.RecipientType))
             return new SendMessageResult(false, new ArgumentException("Reply must belong to the same chat."), default);
 
-        var messageId = Guid.NewGuid();
+        var messageId = operationId;
         var message = new Message
         {
             Id = messageId,
@@ -98,8 +123,7 @@ public class MessageSendingService : IMessageSendingService
         
         var isMember = await _dbContext.GroupMemberships.AnyAsync(gm => gm.UserId == userId && gm.GroupId == groupId && !gm.IsBanned);
         if (!isMember) return (false, "Sender is not a member of the group.");
-        if (group.IsChannel && !await _dbContext.GroupAdmins.AnyAsync(a =>
-            a.GroupId == groupId && a.UserId == userId))
+        if (group.IsChannel && !await _dbContext.IsGroupAdministratorAsync(groupId, userId))
             return (false, "Only channel administrators can send messages.");
 
         return (true, null);

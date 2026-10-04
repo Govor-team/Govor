@@ -12,6 +12,8 @@ public class GroupInvitation
     public DateTime EndDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public int MaxParticipants { get; set; }
+    public int UsedCount { get; set; }
+    public bool IsRevoked { get; set; }
     public List<Guid> GroupMemberships { get; set; } = new();
     public User? UserMaker { get; set; }
 }

@@ -9,6 +9,7 @@ using Govor.Application.Messages.Parameters;
 using Govor.Contracts.Responses.SignalR;
 using Govor.Application.Reactions;
 using Govor.Domain.Models.Reactions;
+using Govor.Application.Groups;
 
 namespace Govor.API.Common.Mapping;
 
@@ -22,6 +23,11 @@ public class MappingProfile : Profile
         CreateMap<ReactionCount, ReactionCountResponse>();
         CreateMap<MessageReactionState, MessageReactionsChangedResponse>();
         CreateMap<ChannelReactionPolicy, ChannelReactionPolicyResponse>();
+        CreateMap<GroupSummary, GroupResponse>()
+            .IncludeMembers(s => s.Group);
+        CreateMap<ChatGroup, GroupResponse>();
+        CreateMap<GroupMember, GroupMemberResponse>();
+        CreateMap<GroupInvitation, GroupInvitationResponse>();
         CreateMap<Message, MessageResponse>();
         CreateMap<MediaAttachments, MediaAttachmentResponse>();
         CreateMap<MessageReaction, MessageReactionResponse>();

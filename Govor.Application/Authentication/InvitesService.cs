@@ -1,4 +1,5 @@
 using Govor.Domain;
+using Govor.Application.Infrastructure.Common;
 using Govor.Domain.Common;
 using Govor.Domain.Models;
 using Govor.Domain.Models.Users;
@@ -10,10 +11,12 @@ namespace Govor.Application.Authentication;
 public class InvitesService : IInvitesService
 {
     private readonly GovorDbContext _context;
+    private readonly INowDateTimeProvider _clock;
 
-    public InvitesService(GovorDbContext context)
+    public InvitesService(GovorDbContext context, INowDateTimeProvider clock)
     {
         _context = context;
+        _clock = clock;
     }
     
     public async Task<string> GetRoleNameAsync(User user)
@@ -40,7 +43,7 @@ public class InvitesService : IInvitesService
         if (invite == null)
             return Result.Failure<Invitation>(Error.NotFound("Auth.LinkNotFount","Invitation not found."));
 
-        if (invite.EndDate < DateTime.Now || invite.MaxParticipants <= invite.Users.Count || invite.MaxParticipants <= invite.Participants)
+        if (!invite.IsActive || invite.EndDate <= _clock.Now || invite.MaxParticipants <= invite.Users.Count || invite.MaxParticipants <= invite.Participants)
         {
             invite.IsActive = false;
             await _context.SaveChangesAsync();

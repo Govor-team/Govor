@@ -28,8 +28,10 @@ public class AccesserToDownloadMediaService : IAccesserToDownloadMedia
         return media.OwnerType switch
         {
             MediaOwnerType.Avatar => true, // media.OwnerId == userId
-            MediaOwnerType.GroupAvatar => await _dbContext.GroupMemberships
-                .AnyAsync(gm => gm.GroupId == media.OwnerId && gm.UserId == userId && !gm.IsBanned),
+            MediaOwnerType.GroupAvatar => await _dbContext.ChatGroups.AnyAsync(g => g.Id == media.OwnerId &&
+                !_dbContext.GroupMemberships.Any(m => m.GroupId == g.Id && m.UserId == userId && m.IsBanned) &&
+                ((!g.IsPrivate && g.ImageId == mediaId) || _dbContext.GroupMemberships
+                    .Any(m => m.GroupId == g.Id && m.UserId == userId && !m.IsBanned))),
 
             MediaOwnerType.Message => await _dbContext.MediaAttachments
                 .AnyAsync(ma =>

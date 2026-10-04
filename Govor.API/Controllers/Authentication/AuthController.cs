@@ -1,4 +1,5 @@
 using Govor.API.Common.Extensions;
+using Govor.API.Hubs.Infrastructure;
 using Govor.Application.Authentication;
 using Govor.Application.Users.UserSessions;
 using Govor.Contracts.Requests;
@@ -17,17 +18,20 @@ public class AuthController : Controller
     private IInvitesService _invitesService;
     private IAccountService _accountService;
     private ILogger<AuthController> _logger;
+    private readonly IChatNotificationService _notifier;
     
     public AuthController(
         IAccountService accountService,
         IInvitesService invitesService,
         IUserSessionOpener userSessionOpener,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IChatNotificationService notifier)
     {
         _userSession = userSessionOpener;
         _accountService = accountService;
         _invitesService = invitesService;
         _logger = logger;
+        _notifier = notifier;
     }
 
     [HttpPost("register")] // api/auth/register
@@ -38,7 +42,12 @@ public class AuthController : Controller
         var result = await _invitesService.ValidateAsync(request.InviteLink)
             .BindAsync(invite => _accountService.RegistrationAsync(request.Name, request.Password, invite))
             .TapAsync(user => _logger.LogInformation("User {Username} ({Id}) registered successfully", user.Username, user.Id))
-            .BindAsync(user => _userSession.OpenSessionAsync(user, request.DeviceInfo));
+            .BindAsync(async user =>
+            {
+                // Registration has committed the required-channel membership at this point.
+                await _notifier.NotifyUserJoinedGroupsAsync(user.Id);
+                return await _userSession.OpenSessionAsync(user, request.DeviceInfo);
+            });
         
         if (result.IsFailure)
         {

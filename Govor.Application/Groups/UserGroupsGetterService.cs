@@ -17,7 +17,7 @@ public class UserGroupsGetterService : IUserGroupsGetterService
     {
         return await _context.GroupMemberships
             .AsNoTracking()
-            .Where(m => m.UserId == userId)
+            .Where(m => m.UserId == userId && !m.IsBanned)
             .Select(m => m.ChatGroup) 
             .ToListAsync();
     }

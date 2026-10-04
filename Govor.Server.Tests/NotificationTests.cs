@@ -9,6 +9,7 @@ using Govor.Domain.Models;
 using Govor.Domain.Models.Messages;
 using Govor.Domain.Models.Users;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using SmartRes;
@@ -22,7 +23,7 @@ public class NotificationTests
     private Mock<IPushNotificationService> _push = null!;
     private Mock<IClientProxy> _proxy = null!;
     private ChatNotificationService _notifier = null!;
-    private readonly List<(string Method, string[] Groups)> _events = [];
+    private readonly List<(string Method, string[] Groups, object Payload)> _events = [];
     private string[] _targetGroups = [];
     private Guid _aliceSession;
     private Guid _bobSession;
@@ -38,7 +39,7 @@ public class NotificationTests
         AddSession(_db.Outsider);
         _proxy = new Mock<IClientProxy>();
         _proxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
-            .Callback<string, object?[], CancellationToken>((method, _, _) => _events.Add((method, _targetGroups)))
+            .Callback<string, object?[], CancellationToken>((method, args, _) => _events.Add((method, _targetGroups, args[0]!)))
             .Returns(Task.CompletedTask);
         var clients = new Mock<IHubClients>();
         clients.Setup(c => c.Groups(It.IsAny<IReadOnlyList<string>>()))
@@ -144,6 +145,80 @@ public class NotificationTests
         Assert.That(_events.Single().Method, Is.EqualTo(ChatHubConstants.ChannelReactionPolicyChanged));
         Assert.That(_events.Single().Groups, Is.EquivalentTo(new[]
         { ChatHubConstants.GetSessionGroup(_aliceSession), ChatHubConstants.GetSessionGroup(_bobSession) }));
+    }
+
+    [Test]
+    public async Task GroupProfileChangeReachesAllActiveDevicesWithoutLeakingToBannedOrForeignUsers()
+    {
+        var group = AddGroup();
+        var secondDevice = AddSession(_db.Bob);
+        var expired = AddSession(_db.Bob);
+        await _db.Context.UserSessions.Where(s => s.Id == expired)
+            .ExecuteUpdateAsync(s => s.SetProperty(s => s.ExpiresAt, DateTime.UtcNow.AddMinutes(-1)));
+        await _notifier.NotifyGroupProfileChangedAsync(group.Id);
+        Assert.That(_events.Single().Method, Is.EqualTo(ChatHubConstants.GroupProfileChanged));
+        Assert.That(_events.Single().Groups, Is.EquivalentTo(new[]
+        {
+            ChatHubConstants.GetSessionGroup(_aliceSession), ChatHubConstants.GetSessionGroup(_bobSession),
+            ChatHubConstants.GetSessionGroup(secondDevice)
+        }));
+        Assert.That(((GroupProfileChangedResponse)_events.Single().Payload).GroupId, Is.EqualTo(group.Id));
+    }
+
+    [TestCase(GroupMemberStatus.Active, GroupRole.Member)]
+    [TestCase(GroupMemberStatus.Active, GroupRole.Admin)]
+    [TestCase(GroupMemberStatus.Active, GroupRole.Owner)]
+    [TestCase(GroupMemberStatus.Banned, null)]
+    [TestCase(GroupMemberStatus.Left, null)]
+    public async Task MembershipEventReportsCommittedStatusAndStillReachesAffectedUser(GroupMemberStatus status, GroupRole? role)
+    {
+        var group = AddGroup();
+        if (status == GroupMemberStatus.Banned)
+            await _db.Context.GroupMemberships.Where(m => m.GroupId == group.Id && m.UserId == _db.Bob)
+                .ExecuteUpdateAsync(s => s.SetProperty(m => m.IsBanned, true));
+        if (status == GroupMemberStatus.Left)
+            await _db.Context.GroupMemberships.Where(m => m.GroupId == group.Id && m.UserId == _db.Bob).ExecuteDeleteAsync();
+        if (role == GroupRole.Admin)
+        {
+            _db.Context.GroupAdmins.Add(new GroupAdmins { Id = Guid.NewGuid(), GroupId = group.Id, UserId = _db.Bob });
+            await _db.Context.SaveChangesAsync();
+        }
+        if (role == GroupRole.Owner)
+            await _db.Context.ChatGroups.Where(g => g.Id == group.Id).ExecuteUpdateAsync(s => s.SetProperty(g => g.OwnerUserId, _db.Bob));
+        await _notifier.NotifyGroupMemberChangedAsync(group.Id, _db.Bob);
+        var change = (GroupMemberChangedResponse)_events.Single().Payload;
+        Assert.That(change.GroupId, Is.EqualTo(group.Id));
+        Assert.That(change.UserId, Is.EqualTo(_db.Bob));
+        Assert.That(change.Status, Is.EqualTo(status));
+        Assert.That(change.Role, Is.EqualTo(role));
+        Assert.That(_events.Single().Groups, Is.EquivalentTo(new[]
+        { ChatHubConstants.GetSessionGroup(_aliceSession), ChatHubConstants.GetSessionGroup(_bobSession) }));
+        _events.Clear();
+        await _notifier.NotifyGroupProfileChangedAsync(group.Id);
+        Assert.That(_events.Single().Groups.Contains(ChatHubConstants.GetSessionGroup(_bobSession)),
+            Is.EqualTo(status == GroupMemberStatus.Active));
+    }
+
+    [Test]
+    public async Task GroupEventDeliveryFailureDoesNotFailTheAlreadyCommittedOperation()
+    {
+        var group = AddGroup();
+        _proxy.Setup(p => p.SendCoreAsync(It.IsAny<string>(), It.IsAny<object?[]>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("offline"));
+        await _notifier.NotifyGroupProfileChangedAsync(group.Id);
+        await _notifier.NotifyGroupMemberChangedAsync(group.Id, _db.Bob);
+        await _notifier.NotifyUserJoinedGroupsAsync(_db.Bob);
+    }
+
+    private ChatGroup AddGroup()
+    {
+        var group = new ChatGroup { Id = Guid.NewGuid(), Name = "Private", Description = "", IsPrivate = true, OwnerUserId = _db.Alice };
+        _db.Context.ChatGroups.Add(group);
+        foreach (var userId in new[] { _db.Alice, _db.Bob, _db.Outsider })
+            _db.Context.GroupMemberships.Add(new GroupMembership
+            { Id = Guid.NewGuid(), GroupId = group.Id, UserId = userId, IsBanned = userId == _db.Outsider });
+        _db.Context.SaveChanges();
+        return group;
     }
 
     private Guid AddSession(Guid userId, bool revoked = false)

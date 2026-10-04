@@ -1,5 +1,6 @@
 using Govor.Application.Infrastructure.Common;
 using Govor.Application.Messages;
+using Govor.Application.Groups;
 using Govor.Domain;
 using Govor.Domain.Common;
 using Govor.Domain.Models.Messages;
@@ -117,7 +118,7 @@ public class MessageReactionService(GovorDbContext context, INowDateTimeProvider
         ChannelReactionMode mode, IReadOnlyCollection<Guid> reactionIds)
     {
         if (!await context.HasChatAccessAsync(userId, groupId, RecipientType.Group) ||
-            !await context.GroupAdmins.AnyAsync(a => a.GroupId == groupId && a.UserId == userId))
+            !await context.IsGroupAdministratorAsync(groupId, userId))
             return Result.Failure<ChannelReactionPolicy>(Denied());
         if (!Enum.IsDefined(mode) || reactionIds is null || reactionIds.Count > 100 || reactionIds.Contains(Guid.Empty) ||
             (mode != ChannelReactionMode.Selected && reactionIds.Count > 0))
@@ -131,7 +132,7 @@ public class MessageReactionService(GovorDbContext context, INowDateTimeProvider
                     .SetProperty(g => g.ReactionPolicyVersion, g => g.ReactionPolicyVersion + 1));
             if (updated == 0) return Result.Failure<ChannelReactionPolicy>(Error.Validation("Reaction.Policy.NotChannel", "Only channels support reaction restrictions."));
             if (!await context.HasChatAccessAsync(userId, groupId, RecipientType.Group) ||
-                !await context.GroupAdmins.AnyAsync(a => a.GroupId == groupId && a.UserId == userId))
+                !await context.IsGroupAdministratorAsync(groupId, userId))
                 return Result.Failure<ChannelReactionPolicy>(Denied());
             if (await context.ReactionItems.CountAsync(r => ids.Contains(r.Id) && r.IsEnabled && r.Pack.IsEnabled) != ids.Length)
                 return Result.Failure<ChannelReactionPolicy>(Error.Validation("Reaction.Policy.InvalidSelection", "All reactions must be active and available."));

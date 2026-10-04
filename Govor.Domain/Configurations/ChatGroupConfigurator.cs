@@ -12,9 +12,11 @@ public class ChatGroupConfigurator : IEntityTypeConfiguration<ChatGroup>
 
         builder.Property(e => e.Name).IsRequired().HasMaxLength(100);
         builder.Property(e => e.Description).HasMaxLength(500);
+        builder.HasOne<Govor.Domain.Models.Users.User>().WithMany()
+            .HasForeignKey(e => e.OwnerUserId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(e => e.Members)
-            .WithOne()
+            .WithOne(e => e.ChatGroup)
             .HasForeignKey(e => e.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
 

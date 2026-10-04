@@ -10,6 +10,8 @@ public static class ChatHubConstants
     public const string ChatRead = "ChatRead";
     public const string MessageReactionsChanged = "MessageReactionsChanged";
     public const string ChannelReactionPolicyChanged = "ChannelReactionPolicyChanged";
+    public const string GroupProfileChanged = "GroupProfileChanged";
+    public const string GroupMemberChanged = "GroupMemberChanged";
 
     public static string GetUserGroup(Guid userId) => userId.ToString();
     public static string GetSessionGroup(Guid sessionId) => $"session_{sessionId}";

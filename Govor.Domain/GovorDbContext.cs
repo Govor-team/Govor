@@ -37,6 +37,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
     public virtual DbSet<GroupInvitation> GroupInvitations { get; set; }
     public virtual DbSet<GroupMembership> GroupMemberships { get; set; }
     public virtual DbSet<GroupAdmins> GroupAdmins { get; set; }
+    public virtual DbSet<ServerCommunitySettings> ServerCommunitySettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +60,7 @@ public class GovorDbContext(DbContextOptions<GovorDbContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new GroupInvitationConfiguration());
         modelBuilder.ApplyConfiguration(new GroupMembershipConfiguration());
         modelBuilder.ApplyConfiguration(new GroupAdminsConfiguration());
+        modelBuilder.ApplyConfiguration(new ServerCommunitySettingsConfiguration());
 
         modelBuilder.ApplyConfiguration(new OneTimePreKeyConfiguration());
         modelBuilder.ApplyConfiguration(new UserCryptoSessionConfiguration());

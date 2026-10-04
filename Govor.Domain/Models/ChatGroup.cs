@@ -12,6 +12,8 @@ public class ChatGroup
     public Govor.Domain.Models.Reactions.ChannelReactionMode ReactionMode { get; set; }
     public long ReactionPolicyVersion { get; set; }
     public bool IsPrivate { get; set; }
+    public Guid? OwnerUserId { get; set; }
+    public DateTime CreatedAt { get; set; }
     public List<GroupAdmins> Admins { get; set; } = new();
     public List<GroupMembership> Members { get; set; } = new();
     public List<GroupInvitation> InviteCodes { get; set; } = new();
