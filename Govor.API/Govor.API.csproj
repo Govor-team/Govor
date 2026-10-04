@@ -36,6 +36,8 @@
     <ItemGroup>
       <Folder Include="logs\" />
       <Folder Include="uploads\" />
+      <Content Remove="secrets/**" />
+      <None Update="secrets/**" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
     </ItemGroup>
 
 </Project>
